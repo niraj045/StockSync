@@ -169,9 +169,9 @@ export function CommercialPage({ kind }: { kind: Kind }) {
   function defaults() {
     const today = new Date().toISOString().slice(0, 10);
     return kind === 'quotations'
-      ? { quotationDate: today, validUntil: today, rentalType: 'MONTHLY', transportCharge: 0, loadingCharge: 0, unloadingCharge: 0, taxRate: 18, items: [{}] }
+      ? { quotationDate: today, validUntil: today, rentalType: 'PER_PIECE_PER_DAY', transportCharge: 0, loadingCharge: 0, unloadingCharge: 0, taxRate: 18, items: [{}] }
       : kind === 'agreements'
-        ? { effectiveDate: today, rentalType: 'MONTHLY', securityDeposit: 0, transportCharge: 0, loadingCharge: 0, unloadingCharge: 0, items: [{}] }
+        ? { effectiveDate: today, rentalType: 'PER_PIECE_PER_DAY', securityDeposit: 0, transportCharge: 0, loadingCharge: 0, unloadingCharge: 0, items: [{}] }
         : { orderDate: today, items: [{}] };
   }
   function edit(row: Row) {
@@ -244,7 +244,14 @@ export function CommercialPage({ kind }: { kind: Kind }) {
             <Form.Item name="templateId" label="Document template"><Select allowClear options={(templates.data ?? []).map((t) => ({ value: t.id, label: t.name }))} /></Form.Item>
           </>}
           {kind !== 'orders' && <Form.Item name="rentalType" label="Rental type" rules={[{ required: true }]}>
-            <Select options={['DAILY', 'WEEKLY', 'MONTHLY', 'FIXED'].map((value) => ({ value, label: value }))} />
+            <Select options={[
+              { value: 'PER_PIECE_PER_DAY', label: 'Per piece per day' },
+              { value: 'PLATE_AREA_PER_DAY', label: 'Plate area per day' },
+              { value: 'SCAFFOLD_AREA_PER_DAY', label: 'Scaffold area per day' },
+              { value: 'PLOT_AREA_PER_DAY', label: 'Plot area per day' },
+              { value: 'SLAB_BASED', label: 'Slab based' },
+              { value: 'FIXED_RATE', label: 'Fixed rate' },
+            ]} />
           </Form.Item>}
           {kind === 'agreements' && <Form.Item name="securityDeposit" label="Security deposit" rules={[{ required: true }]}><InputNumber min={0} style={{ width: '100%' }} /></Form.Item>}
           {kind !== 'orders' && <>
