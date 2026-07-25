@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:mysql://${TEST_DB_HOST:localhost}:${TEST_DB_PORT:3306}/${TEST_DB_NAME:shuttering_inventory}?createDatabaseIfNotExist=true&serverTimezone=UTC
+    url: jdbc:mysql://${TEST_DB_HOST:localhost}:${TEST_DB_PORT:3306}/${TEST_DB_NAME:shuttering_inventory_test}?createDatabaseIfNotExist=true&serverTimezone=UTC
     username: ${TEST_DB_USER:inventory_user}
     password: ${TEST_DB_PASSWORD:inventory_password}
   jpa:

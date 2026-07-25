@@ -120,7 +120,7 @@ Document:
 - Error codes
 - Required roles
 
-## 8.11 Implemented Phase 2 and Phase 3 Endpoints
+## 8.11 Implemented Phase 2 through Phase 4 Endpoints
 
 Master data:
 
@@ -148,3 +148,26 @@ POST /api/v1/stock/adjustments
 All endpoints require an authenticated session. Master-data writes and file uploads require
 `ROLE_ADMIN`. Inventory posting requires `ROLE_ADMIN` or `ROLE_OPERATIONS`; reads also allow
 `ROLE_VIEWER`. Every inventory POST requires an `Idempotency-Key` header.
+
+Commercial workflow:
+
+```text
+GET/POST/PUT /api/v1/quotations
+POST /api/v1/quotations/{id}/clone|send|approve|reject|expire
+POST /api/v1/quotations/{id}/convert
+GET/POST/PUT /api/v1/agreements
+POST /api/v1/agreements/{id}/generate|activate|terminate
+GET  /api/v1/agreements/{id}/document
+GET/POST /api/v1/agreement-templates
+GET /api/v1/agreement-templates/{id}/download
+GET/POST/PUT /api/v1/orders
+POST /api/v1/orders/{id}/confirm|cancel
+```
+
+Quotation and agreement edits are limited to drafts. Conversion requires an approved quotation
+and is atomic. Agreement activation requires a generated document. Order confirmation atomically
+enforces the agreement item allocation ceiling. An order line's `remainingQuantity` is
+`orderedQuantity - issuedQuantity`; Phase 5 will own issued-quantity updates.
+
+Commercial reads allow every authenticated role. Writes require `ROLE_ADMIN` or
+`ROLE_OPERATIONS`; template upload and agreement termination require `ROLE_ADMIN`.

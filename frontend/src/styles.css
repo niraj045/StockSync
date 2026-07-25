@@ -261,6 +261,27 @@ textarea {
   grid-column: 1 / -1;
 }
 
+.commercial-lines {
+  margin-top: 8px;
+  padding: 18px;
+  border: 1px solid #dfe7e4;
+  border-radius: 12px;
+  background: #f8faf9;
+}
+
+.line-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.commercial-line {
+  display: flex;
+  padding-top: 10px;
+  border-top: 1px solid #e8eeec;
+}
+
 .document-layout {
   display: grid;
   grid-template-columns: minmax(300px, 0.72fr) minmax(440px, 1.28fr);

@@ -30,6 +30,9 @@ class MasterDataIntegrationTest extends BaseIntegrationTest {
     @Autowired PartyRepository parties; @Autowired VendorRepository vendors;
 
     @BeforeEach void clean(){
+        jdbc.update("DELETE FROM site_order_items");jdbc.update("DELETE FROM site_orders");jdbc.update("DELETE FROM agreement_items");
+        jdbc.update("DELETE FROM agreements");jdbc.update("DELETE FROM quotation_items");jdbc.update("DELETE FROM quotations");
+        jdbc.update("DELETE FROM agreement_templates");
         jdbc.update("DELETE FROM stock_transactions");jdbc.update("DELETE FROM purchase_items");jdbc.update("DELETE FROM scrap_items");
         jdbc.update("DELETE FROM stock_adjustment_items");jdbc.update("DELETE FROM purchases");jdbc.update("DELETE FROM scrap_entries");
         jdbc.update("DELETE FROM stock_adjustments");jdbc.update("DELETE FROM stock_balances");

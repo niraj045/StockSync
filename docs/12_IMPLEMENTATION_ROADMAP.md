@@ -55,6 +55,8 @@ Status: Completed.
 
 ## Phase 4 — Agreements and Orders
 
+Status: Completed.
+
 - Quotation
 - Agreement template upload
 - Agreement draft

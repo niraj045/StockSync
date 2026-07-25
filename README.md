@@ -53,14 +53,15 @@ The system should therefore be structured as independent internal modules but de
 
 ## Current Implementation
 
-Phases 1 through 3 are implemented:
+Phases 1 through 4 are implemented:
 
 - Foundation, deployment, session authentication, user administration, and immutable audit logging
 - Master data for categories, items, parties, sites, vendors, and entity-linked documents
 - Inventory ledger, balance projection, purchases, scrap, adjustments, history, and dashboard totals
 - Transactional stock posting with mandatory idempotency keys, row locking, and negative-stock protection
+- Quotation drafting and approval, agreement conversion and DOCX generation, and site orders with agreement quantity controls
 
-Agreements, orders, challans, rental billing, payments, GST, and reporting remain future phases.
+Challans, rental billing, payments, GST, and reporting remain future phases.
 
 ## Local Startup with Docker Compose
 
@@ -125,6 +126,17 @@ Vite serves the frontend at `http://localhost:5173` and proxies `/api` to the ba
 After signing in, master data is available from the sidebar and inventory is available at
 `http://localhost:5173/inventory`. Administrators can maintain master data. Administrators and
 operations users can post inventory movements; viewers have read-only access.
+
+Phase 4 is available at:
+
+- `http://localhost:5173/quotations`
+- `http://localhost:5173/agreements`
+- `http://localhost:5173/orders`
+
+Administrators and operations users can create and transition these records. Only administrators
+can upload agreement templates or terminate an active agreement. Agreement templates accept DOCX
+or PDF files up to 10 MB. PDF templates are retained as references while StockSync generates the
+operational agreement as DOCX.
 
 If port 8080 is occupied and the backend is started on another port, override the development proxy target:
 

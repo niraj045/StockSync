@@ -12,6 +12,9 @@ import {
   BuildOutlined,
   TagsOutlined,
   ToolOutlined,
+  FormOutlined,
+  SolutionOutlined,
+  ShoppingCartOutlined,
 } from '@ant-design/icons';
 import { Layout, Menu, Typography, Dropdown, Avatar } from 'antd';
 import { useState } from 'react';
@@ -41,6 +44,9 @@ export function AppLayout() {
     { key: '/vendors', icon: <ToolOutlined />, label: 'Vendors' },
     { key: '/documents', icon: <FileTextOutlined />, label: 'Documents' },
     { key: '/inventory', icon: <AppstoreOutlined />, label: 'Inventory' },
+    { key: '/quotations', icon: <FormOutlined />, label: 'Quotations' },
+    { key: '/agreements', icon: <SolutionOutlined />, label: 'Agreements' },
+    { key: '/orders', icon: <ShoppingCartOutlined />, label: 'Orders' },
     { key: '/reports', icon: <FileTextOutlined />, label: 'Reports', disabled: true },
   ];
 
