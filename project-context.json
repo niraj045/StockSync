@@ -1,0 +1,47 @@
+{
+  "project": "Shuttering Inventory Management System",
+  "architecture": "modular monolith",
+  "backend": [
+    "Java 21",
+    "Spring Boot",
+    "Spring MVC",
+    "Spring Data JPA",
+    "Spring Security",
+    "Flyway",
+    "Maven"
+  ],
+  "frontend": [
+    "React",
+    "TypeScript",
+    "Vite",
+    "Ant Design",
+    "TanStack Query"
+  ],
+  "database": "MySQL 8.4 LTS",
+  "deployment": [
+    "Docker Compose",
+    "Nginx",
+    "Linux VPS",
+    "HTTPS",
+    "Persistent volumes",
+    "Automated backups"
+  ],
+  "core_modules": [
+    "auth",
+    "dashboard",
+    "inventory",
+    "party",
+    "site",
+    "quotation",
+    "agreement",
+    "order",
+    "challan",
+    "rental",
+    "billing",
+    "payment",
+    "gst",
+    "reporting",
+    "document",
+    "audit"
+  ]
+}

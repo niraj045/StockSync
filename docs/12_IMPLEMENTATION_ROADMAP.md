@@ -1,0 +1,124 @@
+# 12. Implementation Roadmap
+
+## Phase 0 — Discovery and Finalization
+
+- Confirm client workflows
+- Collect existing stock data
+- Collect site data
+- Collect agreement templates
+- Collect challan samples
+- Collect invoice formats
+- Confirm rental models
+- Confirm GST rules
+- Confirm server type
+- Confirm user accounts
+
+## Phase 1 — Foundation
+
+- Create backend project
+- Create frontend project
+- Configure MySQL
+- Configure Flyway
+- Configure authentication
+- Configure base layout
+- Configure Docker Compose
+- Configure file storage
+- Create audit framework
+- Create common API error model
+
+## Phase 2 — Master Data
+
+- Categories
+- Items
+- Parties
+- Sites
+- Vendors
+- Users
+- Documents
+
+## Phase 3 — Inventory Core
+
+- Stock transaction ledger
+- Stock balance
+- Purchase entry
+- Scrap entry
+- Adjustment entry
+- Stock history
+- Dashboard totals
+- Concurrency protection
+
+## Phase 4 — Agreements and Orders
+
+- Quotation
+- Agreement template upload
+- Agreement draft
+- Agreement generation
+- Order and order item
+- Remaining quantity calculation
+
+## Phase 5 — Challans
+
+- Issued challan
+- Split challan
+- Posting
+- Cancellation
+- Receiving challan
+- Partial return
+- Extra return
+- Damage
+- Loss
+- Size exchange
+- PDF generation
+
+## Phase 6 — Billing and Payments
+
+- Rental calculation
+- Rate slabs
+- Additional charges
+- Security deposits
+- Invoices
+- Payments
+- TDS
+- Outstanding balance
+
+## Phase 7 — Reports
+
+- Monthly site report
+- Stock report
+- Challan registers
+- Payment register
+- Invoice register
+- Site ledger
+- GST summary
+- PDF and Excel exports
+
+## Phase 8 — Production Readiness
+
+- Security review
+- Backup automation
+- Restore test
+- Performance test
+- User acceptance test
+- Production deployment
+- Client training
+- Handover documentation
+
+## Recommended MVP Cut
+
+For the fastest useful release:
+
+1. Login
+2. Dashboard
+3. Categories and items
+4. Parties and sites
+5. Stock ledger
+6. Issued challans
+7. Received challans
+8. Split challans
+9. File uploads
+10. Monthly site report
+11. Payments
+12. Basic GST summary
+13. PDF export
+14. Docker deployment
+15. Backups

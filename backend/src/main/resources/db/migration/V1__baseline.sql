@@ -1,0 +1,2 @@
+-- Phase 1 schema baseline.
+-- Business tables are intentionally deferred to their owning implementation phases.
