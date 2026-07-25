@@ -43,7 +43,7 @@ public class OrderService{
         o.setCreatedBy(actor());o.setUpdatedBy(actor());SiteOrder saved=orders.save(o);log("ORDER_DRAFT_CREATED",saved,"Draft created",http);return response(saved);}
     @Transactional public OrderResponse update(Long id,OrderRequest r,HttpServletRequest http){SiteOrder o=detailed(id);requireDraft(o);
         if(r.version()==null||o.getVersion()!=r.version())throw new ObjectOptimisticLockingFailureException(SiteOrder.class,id);
-        var agreement=agreementAccess.requireForOrder(r.agreementId());apply(o,r,agreement);o.setUpdatedBy(actor());SiteOrder saved=orders.save(o);
+        var agreement=agreementAccess.requireForOrder(r.agreementId());o.getItems().clear();orders.flush();apply(o,r,agreement);o.setUpdatedBy(actor());SiteOrder saved=orders.save(o);
         log("ORDER_DRAFT_UPDATED",saved,"Draft updated",http);return response(saved);}
     @Transactional public OrderResponse confirm(Long id,HttpServletRequest http){SiteOrder o=detailed(id);requireDraft(o);
         var agreement=agreementAccess.requireForOrder(o.getAgreement().getId());Map<Long,BigDecimal>limits=agreement.items().stream()

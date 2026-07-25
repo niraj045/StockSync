@@ -53,6 +53,7 @@ public class QuotationService implements QuotationAccess {
     @Transactional public QuotationResponse update(Long id,QuotationRequest r,HttpServletRequest http){
         Quotation q=detailed(id);requireDraft(q);
         if(r.version()==null||q.getVersion()!=r.version())throw new ObjectOptimisticLockingFailureException(Quotation.class,id);
+        q.getItems().clear();quotations.flush();
         apply(q,r);q.setUpdatedBy(actor());Quotation saved=quotations.save(q);
         log("QUOTATION_UPDATED",saved,"Draft updated",http);return response(saved);
     }

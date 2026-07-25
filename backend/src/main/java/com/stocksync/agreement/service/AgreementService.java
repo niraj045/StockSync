@@ -59,7 +59,7 @@ public class AgreementService implements AgreementAccess {
         a.setCreatedBy(actor());a.setUpdatedBy(actor());Agreement saved=agreements.save(a);log("AGREEMENT_DRAFT_CREATED",saved,"Manual draft",http);return response(saved);}
     @Transactional public AgreementResponse update(Long id,AgreementRequest r,HttpServletRequest http){
         Agreement a=detailed(id);requireDraft(a);if(r.version()==null||a.getVersion()!=r.version())
-            throw new ObjectOptimisticLockingFailureException(Agreement.class,id);apply(a,r);a.setUpdatedBy(actor());
+            throw new ObjectOptimisticLockingFailureException(Agreement.class,id);a.getItems().clear();agreements.flush();apply(a,r);a.setUpdatedBy(actor());
         Agreement saved=agreements.save(a);log("AGREEMENT_DRAFT_UPDATED",saved,"Draft updated",http);return response(saved);}
     @Transactional public AgreementResponse convert(Long quotationId,QuotationConversionRequest r,HttpServletRequest http){
         if(agreements.existsByQuotationId(quotationId))throw new BusinessRuleException("QUOTATION_ALREADY_CONVERTED","Quotation already has an agreement");

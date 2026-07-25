@@ -47,6 +47,9 @@ class Phase4IntegrationTest extends BaseIntegrationTest {
         mvc.perform(get("/api/v1/quotations/{id}",id)).andExpect(status().isOk())
             .andExpect(jsonPath("$.subtotal").value(2150.0)).andExpect(jsonPath("$.taxAmount").value(387.0))
             .andExpect(jsonPath("$.grandTotal").value(2537.0)).andExpect(jsonPath("$.status").value("DRAFT"));
+        mvc.perform(put("/api/v1/quotations/{id}",id).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                .content(quotationBody().replace("\"items\"", "\"version\":0,\"items\"")))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(2));
         mvc.perform(post("/api/v1/quotations/{id}/send",id).with(csrf())).andExpect(status().isOk()).andExpect(jsonPath("$.status").value("SENT"));
         mvc.perform(put("/api/v1/quotations/{id}",id).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(quotationBody()))
             .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("QUOTATION_IMMUTABLE"));
