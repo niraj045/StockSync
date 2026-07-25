@@ -9,8 +9,11 @@ import {
   DownOutlined,
   KeyOutlined,
   LogoutOutlined,
+  BuildOutlined,
+  TagsOutlined,
+  ToolOutlined,
 } from '@ant-design/icons';
-import { Layout, Menu, Typography, Dropdown, Avatar, Space } from 'antd';
+import { Layout, Menu, Typography, Dropdown, Avatar } from 'antd';
 import { useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../features/auth/context/AuthContext';
@@ -31,9 +34,13 @@ export function AppLayout() {
   // Build dynamic navigation items based on role
   const navigationItems = [
     { key: '/', icon: <DashboardOutlined />, label: 'Dashboard' },
-    { key: '/inventory', icon: <AppstoreOutlined />, label: 'Inventory', disabled: true },
-    { key: '/parties', icon: <TeamOutlined />, label: 'Parties', disabled: true },
-    { key: '/sites', icon: <ShopOutlined />, label: 'Sites', disabled: true },
+    { key: '/categories', icon: <TagsOutlined />, label: 'Categories' },
+    { key: '/items', icon: <AppstoreOutlined />, label: 'Items' },
+    { key: '/parties', icon: <TeamOutlined />, label: 'Parties' },
+    { key: '/sites', icon: <ShopOutlined />, label: 'Sites' },
+    { key: '/vendors', icon: <ToolOutlined />, label: 'Vendors' },
+    { key: '/documents', icon: <FileTextOutlined />, label: 'Documents' },
+    { key: '/inventory', icon: <AppstoreOutlined />, label: 'Inventory' },
     { key: '/reports', icon: <FileTextOutlined />, label: 'Reports', disabled: true },
   ];
 
@@ -71,16 +78,25 @@ export function AppLayout() {
   return (
     <Layout className="app-shell">
       <Sider
+        className="app-sider"
         collapsible
         collapsed={collapsed}
         onCollapse={setCollapsed}
         breakpoint="lg"
         theme="dark"
+        width={238}
       >
         <div className="brand" aria-label="StockSync">
-          {collapsed ? 'SS' : 'StockSync'}
+          <span className="brand-mark"><BuildOutlined /></span>
+          {!collapsed && (
+            <span className="brand-copy">
+              <span className="brand-name">StockSync</span>
+              <span className="brand-caption">Shuttering control</span>
+            </span>
+          )}
         </div>
         <Menu
+          className="app-menu"
           theme="dark"
           mode="inline"
           selectedKeys={[location.pathname]}
@@ -90,23 +106,28 @@ export function AppLayout() {
       </Sider>
       <Layout>
         <Header className="app-header">
-          <Typography.Title level={4} className="app-title">
-            Shuttering Inventory Management
-          </Typography.Title>
+          <div className="header-context">
+            <span className="header-eyebrow">Operations workspace</span>
+            <Typography.Title level={4} className="app-title">
+              Shuttering Inventory Management
+            </Typography.Title>
+          </div>
 
           <Dropdown menu={profileMenuItems} trigger={['click']}>
             <div className="user-profile-header">
-              <Avatar icon={<UserOutlined />} style={{ backgroundColor: '#0f766e' }} />
-              <Space className="user-name-label" style={{ display: collapsed ? 'none' : 'inline-flex' }}>
-                {user?.fullName}
-                <span className="user-role-badge">{displayRole}</span>
-                <DownOutlined style={{ fontSize: '10px', color: '#64748b' }} />
-              </Space>
+              <Avatar className="profile-avatar" icon={<UserOutlined />} />
+              <span className="profile-copy">
+                <span className="user-name-label">{user?.fullName}</span>
+                <span className="user-role-label">{displayRole.toLowerCase()}</span>
+              </span>
+              <DownOutlined style={{ fontSize: 10, color: '#64736f' }} />
             </div>
           </Dropdown>
         </Header>
         <Content className="app-content">
-          <Outlet />
+          <div className="content-frame">
+            <Outlet />
+          </div>
         </Content>
       </Layout>
     </Layout>

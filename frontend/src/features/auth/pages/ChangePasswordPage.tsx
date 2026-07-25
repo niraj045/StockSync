@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Card, Form, Input, Button, message, Alert } from 'antd';
+import { LockOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router';
 import { apiClient } from '../../../api/client';
 
@@ -31,8 +32,12 @@ export function ChangePasswordPage() {
   };
 
   return (
-    <div style={{ maxWidth: 600, margin: '40px auto' }}>
-      <Card title="Change Password" className="premium-card">
+    <div className="form-page">
+      <div className="form-page-intro">
+        <h1>Change password</h1>
+        <p>Choose a strong password to keep your StockSync account secure.</p>
+      </div>
+      <Card className="premium-card">
         {errorMsg && (
           <Alert
             message={errorMsg}
@@ -54,7 +59,7 @@ export function ChangePasswordPage() {
             name="currentPassword"
             rules={[{ required: true, message: 'Please enter your current password' }]}
           >
-            <Input.Password placeholder="Enter current password" size="large" />
+            <Input.Password prefix={<LockOutlined />} placeholder="Enter current password" size="large" />
           </Form.Item>
 
           <Form.Item
@@ -69,7 +74,7 @@ export function ChangePasswordPage() {
               },
             ]}
           >
-            <Input.Password placeholder="Enter new password" size="large" />
+            <Input.Password prefix={<SafetyCertificateOutlined />} placeholder="Enter new password" size="large" />
           </Form.Item>
 
           <Form.Item
@@ -88,7 +93,7 @@ export function ChangePasswordPage() {
               }),
             ]}
           >
-            <Input.Password placeholder="Confirm new password" size="large" />
+            <Input.Password prefix={<SafetyCertificateOutlined />} placeholder="Confirm new password" size="large" />
           </Form.Item>
 
           <Form.Item style={{ marginTop: 32, marginBottom: 0 }}>

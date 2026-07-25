@@ -3,7 +3,7 @@
 ## 6.1 Package Structure
 
 ```text
-com.company.shuttering
+com.stocksync
 ├── auth
 ├── dashboard
 ├── inventory
@@ -201,3 +201,13 @@ Never log:
 - Session cookies
 - Full access tokens
 - Sensitive uploaded document contents
+
+## 6.12 Implemented Transaction Boundaries
+
+Category, item, party, vendor, site, and file use cases are exposed through module services and
+DTO-based controllers. Inventory is the sole owner of stock writes.
+
+Purchase, scrap, and adjustment posting methods are transactional. They create the source
+document and lines, lock affected balance rows pessimistically in deterministic item order, append
+immutable ledger entries, update the balance projection, and record the audit action as one use
+case. Failed validation or insufficient stock rolls back the entire posting.

@@ -128,7 +128,7 @@ export function UserListPage() {
       render: (roles: string[]) => (
         <Space size={[0, 4]} wrap>
           {roles.map((role) => (
-            <Tag color="cyan" key={role}>
+            <Tag className="role-tag" key={role}>
               {role.replace('ROLE_', '')}
             </Tag>
           ))}
@@ -140,7 +140,7 @@ export function UserListPage() {
       dataIndex: 'active',
       key: 'active',
       render: (active: boolean) => (
-        <Tag color={active ? 'success' : 'error'}>
+        <Tag className="status-tag" color={active ? 'success' : 'error'}>
           {active ? 'Active' : 'Deactivated'}
         </Tag>
       ),
@@ -155,6 +155,7 @@ export function UserListPage() {
             <Tooltip title="Edit Profile Details">
               <Button
                 type="text"
+                className="action-button"
                 icon={<EditOutlined />}
                 onClick={() => handleEditClick(record)}
               />
@@ -163,6 +164,7 @@ export function UserListPage() {
             <Tooltip title="View Action Logs">
               <Button
                 type="text"
+                className="action-button"
                 icon={<EyeOutlined />}
                 onClick={() => handleViewLogClick(record)}
               />
@@ -197,15 +199,19 @@ export function UserListPage() {
   return (
     <div className="page-stack">
       <div className="page-header-container">
-        <h2>User Management</h2>
+        <div>
+          <h1 className="page-heading">User management</h1>
+          <p className="page-description">
+            Control team access, account status and assigned operational roles.
+          </p>
+        </div>
         <Button
           type="primary"
           icon={<PlusOutlined />}
           onClick={handleCreateClick}
           size="large"
-          style={{ background: '#0f766e', borderColor: '#0f766e' }}
         >
-          Add New User
+          Add user
         </Button>
       </div>
 

@@ -99,3 +99,10 @@ These should be confirmed with the client.
 - Audit logs: retain
 - Cancelled records: retain with status
 - Temporary processing files: delete automatically
+
+## 10.10 Implemented Audit Actions
+
+Phase 3 records `STOCK_PURCHASE_POSTED`, `STOCK_SCRAP_POSTED`, and
+`STOCK_ADJUSTMENT_POSTED` with the actor snapshot and source document identity. Uploaded files are
+stored outside the public frontend path with generated names; uploads are limited to 10 MB and to
+PDF, DOCX, XLSX, JPEG, and PNG content.

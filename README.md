@@ -51,16 +51,16 @@ The system should therefore be structured as independent internal modules but de
 
 > Build it like modules. Deploy it like one application.
 
-## Phase 1 Foundation
+## Current Implementation
 
-The repository currently contains the project foundation only:
+Phases 1 through 3 are implemented:
 
-- `backend/`: Java 21 Spring Boot modular monolith using Maven and embedded Jetty
-- `frontend/`: React and TypeScript application shell built with Vite and Ant Design
-- `deployment/`: Nginx reverse-proxy and SPA configuration
-- `compose.yaml`: MySQL, backend, and frontend services with persistent volumes
+- Foundation, deployment, session authentication, user administration, and immutable audit logging
+- Master data for categories, items, parties, sites, vendors, and entity-linked documents
+- Inventory ledger, balance projection, purchases, scrap, adjustments, history, and dashboard totals
+- Transactional stock posting with mandatory idempotency keys, row locking, and negative-stock protection
 
-Business functionality starts in later roadmap phases and is intentionally not included yet.
+Agreements, orders, challans, rental billing, payments, GST, and reporting remain future phases.
 
 ## Local Startup with Docker Compose
 
@@ -121,6 +121,10 @@ npm run dev
 ```
 
 Vite serves the frontend at `http://localhost:5173` and proxies `/api` to the backend at `http://localhost:8080`.
+
+After signing in, master data is available from the sidebar and inventory is available at
+`http://localhost:5173/inventory`. Administrators can maintain master data. Administrators and
+operations users can post inventory movements; viewers have read-only access.
 
 If port 8080 is occupied and the backend is started on another port, override the development proxy target:
 

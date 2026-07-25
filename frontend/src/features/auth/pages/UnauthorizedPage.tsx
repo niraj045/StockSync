@@ -6,16 +6,18 @@ export function UnauthorizedPage() {
 
   return (
     <div className="unauthorized-container">
-      <Result
-        status="403"
-        title="403"
-        subTitle="Sorry, you are not authorized to access this page."
-        extra={
-          <Button type="primary" size="large" onClick={() => navigate('/')}>
-            Back to Dashboard
-          </Button>
-        }
-      />
+      <div className="empty-state-card">
+        <Result
+          status="403"
+          title="Access restricted"
+          subTitle="Your assigned role does not allow access to this workspace."
+          extra={
+            <Button type="primary" size="large" onClick={() => navigate('/')}>
+              Back to dashboard
+            </Button>
+          }
+        />
+      </div>
     </div>
   );
 }

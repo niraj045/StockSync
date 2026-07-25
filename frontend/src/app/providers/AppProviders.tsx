@@ -22,7 +22,30 @@ export function AppProviders() {
       theme={{
         token: {
           colorPrimary: '#0f766e',
-          borderRadius: 8,
+          colorInfo: '#0f766e',
+          colorSuccess: '#27835f',
+          colorWarning: '#c97a18',
+          colorError: '#c2413a',
+          colorText: '#17212b',
+          colorTextSecondary: '#64736f',
+          colorBorder: '#dfe7e4',
+          colorBgLayout: '#f5f7f6',
+          fontFamily: 'Inter, "Segoe UI", Arial, sans-serif',
+          borderRadius: 9,
+          controlHeight: 40,
+        },
+        components: {
+          Button: {
+            fontWeight: 650,
+          },
+          Card: {
+            headerFontSize: 16,
+          },
+          Menu: {
+            darkItemBg: '#102b2b',
+            darkSubMenuItemBg: '#102b2b',
+            darkItemSelectedBg: '#0f766e',
+          },
         },
       }}
     >

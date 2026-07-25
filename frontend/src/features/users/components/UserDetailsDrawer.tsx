@@ -112,7 +112,7 @@ export function UserDetailsDrawer({ visible, onClose, user }: UserDetailsDrawerP
             </Descriptions.Item>
             <Descriptions.Item label="Roles">
               {user.roles.map((role) => (
-                <Tag color="cyan" key={role}>
+                <Tag className="role-tag" key={role}>
                   {role.replace('ROLE_', '')}
                 </Tag>
               ))}

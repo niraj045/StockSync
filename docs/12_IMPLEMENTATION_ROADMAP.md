@@ -15,6 +15,8 @@
 
 ## Phase 1 — Foundation
 
+Status: Completed.
+
 - Create backend project
 - Create frontend project
 - Configure MySQL
@@ -28,6 +30,8 @@
 
 ## Phase 2 — Master Data
 
+Status: Completed, including authentication, user administration, and entity-linked documents.
+
 - Categories
 - Items
 - Parties
@@ -37,6 +41,8 @@
 - Documents
 
 ## Phase 3 — Inventory Core
+
+Status: Completed.
 
 - Stock transaction ledger
 - Stock balance

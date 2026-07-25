@@ -163,3 +163,13 @@ Implement:
 - Consistent spacing
 - Consistent status colours
 - Responsive desktop-first layout
+
+## 7.11 Implemented Phase 2 and Phase 3 UI
+
+Authenticated routes are lazy loaded. The application includes reusable master-data pages for
+categories, items, parties, sites, and vendors; an entity-linked document page; an inventory page
+with balance and movement-history tabs; and dashboard stock totals.
+
+Write controls are hidden unless the current role is authorized. Inventory posting creates a new
+idempotency key for each submission and TanStack Query does not retry mutations. Business screens
+use the established navy, teal, warm-neutral visual system and remain responsive at narrow widths.

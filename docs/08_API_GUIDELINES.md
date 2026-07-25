@@ -119,3 +119,32 @@ Document:
 - Response examples
 - Error codes
 - Required roles
+
+## 8.11 Implemented Phase 2 and Phase 3 Endpoints
+
+Master data:
+
+```text
+GET/POST/PUT /api/v1/categories
+GET/POST/PUT /api/v1/items
+GET/POST/PUT /api/v1/parties
+GET/POST/PUT /api/v1/sites
+GET/POST/PUT /api/v1/vendors
+GET/POST /api/v1/files
+GET /api/v1/files/{id}/download
+```
+
+Inventory:
+
+```text
+GET  /api/v1/stock/balances
+GET  /api/v1/stock/transactions
+GET  /api/v1/stock/summary
+POST /api/v1/stock/purchases
+POST /api/v1/stock/scrap
+POST /api/v1/stock/adjustments
+```
+
+All endpoints require an authenticated session. Master-data writes and file uploads require
+`ROLE_ADMIN`. Inventory posting requires `ROLE_ADMIN` or `ROLE_OPERATIONS`; reads also allow
+`ROLE_VIEWER`. Every inventory POST requires an `Idempotency-Key` header.

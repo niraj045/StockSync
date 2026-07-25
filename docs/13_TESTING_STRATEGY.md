@@ -114,3 +114,15 @@ Test:
 14. Download PDF.
 15. Restart containers and confirm data remains.
 16. Restore backup in a test environment.
+
+## 13.7 Automated Coverage Implemented Through Phase 3
+
+The backend integration suite covers authentication and user-management invariants, master-data
+validation and authorization, file metadata, inventory idempotency, purchase/scrap/adjustment
+projection updates, transactional rollback on insufficient stock, role restrictions, and two
+concurrent outbound requests attempting to oversell one balance.
+
+The inventory concurrency test runs both requests simultaneously against MySQL and verifies that
+one succeeds, the other returns `INSUFFICIENT_STOCK`, and the final projected balance remains
+correct. The frontend currently includes authentication-context tests and a TypeScript production
+build; broader component and browser coverage remains part of production readiness.

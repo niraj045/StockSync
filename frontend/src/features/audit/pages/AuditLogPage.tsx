@@ -145,7 +145,12 @@ export function AuditLogPage() {
   return (
     <div className="page-stack">
       <div className="page-header-container">
-        <h2>System Audit Logs</h2>
+        <div>
+          <h1 className="page-heading">Activity audit</h1>
+          <p className="page-description">
+            Review security events and administrative changes across StockSync.
+          </p>
+        </div>
         <Space>
           <Button icon={<ReloadOutlined />} onClick={() => fetchLogs(currentPage, pageSize)}>
             Refresh

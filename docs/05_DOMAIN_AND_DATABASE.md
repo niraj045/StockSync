@@ -249,3 +249,17 @@ Suggested fields:
 - No challan issue above allowed remaining quantity
 - No stock issue above available quantity
 - No duplicate posting of the same draft
+
+## 5.11 Implemented Schema Through Phase 3
+
+Flyway `V3__master_data.sql` implements categories, items, parties, vendors, sites, and generic
+file attachments. Master records use audit timestamps, actor snapshots, and optimistic versions.
+Item codes, category names, site codes, and the applicable tax identifiers are unique.
+
+Flyway `V4__inventory_core.sql` implements stock balances, the immutable stock transaction ledger,
+purchases, scrap entries, and adjustments with line tables. Posting document numbers and
+idempotency keys are unique. Quantities are positive and monetary/quantity values use `DECIMAL`.
+
+The ledger is the audit source; `stock_balances` is an atomically maintained projection. Posting
+locks only affected balance rows in ascending item order. A movement that would make available
+stock negative rolls back its document, lines, ledger entries, and balance changes together.
