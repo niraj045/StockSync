@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Button, Card, Descriptions, Empty, Form, Input, InputNumber, Modal, Select, Space,
+  App as AntApp, Button, Card, Descriptions, Empty, Form, Input, InputNumber, Modal, Select, Space,
   Table, Tabs, Tag, Upload, message,
 } from 'antd';
 import {
@@ -26,6 +26,7 @@ const errorMessage = (error: unknown) =>
   (error as { response?: { data?: { message?: string } } }).response?.data?.message ?? 'The request could not be completed';
 
 export function CommercialPage({ kind }: { kind: Kind }) {
+  const { modal } = AntApp.useApp();
   const { user } = useAuth();
   const canManage = user?.roles.some((role) => role === 'ROLE_ADMIN' || role === 'ROLE_OPERATIONS') ?? false;
   const isAdmin = user?.roles.includes('ROLE_ADMIN') ?? false;
@@ -184,7 +185,12 @@ export function CommercialPage({ kind }: { kind: Kind }) {
     setOpen(true);
   }
   function run(row: Row, name: string) {
-    Modal.confirm({ title: `${name[0].toUpperCase()}${name.slice(1)} ${singular(kind)}?`, onOk: () => action.mutate({ row, name }) });
+    modal.confirm({
+      title: `${name[0].toUpperCase()}${name.slice(1)} ${singular(kind)}?`,
+      content: 'This changes the record status and will be recorded in the audit log.',
+      okText: 'Confirm',
+      onOk: () => action.mutateAsync({ row, name }),
+    });
   }
   function openConvert(row: Row) {
     setConvertQuotation(row);
