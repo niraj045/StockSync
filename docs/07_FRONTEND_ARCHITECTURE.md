@@ -1,5 +1,7 @@
 # 7. Frontend Architecture
 
+`/agreements` is lazy-loaded with conversion, draft editing, detail and role-aware lifecycle actions. Site Orders remain unrouted.
+
 ## Phase 5A routes
 
 `/quotation-templates` and `/quotations` are lazy-loaded typed features using TanStack Query. The editor filters sites by party, supports dynamic lines, shows estimates, maps actions by role, reports conflicts and protects unsaved changes. Agreement and order routes are not registered.

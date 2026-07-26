@@ -1,5 +1,7 @@
 # 4. System Architecture
 
+The `agreement` module owns lifecycle and snapshots, consumes quotation data only at conversion, uses common numbering and attachment storage, and never mutates inventory.
+
 ## Phase 5A quotation architecture
 
 The quotation module owns templates, aggregates, transitions and snapshots. `common.numbering` allocates document numbers. The calculation service is authoritative. PDF rendering uses Thymeleaf and OpenHTMLtoPDF against stored snapshots, not mutable item names.

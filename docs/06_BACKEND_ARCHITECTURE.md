@@ -1,5 +1,7 @@
 # 6. Backend Architecture
 
+Agreement controllers use DTOs and explicit service transitions. Conversion locks the quotation, numbering is atomic by financial year, and PDF generation reads stored snapshots.
+
 ## Phase 5A transactions
 
 Draft creation allocates its number and persists the aggregate transactionally. Sequence rows use one atomic MySQL upsert with connection-scoped `LAST_INSERT_ID`—never `MAX + 1`. Workflow methods are explicit and audit only identifiers and summaries.

@@ -1,5 +1,7 @@
 # 8. API Guidelines
 
+The canonical conversion endpoint is `POST /api/v1/agreements/from-quotation/{quotationId}`. Invalid transitions return `INVALID_AGREEMENT_STATUS_TRANSITION`.
+
 ## Phase 5A APIs
 
 Templates use `/api/v1/quotation-templates`; quotations use `/api/v1/quotations`. Reject/cancel accept `{ "reason": "..." }`. Authenticated PDF download is `GET /api/v1/quotations/{id}/pdf`. Updates carry `version`; stale writes return `OPTIMISTIC_LOCK_CONFLICT`.

@@ -17,6 +17,7 @@ const InventoryPage = lazy(() => import('../../features/inventory/pages/Inventor
 const OpeningStockImportPage = lazy(() => import('../../features/migration/pages/OpeningStockImportPage').then((module) => ({ default: module.OpeningStockImportPage })));
 const QuotationTemplatesPage = lazy(() => import('../../features/quotation/pages/QuotationTemplatesPage').then((module) => ({ default: module.QuotationTemplatesPage })));
 const QuotationsPage = lazy(() => import('../../features/quotation/pages/QuotationsPage').then((module) => ({ default: module.QuotationsPage })));
+const AgreementsPage = lazy(() => import('../../features/agreement/pages/AgreementsPage').then((module) => ({ default: module.AgreementsPage })));
 const deferred = (element: React.ReactNode) => <Suspense fallback={<Spin fullscreen />}>{element}</Suspense>;
 
 export const router = createBrowserRouter([
@@ -70,6 +71,9 @@ export const router = createBrowserRouter([
       { path: 'opening-stock-imports', element: deferred(<OpeningStockImportPage />) },
       { path: 'quotation-templates', element: deferred(<QuotationTemplatesPage />) },
       { path: 'quotations', element: deferred(<QuotationsPage />) },
+      { path: 'quotations/new', element: deferred(<QuotationsPage />) },
+      { path: 'quotations/:quotationId/edit', element: deferred(<QuotationsPage />) },
+      { path: 'agreements', element: deferred(<AgreementsPage />) },
     ],
   },
   {

@@ -1,5 +1,7 @@
 # 13. Testing Strategy
 
+Phase 5B coverage targets roles, numbering, idempotent conversion, snapshot immutability, workflow rules, PDF access and no-stock-impact.
+
 ## Phase 5A
 
 Unit coverage includes financial-year boundaries and calculation rules. MySQL 8.4 integration validation covers V8, concurrency, permissions, transitions, optimistic locking, snapshots, PDF and proof that stock remains unchanged. Frontend validation covers role actions, dependent sites, line validation, clone/download and unsaved changes.

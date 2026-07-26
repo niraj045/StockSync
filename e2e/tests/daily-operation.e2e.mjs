@@ -225,6 +225,32 @@ async function createAndApproveQuotation() {
   return number;
 }
 
+async function convertAndActivateAgreement() {
+  await driver.get(`${baseUrl}/agreements`);
+  await pageContains('Agreements');
+  await (await visible(By.css('[data-testid="convert-agreement"]'))).click();
+  const modal = await activeModal();
+  await (await modal.findElement(By.css('[data-testid="approved-quotation-select"] .ant-select-selector'))).click();
+  await (await visible(By.css('.ant-select-item-option:not(.ant-select-item-option-disabled)'))).click();
+  await clickButton('OK', modal);
+  await waitUntilClosed(modal);
+  await pageContains(data.party);
+  const row = await visible(By.xpath(`//tr[.//td[contains(normalize-space(.),${literal(data.party)})]]`));
+  const cells = await row.findElements(By.css('td'));
+  const number = (await cells[0].getText()).trim();
+  await driver.executeScript('arguments[0].click()', await row.findElement(By.css('[data-testid="ready-agreement"]')));
+  await clickButton('OK', await activeModal());
+  await driver.wait(async()=> (await row.getText()).includes('READY FOR REVIEW'),timeout);
+  await clickButton('Generate PDF',row); await clickButton('OK',await activeModal());
+  await driver.wait(async()=> (await row.findElements(By.xpath(".//button[contains(normalize-space(.),'PDF')]"))).length>0,timeout);
+  await driver.executeScript('arguments[0].click()', await row.findElement(By.css('[data-testid="activate-agreement"]')));
+  await clickButton('OK',await activeModal());
+  await driver.wait(async()=> (await row.getText()).includes('ACTIVE'),timeout);
+  if((await row.findElements(By.css('[data-testid="edit-agreement"]'))).length)throw new Error('ACTIVE agreement is still editable');
+  console.log(`âœ“ Agreement activated and read-only: ${number}`);
+  return number;
+}
+
 try {
   console.log(`Running data-creating daily operation ${runId} against ${baseUrl}`);
   await driver.get(`${baseUrl}/login`);
@@ -240,6 +266,7 @@ try {
   await createParty();
   await createSite();
   const quotationNumber = await createAndApproveQuotation();
+  const agreementNumber = await convertAndActivateAgreement();
 
   await driver.get(`${baseUrl}/audit-logs`);
   await pageContains('Activity audit');
@@ -247,7 +274,7 @@ try {
   console.log('✓ Quotation audit activity is visible');
 
   console.log('\nPASS: Real-world daily operation completed.');
-  console.log(JSON.stringify({ runId, quotationNumber, ...data }, null, 2));
+  console.log(JSON.stringify({ runId, quotationNumber, agreementNumber, ...data }, null, 2));
 } catch (error) {
   await fs.mkdir(artifacts, { recursive: true });
   const screenshotPath = path.join(artifacts, `daily-operation-failure-${runId}.png`);

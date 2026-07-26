@@ -21,6 +21,14 @@
 
 The canonical authority is `ROLE_ACCOUNTS`; no `ACCOUNTANT` or `ROLE_ACCOUNTANT` authority exists.
 
+## Frontend workflow
+
+The quotation register remains at `/quotations`. Creation and editing use dedicated routed pages at
+`/quotations/new` and `/quotations/{id}/edit`; the register is not rendered behind either editor.
+The application content owns the single vertical scrollbar. The editor resets scroll position on
+navigation, groups commercial fields into sections, uses business-facing select placeholders, and
+keeps its action footer visible without covering the final form fields.
+
 ## Manual smoke test
 
 1. Start MySQL, backend `8081`, frontend `5173`; log in as ADMIN.

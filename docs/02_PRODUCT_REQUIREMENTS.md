@@ -1,5 +1,7 @@
 # 2. Product Requirements
 
+Phase 5B confirms idempotent approved-quotation conversion into snapshot-backed agreements, controlled review, PDF generation and ADMIN activation with no inventory impact.
+
 ## Phase 5A — quotation management
 
 StockSync supports reusable quotation templates and financial-year numbered quotations. Item identity, unit, size, rate and commercial values are stored as historical snapshots. The workflow is `DRAFT → SENT → APPROVED` or `DRAFT → SENT → REJECTED`; ADMIN may cancel a draft or sent quotation. Quotations never reserve inventory or create ledger entries.

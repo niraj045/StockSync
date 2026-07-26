@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button, Card, Form, Input, InputNumber, Modal, Select, Switch, Table, Tag, message } from 'antd';
+import { Button, Card, Form, Input, InputNumber, Select, Switch, Table, Tag, message } from 'antd';
 import { EditOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { apiClient } from '../../../api/client';
 import { useAuth } from '../../auth/context/AuthContext';
+import { FormDrawer } from '../../../components/FormDrawer';
 
 type Kind = 'categories' | 'items' | 'parties' | 'sites' | 'vendors';
 type Row = Record<string, unknown> & { id: number; version: number };
@@ -191,11 +192,20 @@ export function MasterDataPage({ kind }: { kind: Kind }) {
           scroll={{ x: 850 }} pagination={{ current: page, pageSize: 10, total: records.data?.totalElements,
             onChange: setPage, showSizeChanger: false }} />
       </Card>
-      <Modal open={open} title={`${editing ? 'Edit' : 'Add'} ${config.singular}`} width={680}
-        onCancel={() => setOpen(false)} onOk={() => form.submit()} confirmLoading={save.isPending} destroyOnClose>
+      <FormDrawer open={open} title={`${editing ? 'Edit' : 'Add'} ${config.singular}`} width={kind === 'categories' ? 520 : 720}
+        subtitle={editing ? `Update this ${config.singular}'s controlled information.` : `Create a new ${config.singular} and configure its details.`}
+        onClose={() => setOpen(false)} onSubmit={() => form.submit()} loading={save.isPending}
+        okText={editing ? 'Save changes' : `Add ${config.singular}`}>
         <Form form={form} layout="vertical" onFinish={(values) => save.mutate(values)} style={{ marginTop: 20 }}>
+          {(kind === 'items' ? [
+            { title: 'Basic information', names: ['itemCode','itemName','categoryId','size','unit','weightPerPiece'] },
+            { title: 'Stock and valuation', names: ['purchaseValue','minimumStock'] },
+            { title: 'Rental configuration', names: ['rentalConfiguration'] },
+            { title: 'Loss and scrap', names: ['lossRate','scrapValue','active'] },
+          ] : [{ title: `${config.singular.charAt(0).toUpperCase()}${config.singular.slice(1)} details`, names: fields.map((field) => field.name) }]).map((section) => <section className="form-section" key={section.title}>
+          <h3 className="form-section-title">{section.title}</h3>
           <div className="master-form-grid">
-            {fields.map((field) => (
+            {fields.filter((field) => section.names.includes(field.name)).map((field) => (
               <Form.Item key={field.name} name={field.name} label={field.label} valuePropName={field.type === 'boolean' ? 'checked' : 'value'}
                 rules={field.required ? [{ required: true, message: `${field.label} is required` }] : undefined}
                 className={field.type === 'textarea' ? 'master-form-wide' : undefined}>
@@ -208,8 +218,9 @@ export function MasterDataPage({ kind }: { kind: Kind }) {
               </Form.Item>
             ))}
           </div>
+          </section>)}
         </Form>
-      </Modal>
+      </FormDrawer>
     </div>
   );
 }

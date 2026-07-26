@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Button,Card,Form,Input,Modal,Select,Space,Switch,Table,Tag,message } from 'antd';
+import { Button,Card,Form,Input,Select,Space,Switch,Table,Tag,message } from 'antd';
 import { PlusOutlined,SearchOutlined } from '@ant-design/icons';
 import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../../api/client';
+import { FormDrawer } from '../../../components/FormDrawer';
 import { useAuth } from '../../auth/context/AuthContext';
 import type { Page,Template } from '../types';
 
@@ -23,7 +24,7 @@ export function QuotationTemplatesPage(){
         {title:'Status',dataIndex:'active',render:(v:boolean)=><Tag color={v?'success':'default'}>{v?'ACTIVE':'INACTIVE'}</Tag>},
         {title:'Actions',render:(_:unknown,t:Template)=>isAdmin?<Space><Button onClick={()=>edit(t)}>Edit</Button><Switch checked={t.active} onChange={()=>toggle.mutate(t)}/></Space>:null},
       ]}/></Card>
-    <Modal open={open} title={editing?'Edit quotation template':'New quotation template'} width={760} onCancel={()=>setOpen(false)} onOk={()=>form.submit()} confirmLoading={save.isPending}>
+    <FormDrawer open={open} title={editing?'Edit quotation template':'New quotation template'} width={760} onClose={()=>setOpen(false)} onSubmit={()=>form.submit()} loading={save.isPending} okText={editing?'Save changes':'Create template'}>
       <Form form={form} layout="vertical" onFinish={v=>save.mutate(v)}><div className="master-form-grid">
         <Form.Item name="templateCode" label="Template code" rules={[{required:true},{max:50}]}><Input/></Form.Item>
         <Form.Item name="name" label="Name" rules={[{required:true},{max:150}]}><Input/></Form.Item>
@@ -34,6 +35,5 @@ export function QuotationTemplatesPage(){
         <Form.Item className="master-form-wide" name="defaultNotes" label="Default notes"><Input.TextArea/></Form.Item>
         <Form.Item className="master-form-wide" name="footerText" label="Footer text"><Input.TextArea/></Form.Item>
       </div></Form>
-    </Modal></div>;
+    </FormDrawer></div>;
 }
-

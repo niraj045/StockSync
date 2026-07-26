@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Modal, Form, Input, Checkbox, Alert } from 'antd';
+import { Form, Input, Checkbox, Alert } from 'antd';
 import { apiClient } from '../../../api/client';
 import { User } from '../../auth/context/AuthContext';
+import { FormDrawer } from '../../../components/FormDrawer';
 
 interface UserFormModalProps {
   visible: boolean;
@@ -95,16 +96,15 @@ export function UserFormModal({ visible, onCancel, onSuccess, userToEdit }: User
   };
 
   return (
-    <Modal
+    <FormDrawer
       open={visible}
       title={userToEdit ? 'Edit User' : 'Create User'}
+      subtitle={userToEdit ? 'Update profile details and assigned access roles.' : 'Create a user and assign the appropriate StockSync roles.'}
       okText={userToEdit ? 'Save Changes' : 'Create'}
-      cancelText="Cancel"
-      onCancel={onCancel}
-      confirmLoading={loading}
-      onOk={() => form.submit()}
-      destroyOnClose
-      width={500}
+      onClose={onCancel}
+      loading={loading}
+      onSubmit={() => form.submit()}
+      width={560}
     >
       {errorMsg && (
         <Alert
@@ -182,6 +182,6 @@ export function UserFormModal({ visible, onCancel, onSuccess, userToEdit }: User
           <Checkbox.Group options={AVAILABLE_ROLES} />
         </Form.Item>
       </Form>
-    </Modal>
+    </FormDrawer>
   );
 }

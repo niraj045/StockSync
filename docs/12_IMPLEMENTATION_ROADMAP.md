@@ -3,7 +3,7 @@
 ## Phase 5 split
 
 - Phase 5A: quotations, templates, numbering, calculations and PDF.
-- Phase 5B: agreements — not started.
+- Phase 5B: agreements — implemented with quotation-only conversion, snapshots, controlled lifecycle, PDF attachments and role-aware UI. Site Orders remain deferred.
 - Phase 5C: site orders — not started.
 
 ## Phase 0 — Discovery and Finalization

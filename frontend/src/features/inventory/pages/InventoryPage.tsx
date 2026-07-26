@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button, Card, DatePicker, Form, Input, InputNumber, Modal, Select, Space, Table, Tabs, Tag, message } from 'antd';
+import { Button, Card, DatePicker, Form, Input, InputNumber, Select, Space, Table, Tabs, Tag, message } from 'antd';
 import { ArrowDownOutlined, DeleteOutlined, HistoryOutlined, PlusOutlined, RetweetOutlined, ToolOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { apiClient } from '../../../api/client';
+import { FormDrawer } from '../../../components/FormDrawer';
 import { useAuth } from '../../auth/context/AuthContext';
 
 interface PageResponse<T> { content: T[]; totalElements: number }
@@ -124,8 +125,8 @@ export function InventoryPage() {
                 onChange: setHistoryPage, showSizeChanger: false }} /> },
         ]} />
       </Card>
-      <Modal open={Boolean(posting)} title={posting ? `Post ${posting}` : ''} width={760} onCancel={() => setPosting(undefined)}
-        onOk={() => form.submit()} confirmLoading={submit.isPending} okText="Post transaction" destroyOnClose>
+      <FormDrawer open={Boolean(posting)} title={posting ? `Post ${posting}` : ''} subtitle="Record a controlled inventory transaction in the immutable movement ledger." width={760} onClose={() => setPosting(undefined)}
+        onSubmit={() => form.submit()} loading={submit.isPending} okText="Post transaction">
         <Form form={form} layout="vertical" onFinish={(values) => submit.mutate(values)} style={{ marginTop: 20 }}>
           <div className="master-form-grid">
             {posting === 'purchase' && <Form.Item name="vendorId" label="Vendor" rules={[{ required: true }]}>
@@ -156,7 +157,7 @@ export function InventoryPage() {
             </>}
           </Form.List>
         </Form>
-      </Modal>
+      </FormDrawer>
     </div>
   );
 }

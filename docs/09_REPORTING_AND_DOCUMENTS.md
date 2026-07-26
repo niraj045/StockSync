@@ -1,5 +1,7 @@
 # 9. Reporting and Document Processing
 
+Agreement PDFs use stored snapshots, safe filenames and authenticated attachment storage. ACTIVE PDFs cannot be silently replaced.
+
 ## Quotation PDF
 
 Quotation PDFs are generated in memory with Thymeleaf and OpenHTMLtoPDF, leaving no temporary files. They contain stored line snapshots, calculations, GST, taxable charges, deposit, terms and notes. Downloads are authenticated and audited.

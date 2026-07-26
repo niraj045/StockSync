@@ -1,22 +1,22 @@
 :root {
   font-family: Inter, "Segoe UI", Arial, sans-serif;
-  color: #17212b;
-  background: #f5f7f6;
+  color: #182230;
+  background: #f5f7f7;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  --ink: #17212b;
-  --muted: #64736f;
-  --navy: #102b2b;
-  --navy-soft: #183b39;
+  --ink: #182230;
+  --muted: #667085;
+  --navy: #0c302f;
+  --navy-soft: #12413f;
   --teal: #0f766e;
   --teal-bright: #14b8a6;
   --teal-pale: #e8f5f2;
   --surface: #ffffff;
-  --canvas: #f5f7f6;
-  --line: #dfe7e4;
-  --warning: #c97a18;
-  --danger: #c2413a;
-  --shadow: 0 12px 34px rgba(23, 50, 47, 0.08);
+  --canvas: #f5f7f7;
+  --line: #dce5e3;
+  --warning: #d97706;
+  --danger: #c62828;
+  --shadow: 0 4px 14px rgba(16, 24, 40, 0.05);
 }
 
 * {
@@ -100,15 +100,20 @@ textarea {
 }
 
 .app-menu {
-  padding: 12px 10px;
+  padding: 12px;
   background: transparent !important;
 }
 
 .app-menu .ant-menu-item {
   height: 44px;
-  margin-block: 4px;
+  margin: 6px 0;
   border-radius: 8px;
   color: #b7cdca;
+}
+
+.app-menu .ant-menu-item:not(.ant-menu-item-selected):hover {
+  color: #fff !important;
+  background: var(--navy-soft) !important;
 }
 
 .app-menu .ant-menu-item-selected {
@@ -121,11 +126,11 @@ textarea {
 }
 
 .app-header {
-  height: 76px;
+  height: 72px;
   display: flex !important;
   align-items: center;
   justify-content: space-between;
-  padding-inline: 28px;
+  padding-inline: 30px;
   line-height: normal;
   background: rgba(255, 255, 255, 0.94);
   border-bottom: 1px solid var(--line);
@@ -140,17 +145,17 @@ textarea {
   display: block;
   margin-bottom: 3px;
   color: var(--teal);
-  font-size: 0.68rem;
-  font-weight: 750;
-  letter-spacing: 0.09em;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
   text-transform: uppercase;
 }
 
 .app-title {
   margin: 0 !important;
   color: var(--ink) !important;
-  font-size: 1.05rem !important;
-  font-weight: 650 !important;
+  font-size: 18px !important;
+  font-weight: 600 !important;
 }
 
 .user-profile-header {
@@ -196,10 +201,8 @@ textarea {
 
 .app-content {
   min-width: 0;
-  padding: 30px;
-  background:
-    radial-gradient(circle at 100% 0, rgba(15, 118, 110, 0.055), transparent 24rem),
-    var(--canvas);
+  padding: 32px 30px;
+  background: var(--canvas);
 }
 
 .content-frame {
@@ -214,16 +217,17 @@ textarea {
 
 .page-header-container {
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
-  margin-bottom: 22px;
+  margin-bottom: 24px;
 }
 
 .page-heading {
-  margin: 0 0 5px;
+  margin: 0 0 4px;
   color: var(--ink);
-  font-size: clamp(1.55rem, 2.4vw, 2rem);
+  font-size: 32px;
+  font-weight: 700;
   line-height: 1.15;
   letter-spacing: -0.035em;
 }
@@ -232,22 +236,22 @@ textarea {
   max-width: 680px;
   margin: 0;
   color: var(--muted);
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
 .premium-card {
   overflow: hidden;
   background: var(--surface);
   border: 1px solid var(--line) !important;
-  border-radius: 14px !important;
+  border-radius: 12px !important;
   box-shadow: var(--shadow);
 }
 
 .filters-bar {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding-bottom: 20px;
+  gap: 12px;
+  padding-bottom: 18px;
   flex-wrap: wrap;
 }
 
@@ -255,6 +259,145 @@ textarea {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0 16px;
+}
+
+.form-drawer .ant-drawer-header {
+  min-height: 72px;
+  padding: 18px 24px;
+  border-bottom-color: var(--line);
+}
+
+.form-drawer .ant-drawer-title {
+  color: var(--ink);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.form-drawer-subtitle {
+  margin-top: 3px;
+  color: #667085;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.form-drawer .ant-drawer-body {
+  padding: 24px;
+  background: #fff;
+}
+
+.form-drawer .ant-drawer-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 14px 24px;
+  background: #fff;
+  border-top-color: var(--line);
+  box-shadow: 0 -4px 12px rgba(16, 24, 40, 0.04);
+}
+
+.form-section + .form-section {
+  margin-top: 8px;
+  padding-top: 22px;
+  border-top: 1px solid #e4e7ec;
+}
+
+.form-section-title {
+  margin: 0 0 16px;
+  color: #344054;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.ant-drawer-mask {
+  background: rgba(15, 23, 42, 0.3) !important;
+}
+
+.workflow-editor-page {
+  position: fixed;
+  z-index: 900;
+  inset: 72px 0 0 238px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  background: #fff;
+}
+
+.sider-collapsed .workflow-editor-page {
+  left: 72px;
+}
+
+.workflow-editor-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-height: 76px;
+  padding: 13px 30px;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.workflow-back {
+  padding: 7px 10px;
+  color: #0f766e;
+  background: #e8f5f3;
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.workflow-editor-body {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  background: #fff;
+}
+
+.workflow-editor-body > form {
+  width: 100%;
+  max-width: 1440px;
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 30px 32px 44px;
+  background: #fff;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.workflow-editor-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 14px 30px;
+  background: #fff;
+  border-top: 1px solid #e4e7ec;
+  box-shadow: 0 -4px 12px rgba(16, 24, 40, 0.04);
+}
+
+@media (max-width: 992px) {
+  .workflow-editor-page {
+    left: 72px;
+  }
+}
+
+@media (max-width: 700px) {
+  .workflow-editor-page {
+    inset: 68px 0 0;
+  }
+  .workflow-editor-header,
+  .workflow-editor-body,
+  .workflow-editor-footer {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+.form-drawer .ant-drawer-footer .ant-btn {
+  min-width: 92px;
+  height: 40px;
 }
 
 .master-form-wide {
@@ -267,6 +410,86 @@ textarea {
   border: 1px solid #dfe7e4;
   border-radius: 12px;
   background: #f8faf9;
+}
+
+.quotation-editor-page {
+  width: 100%;
+  max-width: 1220px;
+  margin: 0 auto;
+  padding-bottom: 32px;
+}
+
+.quotation-back-link {
+  margin: 0 0 14px;
+  padding: 4px 0;
+  color: var(--primary);
+  font: inherit;
+  font-weight: 600;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.quotation-back-link:hover {
+  color: var(--primary-hover);
+}
+
+.quotation-editor-heading {
+  margin-bottom: 22px;
+}
+
+.quotation-editor-form {
+  padding: 24px 26px 0;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.quotation-form-section {
+  padding: 0 0 12px;
+}
+
+.quotation-form-section + .quotation-form-section {
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
+.quotation-form-section h2,
+.commercial-lines > .ant-space:first-child strong {
+  display: block;
+  margin: 0 0 16px;
+  color: #344054;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.quotation-form-section .commercial-lines {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.quotation-summary {
+  padding-bottom: 24px;
+}
+
+.quotation-action-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 -26px;
+  padding: 14px 26px;
+  background: #fff;
+  border-top: 1px solid #e4e7ec;
+  box-shadow: 0 -4px 12px rgba(16, 24, 40, 0.04);
+}
+
+.quotation-action-footer .ant-btn {
+  min-width: 110px;
+  height: 40px;
 }
 
 .line-heading {
@@ -314,19 +537,106 @@ textarea {
 }
 
 .ant-btn-primary {
-  box-shadow: 0 5px 14px rgba(15, 118, 110, 0.18);
+  min-height: 42px;
+  padding-inline: 18px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(15, 118, 110, 0.18);
 }
 
 .ant-table-wrapper .ant-table-thead > tr > th {
-  color: #52635f;
-  background: #f3f7f6;
-  font-size: 0.74rem;
-  font-weight: 750;
+  color: #344054;
+  background: #f3f6f5;
+  font-size: 12px;
+  font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
+.agreement-card .ant-card-body {
+  padding: 24px;
+}
+
+.agreement-toolbar {
+  margin: 0 -24px 18px;
+  padding: 0 24px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.agreement-search {
+  width: 260px;
+}
+
+.agreement-status-filter {
+  width: 180px;
+}
+
+.agreement-toolbar .ant-input-affix-wrapper,
+.agreement-toolbar .ant-select-selector {
+  min-height: 42px !important;
+}
+
+.agreement-table .ant-table {
+  table-layout: auto;
+}
+
+.agreement-empty {
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.agreement-empty .ant-empty {
+  margin: 0;
+}
+
+.agreement-empty strong,
+.agreement-empty span {
+  display: block;
+}
+
+.agreement-empty strong {
+  margin-bottom: 5px;
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.agreement-empty span {
+  color: var(--muted);
+}
+
+.agreement-status {
+  margin: 0;
+  padding: 2px 9px;
+  border: 0;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.agreement-status-draft,
+.agreement-status-ready_for_review,
+.agreement-status-closed,
+.agreement-status-cancelled {
+  color: #475467;
+  background: #f2f4f7;
+}
+
+.agreement-status-active {
+  color: #2e7d32;
+  background: #eaf6ec;
+}
+
+.agreement-status-expired,
+.agreement-status-terminated {
+  color: #c62828;
+  background: #fdecec;
+}
+
 .ant-table-wrapper .ant-table-tbody > tr > td {
+  padding: 16px;
   border-bottom-color: #edf1f0;
 }
 
@@ -350,6 +660,40 @@ textarea {
 
 .action-button {
   color: #46625e;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.action-button:hover {
+  color: #0f766e !important;
+  background: #e8f5f3 !important;
+}
+
+.status-tag.ant-tag-success {
+  min-width: 76px;
+  height: 26px;
+  padding-inline: 10px;
+  color: #2e7d32 !important;
+  background: #e8f5e9 !important;
+  border: 1px solid #c8e6c9 !important;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.ant-input::placeholder,
+.ant-input-affix-wrapper input::placeholder,
+textarea.ant-input::placeholder {
+  color: #98a2b3 !important;
+  opacity: 1;
+}
+
+.app-menu .ant-menu-title-content {
+  overflow: hidden;
+  font-size: 13.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .dashboard-hero {

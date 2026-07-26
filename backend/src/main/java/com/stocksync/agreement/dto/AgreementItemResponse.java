@@ -1,4 +1,7 @@
 package com.stocksync.agreement.dto;
+import com.stocksync.quotation.entity.RentalType;
 import java.math.BigDecimal;
-public record AgreementItemResponse(Long id,Long itemId,String itemCode,String itemName,String unit,BigDecimal agreedQuantity,
-        BigDecimal unitRate,BigDecimal rentalRate,String notes){}
+public record AgreementItemResponse(
+ Long id,Long sourceQuotationItemId,Long itemId,String itemCode,String itemName,String description,String size,String unit,
+ BigDecimal weight,BigDecimal contractedQuantity,BigDecimal rate,RentalType rentalType,BigDecimal areaRate,
+ BigDecimal weightRate,BigDecimal lossRatePerPiece,BigDecimal lossRatePerWeight,BigDecimal damageRate,int sequence,String notes){}

@@ -15,7 +15,7 @@ import {
   FormOutlined,
   ImportOutlined,
 } from '@ant-design/icons';
-import { Layout, Menu, Typography, Dropdown, Avatar } from 'antd';
+import { Layout, Menu, Typography, Dropdown, Avatar, Tooltip } from 'antd';
 import { useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../features/auth/context/AuthContext';
@@ -43,8 +43,9 @@ export function AppLayout() {
     { key: '/vendors', icon: <ToolOutlined />, label: 'Vendors' },
     { key: '/documents', icon: <FileTextOutlined />, label: 'Documents' },
     { key: '/inventory', icon: <AppstoreOutlined />, label: 'Inventory' },
-    { key: '/opening-stock-imports', icon: <ImportOutlined />, label: 'Opening Stock Import' },
+    { key: '/opening-stock-imports', icon: <ImportOutlined />, label: <Tooltip placement="right" title="Opening Stock Import"><span>Opening Stock Import</span></Tooltip> },
     { key: '/quotations', icon: <FormOutlined />, label: 'Quotations' },
+    { key: '/agreements', icon: <FileTextOutlined />, label: 'Agreements' },
     { key: '/quotation-templates', icon: <FileTextOutlined />, label: 'Quotation Templates' },
     { key: '/reports', icon: <FileTextOutlined />, label: 'Reports', disabled: true },
   ];
@@ -81,7 +82,7 @@ export function AppLayout() {
   const displayRole = user?.roles[0]?.replace('ROLE_', '') || 'User';
 
   return (
-    <Layout className="app-shell">
+    <Layout className={`app-shell ${collapsed ? 'sider-collapsed' : ''}`}>
       <Sider
         className="app-sider"
         collapsible
@@ -90,6 +91,7 @@ export function AppLayout() {
         breakpoint="lg"
         theme="dark"
         width={238}
+        collapsedWidth={72}
       >
         <div className="brand" aria-label="StockSync">
           <span className="brand-mark"><BuildOutlined /></span>

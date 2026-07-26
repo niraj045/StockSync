@@ -4,6 +4,7 @@ import {
   Alert, Button, Card, Checkbox, Col, Descriptions, Empty, Form, Input, Modal, Radio, Row,
   Select, Space, Statistic, Table, Tabs, Tag, Typography, Upload, message,
 } from 'antd';
+import { FormDrawer } from '../../../components/FormDrawer';
 import {
   CheckCircleOutlined, CloudUploadOutlined, FileSearchOutlined, LinkOutlined, ReloadOutlined,
   RollbackOutlined, SafetyCertificateOutlined,
@@ -565,9 +566,9 @@ export function OpeningStockImportPage() {
         ]} />
       </Card>}
 
-      <Modal open={uploadOpen} title="Upload client opening-stock workbook" okText="Upload and parse"
-        onCancel={() => { setUploadOpen(false); uploadForm.resetFields(); }}
-        onOk={() => uploadForm.submit()} confirmLoading={upload.isPending}>
+      <FormDrawer open={uploadOpen} title="Upload client opening-stock workbook" okText="Upload and parse"
+        onClose={() => { setUploadOpen(false); uploadForm.resetFields(); }}
+        onSubmit={() => uploadForm.submit()} loading={upload.isPending} width={620}>
         <Alert type="info" showIcon style={{ marginBottom: 16 }}
           message="Controlled format: STEELFAB_STOCK_SNAPSHOT_V1"
           description="StockSync reads Sheet1, item names from B, party/site balances from C:R, and godown balances from U. Source totals T and V are ignored." />
@@ -580,11 +581,11 @@ export function OpeningStockImportPage() {
           </Form.Item>
           <Form.Item name="notes" label="Import notes"><Input.TextArea rows={3} maxLength={1000} /></Form.Item>
         </Form>
-      </Modal>
+      </FormDrawer>
 
-      <Modal open={Boolean(mappingRow)} title="Map source item" width={720} okText="Save item mapping"
-        onCancel={() => { setMappingRow(undefined); itemForm.resetFields(); }}
-        onOk={() => itemForm.submit()} confirmLoading={mapItem.isPending}>
+      <FormDrawer open={Boolean(mappingRow)} title="Map source item" width={720} okText="Save item mapping"
+        onClose={() => { setMappingRow(undefined); itemForm.resetFields(); }}
+        onSubmit={() => itemForm.submit()} loading={mapItem.isPending}>
         {mappingRow && <Descriptions size="small" bordered column={2} style={{ marginBottom: 16 }}>
           <Descriptions.Item label="Source Sr.">{mappingRow.sourceSrNumber}</Descriptions.Item>
           <Descriptions.Item label="Excel row">{mappingRow.sourceExcelRow}</Descriptions.Item>
@@ -624,11 +625,11 @@ export function OpeningStockImportPage() {
             </Form.Item>
           </Space>
         </Form>
-      </Modal>
+      </FormDrawer>
 
-      <Modal open={Boolean(mappingLocation)} title="Map source party/site column" width={720} okText="Save entire column mapping"
-        onCancel={() => { setMappingLocation(undefined); locationForm.resetFields(); }}
-        onOk={() => locationForm.submit()} confirmLoading={mapLocation.isPending}>
+      <FormDrawer open={Boolean(mappingLocation)} title="Map source party/site column" width={720} okText="Save entire column mapping"
+        onClose={() => { setMappingLocation(undefined); locationForm.resetFields(); }}
+        onSubmit={() => locationForm.submit()} loading={mapLocation.isPending}>
         {mappingLocation && <Alert type="info" showIcon style={{ marginBottom: 16 }}
           message={`${mappingLocation.sourceExcelColumn}: ${mappingLocation.sourceLocationName}`}
           description="This source label is preserved. Map it to a legal party and an open site; StockSync does not assume the label represents both." />}
@@ -660,7 +661,7 @@ export function OpeningStockImportPage() {
               </Form.Item>}
           </Form.Item>
         </Form>
-      </Modal>
+      </FormDrawer>
 
       <Modal open={postOpen} title="Post opening balances" okText="Post immutable opening balances"
         okButtonProps={{ danger: true }} onCancel={() => setPostOpen(false)}

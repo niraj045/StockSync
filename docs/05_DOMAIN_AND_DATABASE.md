@@ -1,5 +1,7 @@
 # 5. Domain and Database Design
 
+V10 evolves agreements with commercial snapshots, billing configuration, lifecycle timestamps, attachment linkage and optimistic item versions. One source quotation maps to one agreement.
+
 ## Phase 5A schema
 
 V8 adds `document_number_sequences` and `quotation_templates`, then upgrades the existing quotation tables in place to preserve IDs and references. Sequences are keyed by type and financial year. Quotation lines store code/name/description/size/unit snapshots and optimistic-lock versions. Historical `CONVERTED` remains only for compatibility; Phase 5A exposes no conversion action.

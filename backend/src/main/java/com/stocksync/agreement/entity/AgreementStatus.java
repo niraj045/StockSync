@@ -1,5 +1,5 @@
 package com.stocksync.agreement.entity;
 
 public enum AgreementStatus {
-    DRAFT, GENERATED, ACTIVE, EXPIRED, TERMINATED
+    DRAFT, READY_FOR_REVIEW, ACTIVE, EXPIRED, TERMINATED, CLOSED, CANCELLED
 }

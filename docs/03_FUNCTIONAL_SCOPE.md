@@ -1,5 +1,7 @@
 # 3. Functional Scope
 
+Phase 5B includes quotation-derived agreements, their lifecycle and authenticated PDFs. Manual agreements and Site Orders are deferred.
+
 ## Phase 5A boundary
 
 Included: quotation templates, draft authoring, calculations, send/approve/reject/cancel, clone, filters and PDF. Agreements, agreement templates, site orders, challans, reservations, invoices, payments and reporting are excluded. Prototype agreement/order navigation is hidden until those phases.

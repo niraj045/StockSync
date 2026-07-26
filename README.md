@@ -73,6 +73,10 @@ Phases 1 through 4.1 are implemented:
 
 Challans, rental billing, payments, GST, and reporting remain future phases.
 
+## Phase 5B Agreements
+
+Agreements are available at `http://localhost:5173/agreements`. Approve a quotation, then use **Convert quotation**. Agreement operations never reserve or modify stock. ADMIN performs activation and final lifecycle actions; OPERATIONS prepares drafts and documents; ROLE_ACCOUNTS and VIEWER are read-only.
+
 ## Local Startup with Docker Compose
 
 Prerequisites:

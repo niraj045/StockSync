@@ -1,52 +1,98 @@
-import { useMemo,useState } from 'react';
+import { useEffect,useMemo,useState } from 'react';
 import { Alert,App,Button,Card,Descriptions,Form,Input,InputNumber,Modal,Select,Space,Table,Tag } from 'antd';
 import { DownloadOutlined,PlusOutlined,SearchOutlined } from '@ant-design/icons';
 import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../../api/client';
 import { useAuth } from '../../auth/context/AuthContext';
 import type { Option,Page,Quotation,Template } from '../types';
+import {useLocation,useNavigate,useParams} from 'react-router';
 import { apiErrorCode,apiFormErrors,quotationPermissions,requiresUnsavedConfirmation,sitesForParty,validateQuotationEditor,type QuotationEditor as Editor } from '../quotationForm';
 
 const rental=[{value:'PER_PIECE_PER_DAY',label:'Per piece per day'},{value:'PLATE_AREA_PER_DAY',label:'Plate area per day'},{value:'SCAFFOLD_AREA_PER_DAY',label:'Scaffold area per day'},{value:'PLOT_AREA_PER_DAY',label:'Plot area per day'},{value:'FIXED_RATE',label:'Fixed rate'},{value:'SLAB_BASED',label:'Slab based'}];
 const money=(v?:number)=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR'}).format(v??0);
 export function QuotationsPage(){
+  const navigate=useNavigate(),location=useLocation(),{quotationId}=useParams();
   const {modal,message}=App.useApp(),{user}=useAuth(),roles=user?.roles??[],{isAdmin,canWrite}=quotationPermissions(roles),qc=useQueryClient();
-  const [search,setSearch]=useState(''),[status,setStatus]=useState<string|undefined>(),[open,setOpen]=useState(false),[editing,setEditing]=useState<Quotation|null>(null),[selected,setSelected]=useState<Quotation|null>(null);
-  const [form]=Form.useForm<Editor>();const partyId=Form.useWatch('partyId',form);const watched=Form.useWatch([],form);
+  const [search,setSearch]=useState(''),[status,setStatus]=useState<string|undefined>(),[editing,setEditing]=useState<Quotation|null>(null),[selected,setSelected]=useState<Quotation|null>(null);
+  const [form]=Form.useForm<Editor>();const partyId=Form.useWatch('partyId',form);const discountType=Form.useWatch('discountType',form);const watched=Form.useWatch([],form);
+  const isEditorRoute=location.pathname==='/quotations/new'||Boolean(quotationId);
   const quotations=useQuery({queryKey:['quotations',search,status],queryFn:async()=>(await apiClient.get<Page<Quotation>>('/quotations',{params:{search,status,size:50,sort:'quotationDate,desc'}})).data});
   const templates=useQuery({queryKey:['quotation-templates-active'],queryFn:async()=>(await apiClient.get<Page<Template>>('/quotation-templates',{params:{active:true,size:100}})).data.content});
   const parties=useQuery({queryKey:['parties-options'],queryFn:async()=>(await apiClient.get<Page<Option>>('/parties',{params:{active:true,size:200}})).data.content});
   const sites=useQuery({queryKey:['sites-options'],queryFn:async()=>(await apiClient.get<Page<Option>>('/sites',{params:{size:200}})).data.content});
   const items=useQuery({queryKey:['items-options'],queryFn:async()=>(await apiClient.get<Page<Option>>('/items',{params:{active:true,size:500}})).data.content});
   const save=useMutation({mutationFn:async(v:Editor)=>editing?(await apiClient.put(`/quotations/${editing.id}`,{...v,version:editing.version})).data:(await apiClient.post('/quotations',v)).data,
-    onSuccess:(q:Quotation)=>{message.success(`Saved ${q.quotationNumber}`);setOpen(false);void qc.invalidateQueries({queryKey:['quotations']});},onError:(error:unknown)=>{const fields=apiFormErrors(error);if(fields.length)form.setFields(fields);message.error(apiErrorCode(error)==='OPTIMISTIC_LOCK_CONFLICT'?'This quotation was changed by another user. Reload and try again.':'Unable to save quotation.');}});
+    onSuccess:(q:Quotation)=>{message.success(`Saved ${q.quotationNumber}`);navigate('/quotations');void qc.invalidateQueries({queryKey:['quotations']});},onError:(error:unknown)=>{const fields=apiFormErrors(error);if(fields.length)form.setFields(fields);message.error(apiErrorCode(error)==='OPTIMISTIC_LOCK_CONFLICT'?'This quotation was changed by another user. Reload and try again.':'Unable to save quotation.');}});
   const action=useMutation({mutationFn:async({q,name,reason}:{q:Quotation;name:string;reason?:string})=>(await apiClient.post(`/quotations/${q.id}/${name}`,reason?{reason}:undefined)).data,
     onSuccess:()=>void qc.invalidateQueries({queryKey:['quotations']})});
-  const defaults=():Editor=>({quotationTemplateId:0,partyId:0,siteId:0,quotationDate:new Date().toISOString().slice(0,10),validUntil:new Date(Date.now()+30*86400000).toISOString().slice(0,10),rentalType:'PER_PIECE_PER_DAY',discountType:'NONE',discountValue:0,cgstRate:9,sgstRate:9,igstRate:0,transportCharge:0,loadingCharge:0,unloadingCharge:0,otherCharge:0,roundOff:0,securityDeposit:0,items:[{itemId:0,quantity:1,rate:0,rentalType:'PER_PIECE_PER_DAY'}]});
-  const edit=(q?:Quotation)=>{setEditing(q??null);form.setFieldsValue(q?{...q}:defaults());setOpen(true);};
+  const defaults=()=>({quotationDate:new Date().toISOString().slice(0,10),validUntil:new Date(Date.now()+30*86400000).toISOString().slice(0,10),rentalType:'PER_PIECE_PER_DAY',discountType:'NONE',discountValue:0,cgstRate:9,sgstRate:9,igstRate:0,transportCharge:0,loadingCharge:0,unloadingCharge:0,otherCharge:0,roundOff:0,securityDeposit:0,items:[{quantity:1,rate:0,rentalType:'PER_PIECE_PER_DAY'}]});
+  const edit=(q?:Quotation)=>navigate(q?`/quotations/${q.id}/edit`:'/quotations/new');
+  const closeEditor=()=>{const close=()=>{setEditing(null);navigate('/quotations');};if(requiresUnsavedConfirmation(form.isFieldsTouched()))modal.confirm({title:'Discard unsaved changes?',onOk:close});else close();};
+  useEffect(()=>{
+    if(location.pathname==='/quotations/new'){form.resetFields();setEditing(null);form.setFieldsValue(defaults());}
+    if(quotationId&&quotations.data){const quotation=quotations.data.content.find(q=>q.id===Number(quotationId));if(quotation){form.resetFields();setEditing(quotation);form.setFieldsValue({...quotation});}}
+  },[location.pathname,quotationId,quotations.data]);
+  useEffect(()=>{
+    if(!isEditorRoute)return;
+    window.scrollTo({top:0,behavior:'instant'});
+    document.querySelector('.app-content')?.scrollTo({top:0,behavior:'instant'});
+  },[isEditorRoute,location.pathname]);
   const confirm=(q:Quotation,name:string,needsReason=false)=>{let reason='';modal.confirm({title:`${name} ${q.quotationNumber}?`,content:needsReason?<Input.TextArea placeholder="Reason is required" onChange={e=>reason=e.target.value}/>:undefined,onOk:()=>{if(needsReason&&!reason.trim()){message.error('Reason is required');return Promise.reject();}return action.mutateAsync({q,name,reason});}});};
   const download=async(q:Quotation)=>{const r=await apiClient.get(`/quotations/${q.id}/pdf`,{responseType:'blob'});const url=URL.createObjectURL(r.data as Blob);const a=document.createElement('a');a.href=url;a.download=`quotation-${q.quotationNumber.replaceAll('/','-')}.pdf`;a.click();URL.revokeObjectURL(url);};
   const estimate=useMemo(()=>{const v=watched; if(!v)return 0;const sub=(v.items??[]).reduce((s,i)=>s+(Number(i.quantity)||0)*(Number(i.rate)||0),0);const discount=v.discountType==='PERCENTAGE'?sub*(Number(v.discountValue)||0)/100:v.discountType==='FIXED'?Number(v.discountValue)||0:0;const taxable=sub-discount+(Number(v.transportCharge)||0)+(Number(v.loadingCharge)||0)+(Number(v.unloadingCharge)||0)+(Number(v.otherCharge)||0);return taxable*(1+((Number(v.cgstRate)||0)+(Number(v.sgstRate)||0)+(Number(v.igstRate)||0))/100)+(Number(v.roundOff)||0);},[watched]);
+  if(isEditorRoute)return <div className="quotation-editor-page">
+    <button type="button" className="quotation-back-link" onClick={closeEditor}>← Back to quotations</button>
+    <div className="quotation-editor-heading">
+      <h1 className="page-heading">{editing?'Edit quotation':'New quotation'}</h1>
+      <p className="page-description">Configure commercial terms, item lines, taxes and totals.</p>
+    </div>
+    <Form className="quotation-editor-form" form={form} layout="vertical" onFinish={v=>{const errors=validateQuotationEditor(v,sites.data??[]);if(errors.length){form.setFields(errors);return;}save.mutate(v);}}>
+      <section className="quotation-form-section">
+        <h2>Quotation details</h2>
+        <div className="master-form-grid">
+          <Form.Item name="quotationTemplateId" label="Template" rules={[{required:true}]}><Select placeholder="Select quotation template" options={(templates.data??[]).map(t=>({value:t.id,label:`${t.templateCode} — ${t.name}`}))}/></Form.Item>
+          <Form.Item name="quotationDate" label="Quotation date" rules={[{required:true}]}><Input type="date"/></Form.Item>
+          <Form.Item name="validUntil" label="Valid until" rules={[{required:true}]}><Input type="date"/></Form.Item>
+        </div>
+      </section>
+      <section className="quotation-form-section">
+        <h2>Customer and site</h2>
+        <div className="master-form-grid">
+          <Form.Item name="partyId" label="Party" rules={[{required:true}]}><Select placeholder="Select party" showSearch optionFilterProp="label" options={(parties.data??[]).map(p=>({value:p.id,label:p.legalName}))} onChange={()=>form.setFieldValue('siteId',undefined)}/></Form.Item>
+          <Form.Item name="siteId" label="Site" rules={[{required:true}]}><Select placeholder={partyId?'Select site':'Select a party first'} disabled={!partyId} showSearch optionFilterProp="label" options={sitesForParty(sites.data??[],partyId).map(s=>({value:s.id,label:`${s.siteCode} — ${s.siteName}`}))}/></Form.Item>
+        </div>
+      </section>
+      <section className="quotation-form-section">
+        <h2>Rental terms</h2>
+        <div className="master-form-grid"><Form.Item name="rentalType" label="Rental type" rules={[{required:true}]}><Select options={rental}/></Form.Item></div>
+      </section>
+      <section className="quotation-form-section">
+        <h2>Discount and taxes</h2>
+        <div className="master-form-grid">
+          <Form.Item name="discountType" label="Discount"><Select options={['NONE','PERCENTAGE','FIXED'].map(value=>({value,label:value}))}/></Form.Item>
+          {discountType!=='NONE'&&<Money name="discountValue" label="Discount value"/>}
+          <Money name="cgstRate" label="CGST %"/><Money name="sgstRate" label="SGST %"/><Money name="igstRate" label="IGST %"/>
+        </div>
+      </section>
+      <section className="quotation-form-section"><QuotationItemRows items={items.data??[]}/></section>
+      <section className="quotation-form-section">
+        <h2>Additional charges</h2>
+        <div className="master-form-grid"><Money name="transportCharge" label="Transport"/><Money name="loadingCharge" label="Loading"/><Money name="unloadingCharge" label="Unloading"/><Money name="otherCharge" label="Other charge"/><Money name="roundOff" label="Round off" signed/><Money name="securityDeposit" label="Security deposit"/></div>
+      </section>
+      <section className="quotation-form-section">
+        <h2>Terms and notes</h2>
+        <div className="master-form-grid"><Form.Item className="master-form-wide" name="terms" label="Terms"><Input.TextArea rows={3}/></Form.Item><Form.Item className="master-form-wide" name="notes" label="Notes"><Input.TextArea rows={3}/></Form.Item></div>
+      </section>
+      <section className="quotation-form-section quotation-summary"><h2>Quotation summary</h2><Alert type="info" showIcon message={`Estimated grand total: ${money(estimate)}`} description="The backend recalculates and stores the authoritative total."/></section>
+      <footer className="quotation-action-footer"><Space><Button onClick={closeEditor}>Cancel</Button><Button type="primary" loading={save.isPending} onClick={()=>form.submit()}>{editing?'Save changes':'Create quotation'}</Button></Space></footer>
+    </Form>
+  </div>;
   return <div className="page-stack"><div className="page-header-container"><div><h1 className="page-heading">Quotations</h1><p className="page-description">Prepare, issue and approve commercial offers without reserving stock.</p></div>{canWrite&&<Button type="primary" icon={<PlusOutlined/>} onClick={()=>edit()}>Add quotation</Button>}</div>
     <Card className="premium-card"><Space className="filters-bar" wrap><Input prefix={<SearchOutlined/>} allowClear placeholder="Search quotations" value={search} onChange={e=>setSearch(e.target.value)}/><Select allowClear placeholder="All statuses" style={{width:170}} onChange={setStatus} options={['DRAFT','SENT','APPROVED','REJECTED','EXPIRED','CANCELLED'].map(v=>({value:v,label:v}))}/></Space>
       <Table rowKey="id" loading={quotations.isLoading} dataSource={quotations.data?.content} scroll={{x:1100}} columns={[
         {title:'Quotation',dataIndex:'quotationNumber'},{title:'Party',dataIndex:'partyName'},{title:'Site',dataIndex:'siteName'},{title:'Date',dataIndex:'quotationDate'},{title:'Total',dataIndex:'grandTotal',render:money},{title:'Status',dataIndex:'status',render:(v:string)=><Tag color={v==='APPROVED'?'success':v==='REJECTED'||v==='CANCELLED'?'error':'processing'}>{v}</Tag>},
         {title:'Actions',render:(_:unknown,q:Quotation)=><QuotationActionButtons q={q} isAdmin={isAdmin} canWrite={canWrite} onView={()=>setSelected(q)} onEdit={()=>edit(q)} onAction={(name,reason)=>confirm(q,name,reason)} onPdf={()=>void download(q)}/>},
       ]}/></Card>
-    <Modal open={open} title={editing?'Edit quotation':'New quotation'} width={1000} onCancel={()=>{if(requiresUnsavedConfirmation(form.isFieldsTouched()))modal.confirm({title:'Discard unsaved changes?',onOk:()=>setOpen(false)});else setOpen(false);}} onOk={()=>form.submit()} confirmLoading={save.isPending}>
-      <Form form={form} layout="vertical" onFinish={v=>{const errors=validateQuotationEditor(v,sites.data??[]);if(errors.length){form.setFields(errors);return;}save.mutate(v);}}><div className="master-form-grid">
-        <Form.Item name="quotationTemplateId" label="Template" rules={[{required:true}]}><Select options={(templates.data??[]).map(t=>({value:t.id,label:`${t.templateCode} — ${t.name}`}))}/></Form.Item>
-        <Form.Item name="partyId" label="Party" rules={[{required:true}]}><Select showSearch optionFilterProp="label" options={(parties.data??[]).map(p=>({value:p.id,label:p.legalName}))} onChange={()=>form.setFieldValue('siteId',undefined)}/></Form.Item>
-        <Form.Item name="siteId" label="Site" rules={[{required:true}]}><Select showSearch optionFilterProp="label" options={sitesForParty(sites.data??[],partyId).map(s=>({value:s.id,label:`${s.siteCode} — ${s.siteName}`}))}/></Form.Item>
-        <Form.Item name="rentalType" label="Rental type" rules={[{required:true}]}><Select options={rental}/></Form.Item>
-        <Form.Item name="quotationDate" label="Quotation date" rules={[{required:true}]}><Input type="date"/></Form.Item><Form.Item name="validUntil" label="Valid until" rules={[{required:true}]}><Input type="date"/></Form.Item>
-        <Form.Item name="discountType" label="Discount"><Select options={['NONE','PERCENTAGE','FIXED'].map(value=>({value,label:value}))}/></Form.Item><Money name="discountValue" label="Discount value"/>
-        <Money name="cgstRate" label="CGST %"/><Money name="sgstRate" label="SGST %"/><Money name="igstRate" label="IGST %"/>
-        <Money name="transportCharge" label="Transport"/><Money name="loadingCharge" label="Loading"/><Money name="unloadingCharge" label="Unloading"/><Money name="otherCharge" label="Other charge"/><Money name="roundOff" label="Round off" signed/><Money name="securityDeposit" label="Security deposit"/>
-        <Form.Item className="master-form-wide" name="terms" label="Terms"><Input.TextArea rows={3}/></Form.Item><Form.Item className="master-form-wide" name="notes" label="Notes"><Input.TextArea/></Form.Item>
-      </div><QuotationItemRows items={items.data??[]}/>
-      <Alert type="info" showIcon message={`Estimated grand total: ${money(estimate)}`} description="The backend recalculates and stores the authoritative total."/></Form>
-    </Modal>
     <Modal open={!!selected} title={selected?.quotationNumber} footer={null} onCancel={()=>setSelected(null)} width={850}>{selected&&<><Descriptions bordered column={2} items={[{key:'party',label:'Party',children:selected.partyName},{key:'site',label:'Site',children:selected.siteName},{key:'template',label:'Template',children:selected.quotationTemplateName},{key:'total',label:'Grand total',children:money(selected.grandTotal)},{key:'tax',label:'Total GST',children:money(selected.totalTax)},{key:'deposit',label:'Security deposit',children:money(selected.securityDeposit)}]}/><Table style={{marginTop:16}} pagination={false} rowKey={(i)=>i.id??i.itemId} dataSource={selected.items} columns={[{title:'Code',dataIndex:'itemCodeSnapshot'},{title:'Item',dataIndex:'itemNameSnapshot'},{title:'Qty',dataIndex:'quantity'},{title:'Rate',dataIndex:'rate',render:money},{title:'Amount',dataIndex:'amount',render:money}]}/></>}</Modal>
   </div>;
 }
