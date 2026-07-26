@@ -29,11 +29,14 @@ class Phase4IntegrationTest extends BaseIntegrationTest {
     private Party party; private Site site; private Item plate; private Item prop;
 
     @BeforeEach void setup(){
+        jdbc.update("UPDATE stock_import_rows SET posted_stock_transaction_id=NULL");
         jdbc.update("DELETE FROM site_order_items");jdbc.update("DELETE FROM site_orders");jdbc.update("DELETE FROM agreement_items");
         jdbc.update("DELETE FROM agreements");jdbc.update("DELETE FROM quotation_items");jdbc.update("DELETE FROM quotations");
         jdbc.update("DELETE FROM agreement_templates");jdbc.update("DELETE FROM stock_transactions");jdbc.update("DELETE FROM purchase_items");
         jdbc.update("DELETE FROM scrap_items");jdbc.update("DELETE FROM stock_adjustment_items");jdbc.update("DELETE FROM purchases");
         jdbc.update("DELETE FROM scrap_entries");jdbc.update("DELETE FROM stock_adjustments");jdbc.update("DELETE FROM stock_balances");
+        jdbc.update("DELETE FROM stock_import_location_mappings");jdbc.update("DELETE FROM stock_import_rows");
+        jdbc.update("DELETE FROM stock_import_batches");jdbc.update("DELETE FROM item_aliases");
         jdbc.update("DELETE FROM file_attachments");sites.deleteAll();items.deleteAll();categories.deleteAll();parties.deleteAll();
         party=new Party();party.setLegalName("Phase Four Construction");party.setActive(true);party.setCreatedBy("test");party.setUpdatedBy("test");party=parties.save(party);
         site=new Site();site.setParty(party);site.setSiteName("Phase Four Site");site.setSiteCode("P4-SITE");site.setStatus(SiteStatus.ACTIVE);

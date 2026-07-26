@@ -211,3 +211,26 @@ Purchase, scrap, and adjustment posting methods are transactional. They create t
 document and lines, lock affected balance rows pessimistically in deterministic item order, append
 immutable ledger entries, update the balance projection, and record the audit action as one use
 case. Failed validation or insufficient stock rolls back the entire posting.
+
+## 6.13 Phase 4.1 Controlled Import Services
+
+The `migration` module contains a format-specific `SteelfabStockSnapshotParser`, DTO-only REST
+controller, staging entities/repositories, and `StockImportService`. The parser uses Apache POI
+and accepts only `STEELFAB_STOCK_SNAPSHOT_V1`; it is not a generic OCR or spreadsheet
+interpreter.
+
+Cross-module writes use:
+
+- `ImportItemAccess` for exact/explicit item resolution and confirmed item creation.
+- `ImportLocationAccess` for legal party/open-site resolution or confirmed creation.
+- `OpeningStockAccess` for the only stock-changing operations.
+
+Upload and mapping are transactional. Final posting pessimistically locks the batch, rechecks its
+checksum/status and dry-run reconciliation, processes balance rows in deterministic item order,
+and commits all ledger/projection changes together. A failure rolls back every stock write and
+records `STOCK_IMPORT_FAILED` in the independent audit transaction.
+
+Reversal is ADMIN-only, locks all affected item balances before checking for later movements,
+and creates immutable compensating transactions. The service rejects duplicate posting,
+duplicate reversal, missing reasons, stale row mappings, unresolved totals, unsafe later
+movements, and negative reversal results with standard API errors.

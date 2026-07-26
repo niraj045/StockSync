@@ -171,3 +171,28 @@ enforces the agreement item allocation ceiling. An order line's `remainingQuanti
 
 Commercial reads allow every authenticated role. Writes require `ROLE_ADMIN` or
 `ROLE_OPERATIONS`; template upload and agreement termination require `ROLE_ADMIN`.
+
+## 8.12 Phase 4.1 Opening Stock Import API
+
+```text
+POST /api/v1/stock-imports/upload
+GET  /api/v1/stock-imports
+GET  /api/v1/stock-imports/{id}
+GET  /api/v1/stock-imports/{id}/rows
+PUT  /api/v1/stock-imports/{id}/rows/{rowId}/item-mapping
+GET  /api/v1/stock-imports/{id}/location-mappings
+PUT  /api/v1/stock-imports/{id}/location-mappings
+POST /api/v1/stock-imports/{id}/validate
+GET  /api/v1/stock-imports/{id}/preview
+POST /api/v1/stock-imports/{id}/post
+POST /api/v1/stock-imports/{id}/reverse
+GET  /api/v1/stock-imports/{id}/report
+```
+
+Rows are paginated. Every authenticated role may read batches, rows, mappings, previews, and
+reports. ADMIN and OPERATIONS may upload, map, and validate. Only ADMIN may post or reverse.
+
+Posting requires `{ "confirmed": true, "expectedChecksum": "<64 hex characters>" }`. Reversal
+requires a nonblank reason. Important errors include `IMPORT_FILE_ALREADY_EXISTS`,
+`IMPORT_NOT_VALIDATED`, `IMPORT_TOTALS_UNEXPLAINED`, `IMPORT_ALREADY_POSTED`,
+`IMPORT_ALREADY_REVERSED`, and `IMPORT_REVERSAL_UNSAFE`.

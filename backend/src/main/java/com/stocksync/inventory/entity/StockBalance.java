@@ -19,6 +19,7 @@ public class StockBalance {
     public Long getItemId(){return itemId;} public Item getItem(){return item;} public void setItem(Item v){item=v;itemId=v.getId();}
     public BigDecimal getAvailableQuantity(){return availableQuantity;} public void setAvailableQuantity(BigDecimal v){availableQuantity=v;}
     public BigDecimal getIssuedQuantity(){return issuedQuantity;} public BigDecimal getHiredQuantity(){return hiredQuantity;}
+    public void setIssuedQuantity(BigDecimal v){issuedQuantity=v;}
     public BigDecimal getLostQuantity(){return lostQuantity;} public BigDecimal getScrappedQuantity(){return scrappedQuantity;}
     public void setScrappedQuantity(BigDecimal v){scrappedQuantity=v;}
     public BigDecimal getAvailableWeight(){return availableWeight;} public void setAvailableWeight(BigDecimal v){availableWeight=v;}

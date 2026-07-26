@@ -32,7 +32,9 @@ The system is intended for a shuttering-material business that needs to manage i
 11. [Deployment and DevOps](docs/11_DEPLOYMENT_AND_DEVOPS.md)
 12. [Implementation Roadmap](docs/12_IMPLEMENTATION_ROADMAP.md)
 13. [Testing Strategy](docs/13_TESTING_STRATEGY.md)
-14. [Codex Project Instructions](CODEX_PROJECT_INSTRUCTIONS.md)
+14. [Phase 4 Manual Testing](docs/14_PHASE_4_MANUAL_TESTING.md)
+15. [Phase 4.1 Opening Stock Import](docs/15_PHASE_4_1_OPENING_STOCK_IMPORT.md)
+16. [Codex Project Instructions](CODEX_PROJECT_INSTRUCTIONS.md)
 
 ## Important Product Decision
 
@@ -53,13 +55,15 @@ The system should therefore be structured as independent internal modules but de
 
 ## Current Implementation
 
-Phases 1 through 4 are implemented:
+Phases 1 through 4.1 are implemented:
 
 - Foundation, deployment, session authentication, user administration, and immutable audit logging
 - Master data for categories, items, parties, sites, vendors, and entity-linked documents
 - Inventory ledger, balance projection, purchases, scrap, adjustments, history, and dashboard totals
 - Transactional stock posting with mandatory idempotency keys, row locking, and negative-stock protection
 - Quotation drafting and approval, agreement conversion and DOCX generation, and site orders with agreement quantity controls
+- Controlled client opening-stock import with Apache POI parsing, explicit item and party/site mapping,
+  dry-run reconciliation, immutable ledger posting, audit reporting, and safe reversal
 
 Challans, rental billing, payments, GST, and reporting remain future phases.
 
@@ -132,6 +136,17 @@ Phase 4 is available at:
 - `http://localhost:5173/quotations`
 - `http://localhost:5173/agreements`
 - `http://localhost:5173/orders`
+
+Phase 4.1 is available at:
+
+- `http://localhost:5173/opening-stock-imports`
+
+The original and prepared client workbooks are retained under `client-data/original` and
+`client-data/prepared`. Upload either controlled workbook from **Inventory → Opening Stock
+Import**. The prepared workbook preserves the original `Sheet1` and adds mapping/read-me sheets.
+Only `Sheet1` columns B, C:R, and U are imported; source totals T and V are deliberately ignored.
+Administrators and operations users may upload, map, and validate. Only administrators may post
+or reverse opening balances.
 
 Administrators and operations users can create and transition these records. Only administrators
 can upload agreement templates or terminate an active agreement. Agreement templates accept DOCX

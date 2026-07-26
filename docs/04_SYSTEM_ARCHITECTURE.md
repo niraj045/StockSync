@@ -43,6 +43,7 @@ flowchart TB
     Reporting[Reporting]
     Document[Document]
     Audit[Audit]
+    Migration[Opening Stock Migration]
 
     Challan --> Inventory
     Challan --> Site
@@ -57,6 +58,10 @@ flowchart TB
     Document --> Agreement
     Document --> Challan
     Audit --> Auth
+    Migration --> Inventory
+    Migration --> Party
+    Migration --> Site
+    Migration --> Audit
 ```
 
 ## 4.5 Module Boundary Rules
@@ -110,6 +115,21 @@ Possible future services:
 - Heavy report generation worker
 
 Core inventory, site, challan, and billing logic should remain together as long as they share transactional boundaries.
+
+### 4.7.1 Opening Stock Migration Boundary
+
+`com.stocksync.migration` owns workbook storage metadata, controlled parsing, staging rows,
+mapping state, validation, reconciliation, and import reports. It communicates through public
+interfaces with the Item, Party/Site, and Inventory modules.
+
+The migration module never updates `stock_balances` directly. It submits opening commands to the
+Inventory module, which locks balance rows, appends immutable stock transactions, and updates the
+projection in the same transaction. Posting locks the import batch pessimistically and processes
+items in stable item-ID order, preventing concurrent duplicate posting and reducing deadlock risk.
+
+Reversal locks the batch and affected balances, rejects later stock movements, then appends
+compensating ledger transactions. Original opening transactions and staging evidence remain
+unchanged.
 
 ## 4.8 Transaction Strategy
 

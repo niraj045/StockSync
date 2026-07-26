@@ -126,3 +126,19 @@ The inventory concurrency test runs both requests simultaneously against MySQL a
 one succeeds, the other returns `INSUFFICIENT_STOCK`, and the final projected balance remains
 correct. The frontend currently includes authentication-context tests and a TypeScript production
 build; broader component and browser coverage remains part of production readiness.
+
+## 13.8 Phase 4.1 Import Coverage
+
+The parser suite runs against the retained client XLSX fixture and proves:
+
+- 42 source items, 16 locations, 120 site cells, 32 godown cells, and 152 balance rows;
+- blank/zero cells are skipped and negative quantities are rejected;
+- T/V are ignored and P:R contributes the omitted 2,418;
+- corrected totals are 20,637 party/site, 25,382 godown, and 46,019 combined;
+- duplicate names and mixed dates are detected.
+
+MySQL integration coverage applies Flyway V1–V7 and verifies alias/exact/manual item mapping,
+whole-column location mapping, unresolved mapping blocks, role boundaries, checksum confirmation,
+atomic posting, rollback on a late-row failure, no operational-document creation, audit actions,
+sequential idempotency, compensating reversal, repeated-reversal rejection, and later-movement
+reversal protection.

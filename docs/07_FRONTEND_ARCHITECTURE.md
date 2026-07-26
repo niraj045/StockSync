@@ -173,3 +173,21 @@ with balance and movement-history tabs; and dashboard stock totals.
 Write controls are hidden unless the current role is authorized. Inventory posting creates a new
 idempotency key for each submission and TanStack Query does not retry mutations. Business screens
 use the established navy, teal, warm-neutral visual system and remain responsive at narrow widths.
+
+## 7.12 Phase 4.1 Opening Stock Workspace
+
+`OpeningStockImportPage` is route-level lazy loaded at `/opening-stock-imports` and appears under
+Inventory navigation. It provides:
+
+- paginated batch history and XLSX upload;
+- source/checksum/date metadata and visible mixed-date warnings;
+- paginated cell-level rows with exact source item/location values;
+- item mapping to existing/new/excluded decisions with alias and ambiguity confirmation;
+- whole-column party and site mapping, including controlled creation;
+- summary cards and party/godown/combined dry-run reconciliation;
+- ADMIN-only checksum confirmation for posting;
+- immutable posting result, audit findings, unresolved client questions, and ADMIN reversal.
+
+ADMIN and OPERATIONS see upload/mapping/validation controls. ACCOUNTS and VIEWER receive the same
+read-only evidence without write controls. Posting and reversal buttons are rendered only for
+ADMIN, while backend authorization remains authoritative.

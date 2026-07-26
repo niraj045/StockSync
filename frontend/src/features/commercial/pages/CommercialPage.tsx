@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  App as AntApp, Button, Card, Descriptions, Empty, Form, Input, InputNumber, Modal, Select, Space,
+  Alert, App as AntApp, Button, Card, Descriptions, Empty, Form, Input, InputNumber, Modal, Select, Space,
   Table, Tabs, Tag, Upload, message,
 } from 'antd';
 import {
@@ -40,6 +40,7 @@ export function CommercialPage({ kind }: { kind: Kind }) {
   const [editing, setEditing] = useState<Row | null>(null);
   const [selected, setSelected] = useState<Row | null>(null);
   const [convertQuotation, setConvertQuotation] = useState<Row | null>(null);
+  const [convertingQuotationId, setConvertingQuotationId] = useState<number | null>(null);
   const [templateOpen, setTemplateOpen] = useState(false);
   const [agreementId, setAgreementId] = useState<number>();
 
@@ -139,7 +140,8 @@ export function CommercialPage({ kind }: { kind: Kind }) {
             {row.status === 'DRAFT' && <Button size="small" icon={<SendOutlined />} onClick={() => run(row, 'send')}>Send</Button>}
             {row.status === 'SENT' && <Button size="small" icon={<CheckOutlined />} onClick={() => run(row, 'approve')}>Approve</Button>}
             {row.status === 'SENT' && <Button size="small" danger onClick={() => run(row, 'reject')}>Reject</Button>}
-            {row.status === 'APPROVED' && <Button size="small" type="primary" onClick={() => openConvert(row)}>Convert</Button>}
+            {row.status === 'APPROVED' && <Button size="small" type="primary"
+              loading={convertingQuotationId === row.id} onClick={() => openConvert(row)}>Convert</Button>}
           </>}
           {kind === 'agreements' && canManage && <>
             {row.status === 'DRAFT' && <Button size="small" icon={<FileAddOutlined />} onClick={() => run(row, 'generate')}>Generate</Button>}
@@ -154,7 +156,7 @@ export function CommercialPage({ kind }: { kind: Kind }) {
         </Space>
       ),
     },
-  ], [kind, canManage, isAdmin]);
+  ], [kind, canManage, isAdmin, convertingQuotationId]);
 
   function normalize(values: Record<string, any>) {
     const body = { ...values };
@@ -192,9 +194,21 @@ export function CommercialPage({ kind }: { kind: Kind }) {
       onOk: () => action.mutateAsync({ row, name }),
     });
   }
-  function openConvert(row: Row) {
-    setConvertQuotation(row);
-    convertForm.setFieldsValue({ effectiveDate: new Date().toISOString().slice(0, 10), securityDeposit: 0 });
+  async function openConvert(row: Row) {
+    setConvertingQuotationId(row.id);
+    try {
+      const quotation = (await apiClient.get<Row>(`/quotations/${row.id}`)).data;
+      convertForm.resetFields();
+      convertForm.setFieldsValue({
+        effectiveDate: new Date().toISOString().slice(0, 10),
+        securityDeposit: 0,
+      });
+      setConvertQuotation(quotation);
+    } catch (error) {
+      message.error(errorMessage(error));
+    } finally {
+      setConvertingQuotationId(null);
+    }
   }
   const selectedAgreement = (agreements.data ?? []).find((row) => row.id === agreementId);
   const selectableItems = kind === 'orders' && selectedAgreement ? selectedAgreement.items : items.data ?? [];
@@ -289,10 +303,41 @@ export function CommercialPage({ kind }: { kind: Kind }) {
       </Form>
     </Modal>
     <Details row={selected} kind={kind} onClose={() => setSelected(null)} />
-    <Modal open={Boolean(convertQuotation)} title="Convert quotation to agreement" onCancel={() => setConvertQuotation(null)}
-      onOk={() => convertForm.submit()} confirmLoading={convert.isPending}>
+    <Modal open={Boolean(convertQuotation)} title="Convert quotation to agreement" width={860}
+      onCancel={() => { setConvertQuotation(null); convertForm.resetFields(); }}
+      onOk={() => convertForm.submit()} confirmLoading={convert.isPending} okText="Create agreement draft">
       <Form form={convertForm} layout="vertical" onFinish={(values) => convert.mutate(values)}>
-        <Form.Item name="templateId" label="Template"><Select allowClear options={(templates.data ?? []).map((t) => ({ value: t.id, label: t.name }))} /></Form.Item>
+        {convertQuotation && <>
+          <Alert type="info" showIcon style={{ marginBottom: 16 }}
+            message="Quotation data will be copied automatically"
+            description="The party, site, rental type, charges, terms, and all item quantities and rates below will become the agreement draft." />
+          <Descriptions bordered size="small" column={2} style={{ marginBottom: 16 }}>
+            <Descriptions.Item label="Quotation">{convertQuotation.quotationNumber}</Descriptions.Item>
+            <Descriptions.Item label="Status"><Tag color={statusColor[convertQuotation.status]}>{convertQuotation.status}</Tag></Descriptions.Item>
+            <Descriptions.Item label="Party">{convertQuotation.partyName}</Descriptions.Item>
+            <Descriptions.Item label="Site">{convertQuotation.siteName}</Descriptions.Item>
+            <Descriptions.Item label="Rental type">{String(convertQuotation.rentalType ?? '').replaceAll('_', ' ')}</Descriptions.Item>
+            <Descriptions.Item label="Quotation total">{money(convertQuotation.grandTotal)}</Descriptions.Item>
+          </Descriptions>
+          <Table size="small" rowKey={(line) => line.id ?? line.itemId}
+            dataSource={convertQuotation.items ?? []} pagination={false} scroll={{ x: 620 }}
+            locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="This quotation has no item lines" /> }}
+            columns={[
+              { title: 'Item', dataIndex: 'itemName', key: 'itemName' },
+              { title: 'Quantity', dataIndex: 'quantity', key: 'quantity' },
+              { title: 'Unit rate', dataIndex: 'unitRate', key: 'unitRate', render: money },
+              { title: 'Rental rate', dataIndex: 'rentalRate', key: 'rentalRate', render: money },
+            ]} style={{ marginBottom: 20 }} />
+        </>}
+        <Form.Item name="templateId" label="Document template"
+          extra={templates.data?.length
+            ? 'Leave empty to use the built-in StockSync agreement layout.'
+            : 'No uploaded templates found. The built-in StockSync agreement layout will be used.'}>
+          <Select allowClear loading={templates.isLoading} placeholder="StockSync default template"
+            notFoundContent={templates.isLoading ? 'Loading templates...' : 'No uploaded templates'}
+            options={(templates.data ?? []).filter((template) => template.active !== false)
+              .map((template) => ({ value: template.id, label: template.name }))} />
+        </Form.Item>
         <Form.Item name="effectiveDate" label="Effective date" rules={[{ required: true }]}><Input type="date" /></Form.Item>
         <Form.Item name="expiryDate" label="Expiry date"><Input type="date" /></Form.Item>
         <MoneyField name="securityDeposit" label="Security deposit" />

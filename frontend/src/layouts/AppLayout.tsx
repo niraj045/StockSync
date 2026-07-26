@@ -15,6 +15,7 @@ import {
   FormOutlined,
   SolutionOutlined,
   ShoppingCartOutlined,
+  ImportOutlined,
 } from '@ant-design/icons';
 import { Layout, Menu, Typography, Dropdown, Avatar } from 'antd';
 import { useState } from 'react';
@@ -44,6 +45,7 @@ export function AppLayout() {
     { key: '/vendors', icon: <ToolOutlined />, label: 'Vendors' },
     { key: '/documents', icon: <FileTextOutlined />, label: 'Documents' },
     { key: '/inventory', icon: <AppstoreOutlined />, label: 'Inventory' },
+    { key: '/opening-stock-imports', icon: <ImportOutlined />, label: 'Opening Stock Import' },
     { key: '/quotations', icon: <FormOutlined />, label: 'Quotations' },
     { key: '/agreements', icon: <SolutionOutlined />, label: 'Agreements' },
     { key: '/orders', icon: <ShoppingCartOutlined />, label: 'Orders' },

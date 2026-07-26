@@ -14,6 +14,7 @@ const AuditLogPage = lazy(() => import('../../features/audit/pages/AuditLogPage'
 const MasterDataPage = lazy(() => import('../../features/masterdata/pages/MasterDataPage').then((module) => ({ default: module.MasterDataPage })));
 const DocumentsPage = lazy(() => import('../../features/documents/pages/DocumentsPage').then((module) => ({ default: module.DocumentsPage })));
 const InventoryPage = lazy(() => import('../../features/inventory/pages/InventoryPage').then((module) => ({ default: module.InventoryPage })));
+const OpeningStockImportPage = lazy(() => import('../../features/migration/pages/OpeningStockImportPage').then((module) => ({ default: module.OpeningStockImportPage })));
 const CommercialPage = lazy(() => import('../../features/commercial/pages/CommercialPage').then((module) => ({ default: module.CommercialPage })));
 const deferred = (element: React.ReactNode) => <Suspense fallback={<Spin fullscreen />}>{element}</Suspense>;
 
@@ -65,6 +66,7 @@ export const router = createBrowserRouter([
       { path: 'vendors', element: deferred(<MasterDataPage kind="vendors" />) },
       { path: 'documents', element: deferred(<DocumentsPage />) },
       { path: 'inventory', element: deferred(<InventoryPage />) },
+      { path: 'opening-stock-imports', element: deferred(<OpeningStockImportPage />) },
       { path: 'quotations', element: deferred(<CommercialPage kind="quotations" />) },
       { path: 'agreements', element: deferred(<CommercialPage kind="agreements" />) },
       { path: 'orders', element: deferred(<CommercialPage kind="orders" />) },

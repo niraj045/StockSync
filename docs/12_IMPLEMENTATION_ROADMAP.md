@@ -64,6 +64,19 @@ Status: Completed.
 - Order and order item
 - Remaining quantity calculation
 
+## Phase 4.1 — Client Opening Stock Import
+
+Status: Completed.
+
+- Controlled Apache POI parser for the client snapshot
+- Checksum-protected staging batches and 152 cell-level balance rows
+- Item alias, manual item, and ambiguity mapping
+- Whole-column legal party/open-site mapping
+- Corrected total and mixed-date dry-run reconciliation
+- Transactional `AVAILABLE` and `ISSUED` opening ledger posting
+- ADMIN-only compensating reversal with later-movement protection
+- Audit report and role-aware import workspace
+
 ## Phase 5 — Challans
 
 - Issued challan

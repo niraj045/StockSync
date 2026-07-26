@@ -273,3 +273,24 @@ Before final implementation, confirm:
 12. Is one godown sufficient initially?
 13. Will users have separate accounts?
 14. Is multi-company required now or later?
+
+## 2.5 Client Opening Stock Migration
+
+The client legacy snapshot is imported through a controlled staging workflow, not by replacing
+normalized Item, Party, Site, or Stock models. The supported source format is
+`STEELFAB_STOCK_SNAPSHOT_V1`.
+
+- Preserve 42 exact source item rows and all 16 source party/site labels.
+- Read party/site quantities from C:R and godown quantities from U.
+- Ignore source totals T and V. T omits P:R and understates party/site stock by 2,418.
+- Recalculate party/site stock as 20,637, godown stock as 25,382, and combined owned stock as
+  46,019.
+- Warn that party/site stock is dated 25-07-2026 while godown stock is dated 16-07-2026.
+- Require explicit item decisions for duplicates, damaged-condition wording, variants, and
+  shorthand names.
+- Require a legal party and an open site mapping for every source party/site column.
+- Show expected, mapped, excluded, unresolved, and posted totals before posting.
+- Post immutable opening-balance ledger entries transactionally and idempotently.
+- Never create purchases, vendors, orders, challans, or historical rental charges from the
+  opening snapshot.
+- Reverse only through ADMIN-authorized compensating transactions with a required reason.

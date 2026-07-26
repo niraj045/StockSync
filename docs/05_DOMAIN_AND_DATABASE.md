@@ -12,6 +12,8 @@
 - Posted financial and stock records should not be physically deleted.
 - Use status fields and reversal entries.
 - Add audit columns to important tables.
+- `items.minimum_stock` is nullable only so confirmed legacy-import items can preserve an unknown
+  reorder threshold; normal item creation continues to require an explicit non-negative value.
 
 Recommended audit columns:
 
@@ -250,7 +252,7 @@ Suggested fields:
 - No stock issue above available quantity
 - No duplicate posting of the same draft
 
-## 5.11 Implemented Schema Through Phase 3
+## 5.11 Implemented Schema Through Phase 4
 
 Flyway `V3__master_data.sql` implements categories, items, parties, vendors, sites, and generic
 file attachments. Master records use audit timestamps, actor snapshots, and optimistic versions.
@@ -263,3 +265,33 @@ idempotency keys are unique. Quantities are positive and monetary/quantity value
 The ledger is the audit source; `stock_balances` is an atomically maintained projection. Posting
 locks only affected balance rows in ascending item order. A movement that would make available
 stock negative rolls back its document, lines, ledger entries, and balance changes together.
+
+Flyway `V5__agreements_and_orders.sql` adds quotation, agreement/template, and site-order
+documents with explicit lifecycle status and item snapshots.
+
+## 5.12 Phase 4.1 Opening Stock Schema
+
+Flyway `V6__opening_stock_import.sql` adds:
+
+- `stock_import_batches`: checksum-protected workbook identity, snapshot dates, lifecycle,
+  corrected expected totals, posting/reversal actors, and optimistic version.
+- `stock_import_rows`: exact Excel cell provenance, source values, normalized suggestion,
+  item/location mappings, quantity, snapshot date, target bucket, validation state, exclusions,
+  and posted ledger reference.
+- `stock_import_location_mappings`: one reusable party/site mapping for each source column.
+- `item_aliases`: case-insensitive source-system aliases pointing to normalized items.
+- `stock_transactions.stock_bucket`, `import_batch_id`, and `import_row_id`: minimal ledger
+  provenance extensions.
+
+Flyway `V7__nullable_imported_item_minimum_stock.sql` allows `items.minimum_stock` to remain
+null when a user explicitly creates an item from legacy import data that contains no reorder
+threshold. The normal item API still requires an explicit non-negative threshold.
+
+The 152 staging balance cells are unique by batch, Excel row, and Excel column. Quantities must
+be positive. Workbook checksums and batch codes are unique. Item, party, site, and posted
+transaction references use foreign keys. Source rows are never deleted during posting or
+reversal.
+
+`OPENING_GODOWN_BALANCE` increases `AVAILABLE`; `OPENING_SITE_BALANCE` increases `ISSUED`.
+Total owned quantity is the sum of the relevant projected buckets. Reversal transactions point
+to their original ledger entries and never mutate or delete them.

@@ -163,9 +163,10 @@ public class InventoryService {
         List<InventoryDocumentResponse> found=jdbc.query("SELECT id,"+numberColumn+","+dateColumn+","+totalColumn+" FROM "+table+" WHERE idempotency_key=?",
             (rs,n)->new InventoryDocumentResponse(rs.getLong(1),rs.getString(2),type,rs.getDate(3).toLocalDate(),
                     totalColumn.equals("NULL")?null:rs.getBigDecimal(4),true),key);return found.isEmpty()?null:found.getFirst();}
-    private StockBalanceResponse balanceResponse(StockBalance b){Item i=b.getItem();return new StockBalanceResponse(i.getId(),i.getItemCode(),i.getItemName(),
+    private StockBalanceResponse balanceResponse(StockBalance b){Item i=b.getItem();BigDecimal minimum=i.getMinimumStock();
+        return new StockBalanceResponse(i.getId(),i.getItemCode(),i.getItemName(),
         i.getCategory().getName(),i.getUnit(),b.getAvailableQuantity(),b.getIssuedQuantity(),b.getHiredQuantity(),b.getLostQuantity(),
-        b.getScrappedQuantity(),b.getAvailableWeight(),i.getMinimumStock(),b.getAvailableQuantity().compareTo(i.getMinimumStock())<0,b.getVersion(),b.getUpdatedAt());}
+        b.getScrappedQuantity(),b.getAvailableWeight(),minimum,minimum!=null&&b.getAvailableQuantity().compareTo(minimum)<0,b.getVersion(),b.getUpdatedAt());}
     private StockTransactionResponse transactionResponse(StockTransaction t){Item i=t.getItem();return new StockTransactionResponse(t.getId(),i.getId(),i.getItemCode(),
         i.getItemName(),t.getTransactionType(),t.getTransactionDate(),t.getQuantity(),t.getWeight(),t.getDirection(),t.getSourceType(),t.getSourceId(),
         t.getNotes(),t.getCreatedBy(),t.getCreatedAt());}

@@ -29,12 +29,15 @@ class InventoryIntegrationTest extends BaseIntegrationTest {
     private Item item;private Vendor vendor;
 
     @BeforeEach void setup(){
+        jdbc.update("UPDATE stock_import_rows SET posted_stock_transaction_id=NULL");
         jdbc.update("DELETE FROM site_order_items");jdbc.update("DELETE FROM site_orders");jdbc.update("DELETE FROM agreement_items");
         jdbc.update("DELETE FROM agreements");jdbc.update("DELETE FROM quotation_items");jdbc.update("DELETE FROM quotations");
         jdbc.update("DELETE FROM agreement_templates");
         jdbc.update("DELETE FROM stock_transactions");jdbc.update("DELETE FROM purchase_items");jdbc.update("DELETE FROM scrap_items");
         jdbc.update("DELETE FROM stock_adjustment_items");jdbc.update("DELETE FROM purchases");jdbc.update("DELETE FROM scrap_entries");
         jdbc.update("DELETE FROM stock_adjustments");jdbc.update("DELETE FROM stock_balances");
+        jdbc.update("DELETE FROM stock_import_location_mappings");jdbc.update("DELETE FROM stock_import_rows");
+        jdbc.update("DELETE FROM stock_import_batches");jdbc.update("DELETE FROM item_aliases");
         items.deleteAll();categories.deleteAll();vendors.deleteAll();
         ItemCategory c=new ItemCategory();c.setName("Inventory Test");c.setActive(true);c.setCreatedBy("test");c.setUpdatedBy("test");c=categories.save(c);
         item=new Item();item.setItemCode("INV-01");item.setItemName("Inventory Item");item.setCategory(c);item.setUnit("PCS");

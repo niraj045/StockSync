@@ -29,8 +29,8 @@ public class Item extends AuditedEntity {
     private BigDecimal lossRate;
     @Column(name = "scrap_value", precision = 19, scale = 2)
     private BigDecimal scrapValue;
-    @Column(name = "minimum_stock", nullable = false, precision = 19, scale = 4)
-    private BigDecimal minimumStock = BigDecimal.ZERO;
+    @Column(name = "minimum_stock", precision = 19, scale = 4)
+    private BigDecimal minimumStock;
     @Column(nullable = false)
     private boolean active = true;
 

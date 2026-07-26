@@ -396,3 +396,22 @@ The system must:
 - Record uploader and timestamp
 - Link files to business entities
 - Prevent direct public access
+
+## 3.15 Opening Stock Import
+
+Phase 4.1 provides a dedicated legacy migration workspace:
+
+1. Upload and checksum the controlled XLSX workbook.
+2. Parse `Sheet1` with Apache POI into staging rows.
+3. Review source formula and mixed-date warnings.
+4. Map each source item to an alias, existing item, newly confirmed item, or documented
+   exclusion.
+5. Map each of the 16 source location columns to a legal party and open site.
+6. Validate and reconcile expected, mapped, excluded, error, and posted totals.
+7. Require explicit ADMIN confirmation and matching checksum.
+8. Post all opening balances in one transaction.
+9. Retain an import audit report and immutable reversal history.
+
+Godown rows create `OPENING_GODOWN_BALANCE` movements into `AVAILABLE`. Party/site rows create
+`OPENING_SITE_BALANCE` movements into `ISSUED`. These represent the opening state only; they do
+not reconstruct historical purchases, dispatches, or rental periods.

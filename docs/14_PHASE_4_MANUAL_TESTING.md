@@ -11,9 +11,12 @@
 1. Open **Quotations** and create a quotation with one or more item lines.
 2. Confirm the calculated subtotal, tax, and grand total.
 3. Edit the draft, send it, and confirm a sent quotation can no longer be edited.
-4. Approve it and use **Convert** to create an agreement draft.
-5. Confirm converting the same quotation again is rejected.
-6. Clone a quotation and confirm the clone is a new draft with a new number.
+4. Approve it and use **Convert**. Confirm the dialog previews the party, site, rental type,
+   quotation total, and every item quantity and rate that will be copied.
+5. Select an uploaded document template, or leave the selector empty to use the built-in
+   StockSync agreement layout, then create the agreement draft.
+6. Confirm converting the same quotation again is rejected.
+7. Clone a quotation and confirm the clone is a new draft with a new number.
 
 ## Agreement
 
