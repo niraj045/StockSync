@@ -1,5 +1,11 @@
 # 13. Testing Strategy
 
+## Phase 5A
+
+Unit coverage includes financial-year boundaries and calculation rules. MySQL 8.4 integration validation covers V8, concurrency, permissions, transitions, optimistic locking, snapshots, PDF and proof that stock remains unchanged. Frontend validation covers role actions, dependent sites, line validation, clone/download and unsaved changes.
+
+The hardening suite renders and parses the real PDF for canonical roles, verifies safe headers and immutable item/party/site output, checks in-memory cleanup behavior, and compares stock state around quotation transitions. React Testing Library covers protected routes, role actions, dependent sites, dynamic lines, validations, confirmations, API field mapping, conflicts, downloads, and unsaved-change warnings.
+
 ## 13.1 Testing Levels
 
 - Unit tests

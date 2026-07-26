@@ -1,5 +1,11 @@
 # 5. Domain and Database Design
 
+## Phase 5A schema
+
+V8 adds `document_number_sequences` and `quotation_templates`, then upgrades the existing quotation tables in place to preserve IDs and references. Sequences are keyed by type and financial year. Quotation lines store code/name/description/size/unit snapshots and optimistic-lock versions. Historical `CONVERTED` remains only for compatibility; Phase 5A exposes no conversion action.
+
+V9 adds non-null party-name and site-name snapshots, backfilled from existing master data. New and edited drafts refresh them so finalized documents do not render mutable party/site names.
+
 ## 5.1 Database Principles
 
 - Use MySQL 8.4.

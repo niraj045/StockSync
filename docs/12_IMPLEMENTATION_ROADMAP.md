@@ -1,5 +1,11 @@
 # 12. Implementation Roadmap
 
+## Phase 5 split
+
+- Phase 5A: quotations, templates, numbering, calculations and PDF.
+- Phase 5B: agreements — not started.
+- Phase 5C: site orders — not started.
+
 ## Phase 0 — Discovery and Finalization
 
 - Confirm client workflows

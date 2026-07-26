@@ -1,5 +1,9 @@
 # 2. Product Requirements
 
+## Phase 5A — quotation management
+
+StockSync supports reusable quotation templates and financial-year numbered quotations. Item identity, unit, size, rate and commercial values are stored as historical snapshots. The workflow is `DRAFT → SENT → APPROVED` or `DRAFT → SENT → REJECTED`; ADMIN may cancel a draft or sent quotation. Quotations never reserve inventory or create ledger entries.
+
 ## 2.1 Confirmed Core Requirements
 
 ### Dashboard

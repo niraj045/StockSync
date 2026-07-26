@@ -6,15 +6,28 @@
 backend/target/
 *.class
 *.log
+*.pid
 
 # Node and Vite
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
 frontend/*.tsbuildinfo
+e2e/node_modules/
+e2e/artifacts/
 
 # IDE and operating system
 .idea/
+.m2/
+.mysql-test.pid
+.mysql-test.log
+.stocksync-runtime/
+.mysql-local-dev-data/
+.mysql-stocksync-dev-data/
+.mysql-local-data/
+.mysql-runtime-data/
+.mysql-final-data/
+.build-final-backend/
 .vscode/
 *.iml
 .DS_Store
@@ -24,3 +37,8 @@ Thumbs.db
 storage/
 data/
 backups/
+
+# Local source material and assistant transcripts
+/*.xlsx
+/~$*.xlsx
+/Implementing Phase 2 Security.md

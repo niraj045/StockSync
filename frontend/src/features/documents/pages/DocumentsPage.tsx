@@ -47,7 +47,9 @@ export function DocumentsPage() {
       body.append('entityType', entityType); body.append('entityId', String(entityId));
       body.append('documentType', values.documentType); body.append('description', values.description ?? '');
       body.append('file', selected);
-      return apiClient.post('/files', body);
+      return apiClient.post('/files', body, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
     },
     onSuccess: () => {
       message.success('Document uploaded'); form.resetFields();

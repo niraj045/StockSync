@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"/>
+<style>
+body{font-family:sans-serif;color:#17312d;font-size:11px}h1{color:#087f72}.meta,.totals{width:100%;margin:12px 0}
+table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccd8d5;padding:6px;text-align:left}th{background:#eef5f3}
+.right{text-align:right}.footer{margin-top:25px;color:#526763;white-space:pre-wrap}
+</style></head><body>
+<h1 th:text="${q.templateCompanyName ?: (q.quotationTemplateName ?: 'StockSync')}">StockSync</h1>
+<div th:if="${q.templateCompanyAddress}" th:text="${q.templateCompanyAddress}"></div>
+<div th:if="${q.templateCompanyGstin}"><strong>GSTIN:</strong> <span th:text="${q.templateCompanyGstin}"></span></div>
+<div class="footer" th:if="${q.templateHeaderText}" th:text="${q.templateHeaderText}"></div>
+<h2>Quotation</h2>
+<div><strong>Quotation:</strong> <span th:text="${q.quotationNumber}"></span></div>
+<table class="meta"><tr><td><strong>Party</strong><br/><span th:text="${q.partyName}"></span></td>
+<td><strong>Site</strong><br/><span th:text="${q.siteName}"></span></td>
+<td><strong>Date / Valid until</strong><br/><span th:text="${q.quotationDate}"></span> / <span th:text="${q.validUntil}"></span></td></tr></table>
+<table><thead><tr><th>#</th><th>Code</th><th>Item</th><th>Size</th><th>Unit</th><th class="right">Quantity</th><th class="right">Rate</th><th class="right">Amount</th></tr></thead>
+<tbody><tr th:each="i : ${q.items}"><td th:text="${i.sequence}"></td><td th:text="${i.itemCodeSnapshot}"></td>
+<td th:text="${i.itemNameSnapshot}"></td><td th:text="${i.sizeSnapshot}"></td><td th:text="${i.unitSnapshot}"></td>
+<td class="right" th:text="${i.quantity}"></td><td class="right" th:text="${i.rate}"></td><td class="right" th:text="${i.amount}"></td></tr></tbody></table>
+<table class="totals"><tr><td>Subtotal</td><td class="right" th:text="${q.subtotal}"></td></tr>
+<tr><td>Discount</td><td class="right" th:text="${q.discountAmount}"></td></tr>
+<tr><td>Transport / Loading / Unloading / Other charges</td><td class="right"><span th:text="${q.transportCharge}"></span> / <span th:text="${q.loadingCharge}"></span> / <span th:text="${q.unloadingCharge}"></span> / <span th:text="${q.otherCharge}"></span></td></tr>
+<tr><td>Taxable amount (includes taxable additional charges)</td><td class="right" th:text="${q.taxableAmount}"></td></tr>
+<tr><td>CGST / SGST / IGST</td><td class="right"><span th:text="${q.cgstAmount}"></span> / <span th:text="${q.sgstAmount}"></span> / <span th:text="${q.igstAmount}"></span></td></tr>
+<tr><td><strong>Grand total</strong></td><td class="right"><strong th:text="${q.grandTotal}"></strong></td></tr>
+<tr><td>Security deposit (excluded from grand total)</td><td class="right" th:text="${q.securityDeposit}"></td></tr></table>
+<div class="footer"><strong>Terms</strong><br/><span th:text="${q.terms ?: '-'}"></span><br/><br/><strong>Notes</strong><br/><span th:text="${q.notes ?: '-'}"></span></div>
+<div class="footer" th:if="${q.templateFooterText}" th:text="${q.templateFooterText}"></div>
+</body></html>

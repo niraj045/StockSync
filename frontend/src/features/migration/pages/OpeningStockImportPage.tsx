@@ -291,7 +291,9 @@ export function OpeningStockImportPage() {
       const body = new FormData();
       body.append('file', source);
       if (values.notes) body.append('notes', values.notes);
-      return (await apiClient.post<ImportBatch>('/stock-imports/upload', body)).data;
+      return (await apiClient.post<ImportBatch>('/stock-imports/upload', body, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })).data;
     },
     onSuccess: (created) => {
       message.success(`Parsed ${created.totalBalanceRows} opening balance rows`);

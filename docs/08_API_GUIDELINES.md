@@ -1,5 +1,9 @@
 # 8. API Guidelines
 
+## Phase 5A APIs
+
+Templates use `/api/v1/quotation-templates`; quotations use `/api/v1/quotations`. Reject/cancel accept `{ "reason": "..." }`. Authenticated PDF download is `GET /api/v1/quotations/{id}/pdf`. Updates carry `version`; stale writes return `OPTIMISTIC_LOCK_CONFLICT`.
+
 ## 8.1 Base Path
 
 ```text

@@ -1,5 +1,9 @@
 # 6. Backend Architecture
 
+## Phase 5A transactions
+
+Draft creation allocates its number and persists the aggregate transactionally. Sequence rows use one atomic MySQL upsert with connection-scoped `LAST_INSERT_ID`—never `MAX + 1`. Workflow methods are explicit and audit only identifiers and summaries.
+
 ## 6.1 Package Structure
 
 ```text

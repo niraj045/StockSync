@@ -1,5 +1,11 @@
 # 9. Reporting and Document Processing
 
+## Quotation PDF
+
+Quotation PDFs are generated in memory with Thymeleaf and OpenHTMLtoPDF, leaving no temporary files. They contain stored line snapshots, calculations, GST, taxable charges, deposit, terms and notes. Downloads are authenticated and audited.
+
+Party and site display names are also read from quotation snapshots. PDF access is explicitly limited to `ROLE_ADMIN`, `ROLE_OPERATIONS`, `ROLE_ACCOUNTS`, and `ROLE_VIEWER`.
+
 ## 9.1 Document Technologies
 
 - Apache POI for DOCX and XLSX

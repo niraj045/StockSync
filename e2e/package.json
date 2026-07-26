@@ -1,0 +1,18 @@
+{
+  "name": "stocksync-selenium-e2e",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/client-story.e2e.mjs",
+    "test:headless": "cross-env E2E_HEADLESS=true node tests/client-story.e2e.mjs",
+    "test:daily": "node tests/daily-operation.e2e.mjs",
+    "test:daily:headless": "cross-env E2E_HEADLESS=true node tests/daily-operation.e2e.mjs"
+  },
+  "dependencies": {
+    "selenium-webdriver": "^4.0.0"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3"
+  }
+}

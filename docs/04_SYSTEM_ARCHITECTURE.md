@@ -1,5 +1,9 @@
 # 4. System Architecture
 
+## Phase 5A quotation architecture
+
+The quotation module owns templates, aggregates, transitions and snapshots. `common.numbering` allocates document numbers. The calculation service is authoritative. PDF rendering uses Thymeleaf and OpenHTMLtoPDF against stored snapshots, not mutable item names.
+
 ## 4.1 Architecture Decision
 
 Use a modular monolith.

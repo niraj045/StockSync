@@ -13,8 +13,6 @@ import {
   TagsOutlined,
   ToolOutlined,
   FormOutlined,
-  SolutionOutlined,
-  ShoppingCartOutlined,
   ImportOutlined,
 } from '@ant-design/icons';
 import { Layout, Menu, Typography, Dropdown, Avatar } from 'antd';
@@ -47,8 +45,7 @@ export function AppLayout() {
     { key: '/inventory', icon: <AppstoreOutlined />, label: 'Inventory' },
     { key: '/opening-stock-imports', icon: <ImportOutlined />, label: 'Opening Stock Import' },
     { key: '/quotations', icon: <FormOutlined />, label: 'Quotations' },
-    { key: '/agreements', icon: <SolutionOutlined />, label: 'Agreements' },
-    { key: '/orders', icon: <ShoppingCartOutlined />, label: 'Orders' },
+    { key: '/quotation-templates', icon: <FileTextOutlined />, label: 'Quotation Templates' },
     { key: '/reports', icon: <FileTextOutlined />, label: 'Reports', disabled: true },
   ];
 

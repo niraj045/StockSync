@@ -1,5 +1,9 @@
 # 3. Functional Scope
 
+## Phase 5A boundary
+
+Included: quotation templates, draft authoring, calculations, send/approve/reject/cancel, clone, filters and PDF. Agreements, agreement templates, site orders, challans, reservations, invoices, payments and reporting are excluded. Prototype agreement/order navigation is hidden until those phases.
+
 ## 3.1 Authentication and Users
 
 ### Features

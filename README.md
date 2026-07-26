@@ -1,5 +1,11 @@
 # Shuttering Inventory Management System
 
+## Phase 5A quotation verification
+
+With MySQL and the backend running, open `http://localhost:5173/quotation-templates` as ADMIN, create an active template, then open `http://localhost:5173/quotations`. Draft numbers are assigned on creation as `QT/2026-27/0001`. Quotations never reserve or change stock. See `docs/16_PHASE_5A_QUOTATIONS.md`.
+
+Phase 5A hardening persists party, site, and item display snapshots so finalized PDFs are not changed by later master-data edits. The canonical read-only finance authority is `ROLE_ACCOUNTS`.
+
 This repository documentation defines the product, requirements, architecture, development standards, deployment model, and implementation roadmap for a shuttering inventory management web application.
 
 The system is intended for a shuttering-material business that needs to manage inventory, sites, parties, agreements, issued and received challans, rental billing, payments, GST reports, and operational reports.
@@ -103,6 +109,30 @@ docker compose down
 
 ## Local Development without Containers
 
+For a one-command Windows setup, open Git Bash in the repository root and run:
+
+```bash
+./start.sh
+```
+
+The launcher initializes a project-local MySQL 8.4 database when needed, starts the backend on
+port `8081`, starts Vite on port `5173`, applies Flyway migrations, and creates a local ADMIN
+account only when it does not already exist. It prints the application, Workbench, and login
+credentials after all health checks pass.
+
+```bash
+./start.sh --status
+./start.sh --stop
+```
+
+Its local data and logs are in ignored `.mysql-stocksync-dev-data/` and `.stocksync-runtime/`
+directories. Override the development defaults with `STOCKSYNC_DB_PASSWORD`,
+`STOCKSYNC_MYSQL_ROOT_PASSWORD`, `STOCKSYNC_ADMIN_PASSWORD`, and a matching BCrypt
+`STOCKSYNC_ADMIN_PASSWORD_HASH` before the first start.
+
+A separate, non-destructive Selenium client-story test is available under `e2e/`.
+See `e2e/README.md` for visible and headless browser commands.
+
 Backend prerequisites are Java 21 and MySQL 8.4. Maven does not need to be installed globally because the repository includes the Maven Wrapper. Create the database and credentials matching `backend/src/main/resources/application-local.yml`, or override them with `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD`.
 
 ```bash
@@ -125,7 +155,8 @@ npm install
 npm run dev
 ```
 
-Vite serves the frontend at `http://localhost:5173` and proxies `/api` to the backend at `http://localhost:8080`.
+The local profile serves the backend at `http://localhost:8081`. Vite serves the frontend at
+`http://localhost:5173` and proxies `/api` to the backend at `http://localhost:8081`.
 
 After signing in, master data is available from the sidebar and inventory is available at
 `http://localhost:5173/inventory`. Administrators can maintain master data. Administrators and
@@ -153,7 +184,7 @@ can upload agreement templates or terminate an active agreement. Agreement templ
 or PDF files up to 10 MB. PDF templates are retained as references while StockSync generates the
 operational agreement as DOCX.
 
-If port 8080 is occupied and the backend is started on another port, override the development proxy target:
+To use a different local backend port, override the development proxy target:
 
 ```powershell
 $env:VITE_API_PROXY_TARGET = 'http://localhost:8081'

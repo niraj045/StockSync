@@ -5,8 +5,17 @@ import java.math.BigDecimal;
 import java.time.*;
 import java.util.List;
 
-public record QuotationResponse(Long id,String quotationNumber,Long partyId,String partyName,Long siteId,String siteName,
-        LocalDate quotationDate,LocalDate validUntil,RentalType rentalType,QuotationStatus status,
-        BigDecimal transportCharge,BigDecimal loadingCharge,BigDecimal unloadingCharge,BigDecimal taxRate,
-        BigDecimal subtotal,BigDecimal taxAmount,BigDecimal grandTotal,String terms,String notes,
-        List<QuotationItemResponse> items,Long version,Instant createdAt,Instant updatedAt) {}
+public record QuotationResponse(
+        Long id,String quotationNumber,Long quotationTemplateId,String quotationTemplateName,
+        String templateCompanyName,String templateCompanyAddress,String templateCompanyGstin,
+        String templateHeaderText,String templateFooterText,
+        Long partyId,String partyName,Long siteId,String siteName,LocalDate quotationDate,LocalDate validUntil,
+        RentalType rentalType,QuotationStatus status,BigDecimal subtotal,DiscountType discountType,
+        BigDecimal discountValue,BigDecimal discountAmount,BigDecimal taxableAmount,
+        BigDecimal cgstRate,BigDecimal cgstAmount,BigDecimal sgstRate,BigDecimal sgstAmount,
+        BigDecimal igstRate,BigDecimal igstAmount,BigDecimal totalTax,
+        BigDecimal transportCharge,BigDecimal loadingCharge,BigDecimal unloadingCharge,BigDecimal otherCharge,
+        BigDecimal roundOff,BigDecimal grandTotal,BigDecimal securityDeposit,String terms,String notes,
+        String rejectionReason,Instant sentAt,String sentBy,Instant approvedAt,String approvedBy,
+        Instant rejectedAt,String rejectedBy,Instant cancelledAt,String cancelledBy,String cancellationReason,
+        List<QuotationItemResponse> items,long version,Instant createdAt,String createdBy,Instant updatedAt,String updatedBy) {}
