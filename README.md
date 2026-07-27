@@ -44,6 +44,8 @@ The system is intended for a shuttering-material business that needs to manage i
 17. [Phase 7 Rental Billing and Invoices](docs/22_PHASE_7_RENTAL_BILLING_AND_INVOICES.md)
 18. [Phase 8 Payments, TDS, Deposits, and Outstanding](docs/23_PHASE_8_PAYMENTS_TDS_DEPOSITS_OUTSTANDING.md)
 19. [Phase 9 Reports, GST Exports, and Analytics](docs/24_PHASE_9_REPORTS_GST_ANALYTICS.md)
+20. [Phase 10 Operational Dashboard and Local Scale Validation](docs/25_PHASE_10_DASHBOARD_AND_LOCAL_SCALE_VALIDATION.md)
+21. [Tomorrow Handoff](docs/26_TOMORROW_HANDOFF.md)
 
 ## Important Product Decision
 

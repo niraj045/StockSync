@@ -256,3 +256,19 @@ Phase 9 reporting APIs are rooted at `/api/v1/reports`.
 Report types are fixed server-side constants. Requests may provide typed filters
 such as date range, party, site, agreement, item, status, document number, user,
 month, page, and size.
+
+## 8.15 Phase 10 Dashboard API
+
+The operational dashboard uses a single read-only endpoint:
+
+```text
+GET /api/v1/dashboard/overview
+```
+
+Supported filters are `partyId`, `siteId`, `categoryId`, `dateFrom`, and
+`dateTo`. The response is structured into stock, movement, order, challan,
+agreement, billing, payment, exception, attention, chart, recent document,
+recent activity, and quick-action sections.
+
+The controller delegates to the dashboard read-model service. It does not access
+repositories directly and does not modify business data.

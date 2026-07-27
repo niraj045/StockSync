@@ -6,9 +6,9 @@ import { LoginPage } from '../../features/auth/pages/LoginPage';
 import { ProtectedRoute } from '../../features/auth/components/ProtectedRoute';
 import { UnauthorizedPage } from '../../features/auth/pages/UnauthorizedPage';
 import { ChangePasswordPage } from '../../features/auth/pages/ChangePasswordPage';
-import { DashboardPage } from '../../features/dashboard/pages/DashboardPage';
 import { NotFoundPage } from '../../pages/NotFoundPage';
 
+const DashboardPage = lazy(() => import('../../features/dashboard/pages/DashboardPage').then((module) => ({ default: module.DashboardPage })));
 const UserListPage = lazy(() => import('../../features/users/pages/UserListPage').then((module) => ({ default: module.UserListPage })));
 const AuditLogPage = lazy(() => import('../../features/audit/pages/AuditLogPage').then((module) => ({ default: module.AuditLogPage })));
 const MasterDataPage = lazy(() => import('../../features/masterdata/pages/MasterDataPage').then((module) => ({ default: module.MasterDataPage })));
@@ -49,7 +49,7 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <DashboardPage />,
+        element: deferred(<DashboardPage />),
       },
       {
         path: 'change-password',

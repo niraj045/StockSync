@@ -127,6 +127,14 @@ invoices, payment receipts, TDS certificates, and security-deposit transactions.
 GST reporting is preparation-only and stores export mappings, not GST portal
 credentials or filing state.
 
+### Phase 10 Dashboard Read Model
+
+The dashboard does not introduce duplicated stock, invoice, payment, or
+outstanding state. It reads existing operational tables with aggregate SQL and
+adds only query-support indexes in `V18__dashboard_scale_validation_indexes.sql`.
+Synthetic scale data is generated only through the local `local-scale` profile
+and must use a separate local database.
+
 ## 5.3 Stock Ledger Model
 
 `stock_transactions` is the permanent source of stock movement history.
