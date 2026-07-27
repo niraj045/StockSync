@@ -52,6 +52,8 @@ class Phase6AIntegrationTest extends BaseIntegrationTest {
     @BeforeEach
     void setup() {
         jdbc.update("UPDATE stock_import_rows SET posted_stock_transaction_id=NULL");
+        jdbc.update("DELETE FROM receiving_challan_items");
+        jdbc.update("DELETE FROM receiving_challans");
         jdbc.update("DELETE FROM issued_challan_items");
         jdbc.update("DELETE FROM issued_challans");
         jdbc.update("DELETE FROM site_order_items");

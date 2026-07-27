@@ -48,6 +48,7 @@ export function AppLayout() {
     { key: '/agreements', icon: <FileTextOutlined />, label: 'Agreements' },
     { key: '/orders', icon: <FileTextOutlined />, label: 'Site Orders' },
     { key: '/challans/issued', icon: <FileTextOutlined />, label: 'Issued Challans' },
+    { key: '/challans/receiving', icon: <FileTextOutlined />, label: 'Receiving Challans' },
     { key: '/quotation-templates', icon: <FileTextOutlined />, label: 'Quotation Templates' },
     { key: '/reports', icon: <FileTextOutlined />, label: 'Reports', disabled: true },
   ];

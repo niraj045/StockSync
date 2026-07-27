@@ -20,6 +20,7 @@ const QuotationsPage = lazy(() => import('../../features/quotation/pages/Quotati
 const AgreementsPage = lazy(() => import('../../features/agreement/pages/AgreementsPage').then((module) => ({ default: module.AgreementsPage })));
 const SiteOrdersPage = lazy(() => import('../../features/order/pages/SiteOrdersPage').then((module) => ({ default: module.SiteOrdersPage })));
 const IssuedChallansPage = lazy(() => import('../../features/challan/pages/IssuedChallansPage').then((module) => ({ default: module.IssuedChallansPage })));
+const ReceivingChallansPage = lazy(() => import('../../features/challan/pages/ReceivingChallansPage').then((module) => ({ default: module.ReceivingChallansPage })));
 const deferred = (element: React.ReactNode) => <Suspense fallback={<Spin fullscreen />}>{element}</Suspense>;
 
 export const router = createBrowserRouter([
@@ -78,6 +79,7 @@ export const router = createBrowserRouter([
       { path: 'agreements', element: deferred(<AgreementsPage />) },
       { path: 'orders', element: deferred(<SiteOrdersPage />) },
       { path: 'challans/issued', element: deferred(<IssuedChallansPage />) },
+      { path: 'challans/receiving', element: deferred(<ReceivingChallansPage />) },
     ],
   },
   {

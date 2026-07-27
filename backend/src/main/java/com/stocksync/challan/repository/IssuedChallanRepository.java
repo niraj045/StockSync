@@ -13,4 +13,6 @@ public interface IssuedChallanRepository extends JpaRepository<IssuedChallan, Lo
 
     @Query("SELECT c FROM IssuedChallan c JOIN FETCH c.siteOrder o JOIN FETCH o.agreement a WHERE c.challanNumber LIKE :search OR o.orderNumber LIKE :search")
     Page<IssuedChallan> search(@Param("search") String search, Pageable pageable);
+
+    java.util.List<IssuedChallan> findBySiteOrderSiteId(Long siteId);
 }

@@ -1,0 +1,37 @@
+package com.stocksync.challan.dto;
+
+import java.time.LocalDate;
+import java.time.Instant;
+import java.util.List;
+
+public record ReceivingChallanResponse(
+    Long id,
+    String receivingChallanNumber,
+    Long agreementId,
+    String agreementNumber,
+    Long partyId,
+    String partyName,
+    Long siteId,
+    String siteName,
+    Long linkedIssuedChallanId,
+    String linkedIssuedChallanNumber,
+    LocalDate receiveDate,
+    String status,
+    String vehicleNumber,
+    String driverName,
+    String driverPhone,
+    Long transporterId,
+    String sourceType,
+    String notes,
+    Instant postedAt,
+    String postedBy,
+    Instant cancelledAt,
+    String cancelledBy,
+    String cancellationReason,
+    long version,
+    Instant createdAt,
+    String createdBy,
+    Instant updatedAt,
+    String updatedBy,
+    List<ReceivingChallanItemResponse> items
+) {}

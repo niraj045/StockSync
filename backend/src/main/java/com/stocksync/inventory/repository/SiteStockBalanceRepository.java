@@ -12,4 +12,6 @@ public interface SiteStockBalanceRepository extends JpaRepository<SiteStockBalan
     Optional<SiteStockBalance> findForUpdate(@Param("siteId") Long siteId, @Param("itemId") Long itemId);
 
     Optional<SiteStockBalance> findBySiteIdAndItemId(Long siteId, Long itemId);
+
+    java.util.List<SiteStockBalance> findBySiteIdAndPendingQuantityGreaterThan(Long siteId, java.math.BigDecimal pendingQuantity);
 }
