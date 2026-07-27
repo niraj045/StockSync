@@ -15,6 +15,7 @@ import com.stocksync.common.numbering.DocumentNumberService;
 import com.stocksync.common.numbering.DocumentType;
 import com.stocksync.inventory.entity.*;
 import com.stocksync.inventory.repository.*;
+import com.stocksync.exception.service.*;
 import com.stocksync.party.entity.Party;
 import com.stocksync.party.repository.PartyRepository;
 import com.stocksync.site.entity.Site;
@@ -52,6 +53,9 @@ public class ReceivingChallanService {
     private final SiteRepository sites;
     private final JdbcTemplate jdbc;
     private final jakarta.persistence.EntityManager em;
+    private final StockLossService lossService;
+    private final StockDamageService damageService;
+    private final ItemExchangeService exchangeService;
 
     public ReceivingChallanService(
             ReceivingChallanRepository challans,
@@ -68,7 +72,10 @@ public class ReceivingChallanService {
             PartyRepository parties,
             SiteRepository sites,
             JdbcTemplate jdbc,
-            jakarta.persistence.EntityManager em) {
+            jakarta.persistence.EntityManager em,
+            StockLossService lossService,
+            StockDamageService damageService,
+            ItemExchangeService exchangeService) {
         this.challans = challans;
         this.challanItems = challanItems;
         this.issuedChallans = issuedChallans;
@@ -84,6 +91,9 @@ public class ReceivingChallanService {
         this.sites = sites;
         this.jdbc = jdbc;
         this.em = em;
+        this.lossService = lossService;
+        this.damageService = damageService;
+        this.exchangeService = exchangeService;
     }
 
     @Transactional(readOnly = true)
@@ -339,6 +349,19 @@ public class ReceivingChallanService {
             }
         }
 
+        // Auto-create exceptions and exchange records
+        for (var line : c.getItems()) {
+            if (line.getLostQuantity().compareTo(BigDecimal.ZERO) > 0) {
+                lossService.createReceivingLinked(c, line, http);
+            }
+            if (line.getDamagedReturnedQuantity().compareTo(BigDecimal.ZERO) > 0) {
+                damageService.createReceivingLinked(c, line, http);
+            }
+            if (line.getExchangedFromItem() != null && line.getExchangedToItem() != null && line.getExchangedQuantity().compareTo(BigDecimal.ZERO) > 0) {
+                exchangeService.createReceivingLinked(c, line, http);
+            }
+        }
+
         c.setStatus(ReceivingStatus.POSTED);
         c.setPostedAt(Instant.now());
         c.setPostedBy(actor);
@@ -425,6 +448,19 @@ public class ReceivingChallanService {
 
                 postLedger(toItem, "REVERSAL", c.getReceiveDate(), qty, "IN", "AVAILABLE", c.getId(), c.getSite(), c.getParty(), actor);
                 postLedger(toItem, "REVERSAL", c.getReceiveDate(), qty, "OUT", "PENDING_SITE", c.getId(), c.getSite(), c.getParty(), actor);
+            }
+        }
+
+        // Revert linked exceptions and exchanges
+        for (var line : c.getItems()) {
+            if (line.getLostQuantity().compareTo(BigDecimal.ZERO) > 0) {
+                lossService.reverseReceivingLinked(line.getId(), reason, http);
+            }
+            if (line.getDamagedReturnedQuantity().compareTo(BigDecimal.ZERO) > 0) {
+                damageService.reverseReceivingLinked(line.getId(), reason, http);
+            }
+            if (line.getExchangedFromItem() != null && line.getExchangedToItem() != null && line.getExchangedQuantity().compareTo(BigDecimal.ZERO) > 0) {
+                exchangeService.reverseReceivingLinked(line.getId(), reason, http);
             }
         }
 

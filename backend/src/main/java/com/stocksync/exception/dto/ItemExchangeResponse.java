@@ -1,0 +1,44 @@
+package com.stocksync.exception.dto;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
+
+public record ItemExchangeResponse(
+    Long id,
+    String exchangeNumber,
+    String sourceType,
+    Long sourceReceivingChallanId,
+    String sourceReceivingChallanNumber,
+    Long sourceReceivingChallanItemId,
+    Long agreementId,
+    String agreementNumber,
+    Long partyId,
+    String partyName,
+    Long siteId,
+    String siteName,
+    Long expectedItemId,
+    String expectedItemCode,
+    String expectedItemName,
+    Long actualItemId,
+    String actualItemCode,
+    String actualItemName,
+    LocalDate exchangeDate,
+    BigDecimal expectedQuantity,
+    BigDecimal actualQuantity,
+    BigDecimal expectedWeight,
+    BigDecimal actualWeight,
+    String destinationStockStatus,
+    String reason,
+    String status,
+    Instant postedAt,
+    String postedBy,
+    Instant cancelledAt,
+    String cancelledBy,
+    String cancellationReason,
+    Instant createdAt,
+    String createdBy,
+    Instant updatedAt,
+    String updatedBy,
+    long version
+) {}

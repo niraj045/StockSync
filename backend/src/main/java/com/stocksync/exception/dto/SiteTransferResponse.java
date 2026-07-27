@@ -1,0 +1,40 @@
+package com.stocksync.exception.dto;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.List;
+
+public record SiteTransferResponse(
+    Long id,
+    String transferNumber,
+    Long sourceAgreementId,
+    String sourceAgreementNumber,
+    Long destinationAgreementId,
+    String destinationAgreementNumber,
+    Long sourcePartyId,
+    String sourcePartyName,
+    Long sourceSiteId,
+    String sourceSiteName,
+    Long destinationPartyId,
+    String destinationPartyName,
+    Long destinationSiteId,
+    String destinationSiteName,
+    LocalDate transferDate,
+    String status,
+    String vehicleNumber,
+    String driverName,
+    String driverPhone,
+    Long transporterId,
+    String notes,
+    Instant postedAt,
+    String postedBy,
+    Instant cancelledAt,
+    String cancelledBy,
+    String cancellationReason,
+    List<SiteTransferItemResponse> items,
+    Instant createdAt,
+    String createdBy,
+    Instant updatedAt,
+    String updatedBy,
+    long version
+) {}

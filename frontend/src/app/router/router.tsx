@@ -21,6 +21,10 @@ const AgreementsPage = lazy(() => import('../../features/agreement/pages/Agreeme
 const SiteOrdersPage = lazy(() => import('../../features/order/pages/SiteOrdersPage').then((module) => ({ default: module.SiteOrdersPage })));
 const IssuedChallansPage = lazy(() => import('../../features/challan/pages/IssuedChallansPage').then((module) => ({ default: module.IssuedChallansPage })));
 const ReceivingChallansPage = lazy(() => import('../../features/challan/pages/ReceivingChallansPage').then((module) => ({ default: module.ReceivingChallansPage })));
+const StockLossesPage = lazy(() => import('../../features/exception/pages/StockLossesPage').then((module) => ({ default: module.StockLossesPage })));
+const StockDamagesPage = lazy(() => import('../../features/exception/pages/StockDamagesPage').then((module) => ({ default: module.StockDamagesPage })));
+const ItemExchangesPage = lazy(() => import('../../features/exception/pages/ItemExchangesPage').then((module) => ({ default: module.ItemExchangesPage })));
+const SiteTransfersPage = lazy(() => import('../../features/exception/pages/SiteTransfersPage').then((module) => ({ default: module.SiteTransfersPage })));
 const deferred = (element: React.ReactNode) => <Suspense fallback={<Spin fullscreen />}>{element}</Suspense>;
 
 export const router = createBrowserRouter([
@@ -80,6 +84,10 @@ export const router = createBrowserRouter([
       { path: 'orders', element: deferred(<SiteOrdersPage />) },
       { path: 'challans/issued', element: deferred(<IssuedChallansPage />) },
       { path: 'challans/receiving', element: deferred(<ReceivingChallansPage />) },
+      { path: 'stock-losses', element: deferred(<StockLossesPage />) },
+      { path: 'stock-damages', element: deferred(<StockDamagesPage />) },
+      { path: 'item-exchanges', element: deferred(<ItemExchangesPage />) },
+      { path: 'site-transfers', element: deferred(<SiteTransfersPage />) },
     ],
   },
   {
