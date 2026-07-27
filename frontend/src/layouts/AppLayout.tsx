@@ -14,6 +14,10 @@ import {
   ToolOutlined,
   FormOutlined,
   ImportOutlined,
+  CreditCardOutlined,
+  SafetyCertificateOutlined,
+  CalculatorOutlined,
+  BarChartOutlined,
 } from '@ant-design/icons';
 import { Layout, Menu, Typography, Dropdown, Avatar, Tooltip } from 'antd';
 import { useState } from 'react';
@@ -46,15 +50,27 @@ export function AppLayout() {
     { key: '/opening-stock-imports', icon: <ImportOutlined />, label: <Tooltip placement="right" title="Opening Stock Import"><span>Opening Stock Import</span></Tooltip> },
     { key: '/quotations', icon: <FormOutlined />, label: 'Quotations' },
     { key: '/agreements', icon: <FileTextOutlined />, label: 'Agreements' },
+    { key: '/billing-runs', icon: <FileTextOutlined />, label: 'Billing Runs' },
+    { key: '/invoices', icon: <FileTextOutlined />, label: 'Invoices' },
+    { key: '/payments', icon: <CreditCardOutlined />, label: 'Payments' },
+    { key: '/security-deposits', icon: <SafetyCertificateOutlined />, label: 'Security Deposits' },
+    { key: '/outstanding', icon: <CalculatorOutlined />, label: 'Outstanding' },
+    { key: '/orders', icon: <FileTextOutlined />, label: 'Site Orders' },
+    { key: '/challans/issued', icon: <FileTextOutlined />, label: 'Issued Challans' },
+    { key: '/challans/receiving', icon: <FileTextOutlined />, label: 'Receiving Challans' },
+    { key: '/stock-losses', icon: <FileTextOutlined />, label: 'Stock Losses' },
+    { key: '/stock-damages', icon: <FileTextOutlined />, label: 'Stock Damages' },
+    { key: '/item-exchanges', icon: <FileTextOutlined />, label: 'Item Exchanges' },
+    { key: '/site-transfers', icon: <FileTextOutlined />, label: 'Site Transfers' },
     { key: '/quotation-templates', icon: <FileTextOutlined />, label: 'Quotation Templates' },
-    { key: '/reports', icon: <FileTextOutlined />, label: 'Reports', disabled: true },
+    { key: '/reports', icon: <BarChartOutlined />, label: 'Reports' },
   ];
 
   // If user is Admin, add user management and audit logs links
   if (user?.roles.includes('ROLE_ADMIN')) {
     navigationItems.push(
-      { key: '/users', icon: <TeamOutlined />, label: 'User Management', disabled: false },
-      { key: '/audit-logs', icon: <HistoryOutlined />, label: 'Audit Logs', disabled: false }
+      { key: '/users', icon: <TeamOutlined />, label: 'User Management' },
+      { key: '/audit-logs', icon: <HistoryOutlined />, label: 'Audit Logs' }
     );
   }
 

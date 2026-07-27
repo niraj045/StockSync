@@ -4,6 +4,7 @@ import com.stocksync.quotation.entity.RentalType;
 import java.math.BigDecimal;
 import java.time.*;
 import java.util.List;
+
 public record AgreementResponse(
  Long id,String agreementNumber,Long sourceQuotationId,String sourceQuotationNumber,LocalDate sourceQuotationDate,
  Long partyId,String partyName,String partyTradeName,String partyGstin,String partyPan,String partyAddress,String partyState,String partyContact,
@@ -17,4 +18,5 @@ public record AgreementResponse(
  Long generatedDocumentAttachmentId,String generatedFilename,Instant generatedAt,Instant readyForReviewAt,String readyForReviewBy,
  Instant activatedAt,String activatedBy,String terminationReason,Instant terminatedAt,String terminatedBy,
  String cancellationReason,Instant cancelledAt,String cancelledBy,List<AgreementItemResponse> items,
+ String billingStartRule,String billingEndRule,
  long version,Instant createdAt,String createdBy,Instant updatedAt,String updatedBy){}

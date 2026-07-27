@@ -1,0 +1,13 @@
+<!DOCTYPE html><html xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"/>
+<style>body{font-family:sans-serif;color:#17312d;font-size:11px}h1{color:#087f72}table{border-collapse:collapse;width:100%;margin:12px 0}th,td{border:1px solid #ccd8d5;padding:6px}th{background:#eef5f3}.right{text-align:right}.sign{margin-top:50px}</style></head><body>
+<h1>StockSync — Issued Challan</h1>
+<p><b>Challan Number:</b> <span th:text="${c.challanNumber}"></span> &#160; <b>Order Number:</b> <span th:text="${c.siteOrderNumber}"></span> &#160; <b>Dispatch Date:</b> <span th:text="${c.dispatchDate}"></span></p>
+<table><tr><td><b>Party</b><br/><span th:text="${c.partyName}"></span></td>
+<td><b>Site</b><br/><span th:text="${c.siteName}"></span></td>
+<td><b>Vehicle Number</b><br/><span th:text="${c.vehicleNumber ?: '-'}"></span></td>
+<td><b>Driver Name</b><br/><span th:text="${c.driverName ?: '-'}"></span></td></tr></table>
+<table><thead><tr><th>#</th><th>Code</th><th>Item</th><th>Unit</th><th class="right">Dispatched Quantity</th></tr></thead>
+<tbody><tr th:each="i,stat:${c.items}"><td th:text="${stat.index + 1}"></td><td th:text="${i.itemCode}"></td><td th:text="${i.itemName}"></td><td th:text="${i.unit}"></td><td class="right" th:text="${i.quantity}"></td></tr></tbody></table>
+<p><b>Notes</b><br/><span th:text="${c.notes ?: '-'}"></span></p>
+<table class="sign"><tr><td>For StockSync<br/><br/><br/>Authorised signatory</td><td>For Party<br/><br/><br/>Received By</td></tr></table>
+</body></html>

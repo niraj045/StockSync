@@ -5,8 +5,10 @@ import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+
 public record AgreementRequest(
  @NotNull LocalDate agreementDate,@NotNull LocalDate effectiveDate,LocalDate expiryDate,@NotNull BillingCycle billingCycle,
  @Positive Integer customBillingCycleDays,@PositiveOrZero Integer gracePeriodDays,@PositiveOrZero Integer minimumBillingDays,
  @NotNull @DecimalMin("0") BigDecimal securityDeposit,@Size(max=4000) String terms,@Size(max=1000) String notes,
- @NotEmpty List<@Valid AgreementItemRequest> items,@NotNull Long version){}
+ @NotEmpty List<@Valid AgreementItemRequest> items,@NotNull Long version,
+ String billingStartRule,String billingEndRule){}

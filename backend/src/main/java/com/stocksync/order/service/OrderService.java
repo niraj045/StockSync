@@ -18,6 +18,7 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.stocksync.common.numbering.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -29,9 +30,10 @@ import java.util.stream.Collectors;
 public class OrderService{
     private final SiteOrderRepository orders;private final SiteOrderItemRepository orderItems;private final AgreementAccess agreementAccess;
     private final AgreementRepository agreementEntities;private final ItemRepository items;private final UserRepository users;private final UserActivityLogService audit;
+    private final DocumentNumberService numbers;
     public OrderService(SiteOrderRepository orders,SiteOrderItemRepository orderItems,AgreementAccess agreementAccess,AgreementRepository agreementEntities,
-        ItemRepository items,UserRepository users,UserActivityLogService audit){this.orders=orders;this.orderItems=orderItems;this.agreementAccess=agreementAccess;
-        this.agreementEntities=agreementEntities;this.items=items;this.users=users;this.audit=audit;}
+        ItemRepository items,UserRepository users,UserActivityLogService audit,DocumentNumberService numbers){this.orders=orders;this.orderItems=orderItems;this.agreementAccess=agreementAccess;
+        this.agreementEntities=agreementEntities;this.items=items;this.users=users;this.audit=audit;this.numbers=numbers;}
     @Transactional(readOnly=true)public Page<OrderResponse>list(String search,OrderStatus status,Long agreementId,Long siteId,Pageable pageable){
         return orders.findAll((root,q,cb)->{List<Predicate>p=new ArrayList<>();if(search!=null&&!search.isBlank()){String t="%"+search.trim().toLowerCase(Locale.ROOT)+"%";
             p.add(cb.or(cb.like(cb.lower(root.get("orderNumber")),t),cb.like(cb.lower(root.get("party").get("legalName")),t),cb.like(cb.lower(root.get("site").get("siteName")),t)));}
@@ -39,7 +41,7 @@ public class OrderService{
             if(siteId!=null)p.add(cb.equal(root.get("site").get("id"),siteId));return cb.and(p.toArray(Predicate[]::new));},pageable).map(this::response);}
     @Transactional(readOnly=true)public OrderResponse get(Long id){return response(detailed(id));}
     @Transactional public OrderResponse create(OrderRequest r,HttpServletRequest http){var agreement=agreementAccess.requireForOrder(r.agreementId());
-        SiteOrder o=new SiteOrder();o.setOrderNumber(number());o.setStatus(OrderStatus.DRAFT);apply(o,r,agreement);
+        SiteOrder o=new SiteOrder();o.setOrderNumber(numbers.next(DocumentType.SITE_ORDER, LocalDate.now()));o.setStatus(OrderStatus.DRAFT);apply(o,r,agreement);
         o.setCreatedBy(actor());o.setUpdatedBy(actor());SiteOrder saved=orders.save(o);log("ORDER_DRAFT_CREATED",saved,"Draft created",http);return response(saved);}
     @Transactional public OrderResponse update(Long id,OrderRequest r,HttpServletRequest http){SiteOrder o=detailed(id);requireDraft(o);
         if(r.version()==null||o.getVersion()!=r.version())throw new ObjectOptimisticLockingFailureException(SiteOrder.class,id);
@@ -71,7 +73,7 @@ public class OrderService{
         o.getParty().getId(),o.getParty().getLegalName(),o.getSite().getId(),o.getSite().getSiteName(),o.getOrderDate(),o.getStatus(),o.getNotes(),
         o.getItems().stream().map(i->new OrderItemResponse(i.getId(),i.getItem().getId(),i.getItem().getItemCode(),i.getItem().getItemName(),
             i.getItem().getUnit(),i.getOrderedQuantity(),i.getIssuedQuantity(),i.getRemainingQuantity(),i.getVersion())).toList(),o.getVersion(),o.getCreatedAt(),o.getUpdatedAt());}
-    private String number(){return "ORD-"+LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE)+"-"+UUID.randomUUID().toString().substring(0,8).toUpperCase(Locale.ROOT);}
+
     private String actor(){var a=SecurityContextHolder.getContext().getAuthentication();return a==null?"system":a.getName();}
     private String trim(String v){return v==null||v.isBlank()?null:v.trim();}
     private void log(String action,SiteOrder o,String description,HttpServletRequest req){User user=users.findByUsernameIgnoreCase(actor()).orElse(null);

@@ -94,9 +94,11 @@ Recommended audit columns:
 
 ### Payments and GST
 
-- payments
+- payment_receipts
 - payment_allocations
-- tds_entries
+- tds_details
+- security_deposit_transactions
+- deposit_invoice_allocations
 - gst_reports
 - eway_bill_records
 
@@ -115,6 +117,15 @@ Recommended audit columns:
 - file_attachments
 - generated_reports
 - report_jobs, only if asynchronous generation is added later
+
+### Phase 9 Reporting
+
+Phase 9 adds reporting metadata tables for saved filters, export history, and GST
+export configuration versions. Report data remains sourced from operational
+tables such as stock transactions, site stock balances, challans, billing runs,
+invoices, payment receipts, TDS certificates, and security-deposit transactions.
+GST reporting is preparation-only and stores export mappings, not GST portal
+credentials or filing state.
 
 ## 5.3 Stock Ledger Model
 
@@ -303,3 +314,22 @@ reversal.
 `OPENING_GODOWN_BALANCE` increases `AVAILABLE`; `OPENING_SITE_BALANCE` increases `ISSUED`.
 Total owned quantity is the sum of the relevant projected buckets. Reversal transactions point
 to their original ledger entries and never mutate or delete them.
+
+## 5.13 Phase 8 Payment Schema
+
+Flyway `V16__payments_tds_deposits_outstanding.sql` adds payment receipts, allocations, TDS
+details, security-deposit transactions, deposit invoice allocations, and cached invoice
+settlement totals.
+
+- `payment_receipts`: draft/posted/reversed receipt header with cash, TDS, total settlement,
+  unallocated advance, party/site snapshots, PDF attachment, and optimistic version.
+- `payment_allocations`: one receipt to many invoices, with separate cash and TDS allocated
+  amounts and a unique `(payment_receipt_id, invoice_id)` guard.
+- `tds_details`: certificate and verification information linked one-to-one to a receipt.
+- `security_deposit_transactions`: separate deposit receipt/refund/adjustment lifecycle with
+  agreement, party, site, and invoice references.
+- `deposit_invoice_allocations`: explicit deposit-to-invoice allocation records.
+
+`invoices` now stores `cash_allocated_total`, `tds_allocated_total`,
+`deposit_adjusted_total`, and `outstanding_amount`. These are maintained transactionally by the
+payment and deposit services and are not stock movements.

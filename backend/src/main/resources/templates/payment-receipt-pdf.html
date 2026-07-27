@@ -1,0 +1,56 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <style>
+    body { font-family: Arial, sans-serif; color: #1f2933; font-size: 12px; }
+    h1 { font-size: 22px; margin: 0 0 4px; }
+    h2 { font-size: 15px; margin: 22px 0 8px; border-bottom: 1px solid #d5dde5; padding-bottom: 5px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 7px; border: 1px solid #d5dde5; text-align: left; }
+    th { background: #eef3f1; }
+    .meta td { border: 0; padding: 4px 0; }
+    .amount { text-align: right; }
+    .split { display: table; width: 100%; margin-top: 12px; }
+    .cell { display: table-cell; width: 50%; vertical-align: top; }
+    .signature { margin-top: 50px; text-align: right; }
+  </style>
+</head>
+<body>
+  <h1>Payment Receipt</h1>
+  <table class="meta">
+    <tr><td><strong>Receipt number</strong></td><td th:text="${payment.receiptNumber}"></td><td><strong>Status</strong></td><td th:text="${payment.status}"></td></tr>
+    <tr><td><strong>Payment date</strong></td><td th:text="${payment.paymentDate}"></td><td><strong>Received by</strong></td><td th:text="${payment.postedBy}"></td></tr>
+    <tr><td><strong>Party</strong></td><td th:text="${payment.partyName}"></td><td><strong>Site</strong></td><td th:text="${payment.siteName ?: '-'}"></td></tr>
+    <tr><td><strong>Mode</strong></td><td th:text="${payment.paymentMode}"></td><td><strong>Reference</strong></td><td th:text="${payment.referenceNumber ?: '-'}"></td></tr>
+  </table>
+  <div class="split">
+    <div class="cell">
+      <h2>Settlement</h2>
+      <table>
+        <tr><th>Cash received</th><td class="amount" th:text="${payment.cashAmount}"></td></tr>
+        <tr><th>TDS deducted</th><td class="amount" th:text="${payment.tdsAmount}"></td></tr>
+        <tr><th>Total settlement</th><td class="amount" th:text="${payment.totalSettlementAmount}"></td></tr>
+        <tr><th>Unallocated advance</th><td class="amount" th:text="${payment.unallocatedAmount}"></td></tr>
+      </table>
+    </div>
+    <div class="cell">
+      <h2>Notes</h2>
+      <p th:text="${payment.notes ?: '-'}"></p>
+    </div>
+  </div>
+  <h2>Invoice Allocations</h2>
+  <table>
+    <thead><tr><th>Invoice</th><th class="amount">Cash</th><th class="amount">TDS</th><th class="amount">Total</th></tr></thead>
+    <tbody>
+      <tr th:each="a : ${payment.allocations}">
+        <td th:text="${a.invoiceNumber}"></td>
+        <td class="amount" th:text="${a.cashAllocated}"></td>
+        <td class="amount" th:text="${a.tdsAllocated}"></td>
+        <td class="amount" th:text="${a.totalAllocated}"></td>
+      </tr>
+      <tr th:if="${#lists.isEmpty(payment.allocations)}"><td colspan="4">No invoice allocations</td></tr>
+    </tbody>
+  </table>
+  <div class="signature">Authorized signature</div>
+</body>
+</html>

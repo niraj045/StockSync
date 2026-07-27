@@ -119,7 +119,31 @@ Status: Completed.
 - GST summary
 - PDF and Excel exports
 
-## Phase 8 — Production Readiness
+## Phase 8 — Payments, TDS, Security Deposits, and Outstanding
+
+Status: Completed.
+
+- Payment receipt drafts, posting, reversal, and receipt PDF
+- Partial and multi-invoice allocations
+- Advance/unallocated payment tracking and later allocation
+- TDS certificate details and verification status
+- Security-deposit receipts, refunds, explicit invoice adjustments, and reversals
+- Invoice, party, site, and agreement outstanding summaries
+- Role-aware backend APIs and frontend workspaces
+
+## Phase 9 - Reports, GST Exports, and Business Analytics
+
+Status: Completed.
+
+- Role-aware report centre
+- Inventory, site, party, operational, commercial, financial, and GST preparation reports
+- Saved filters
+- Export history
+- PDF, Excel, and CSV exports
+- GST sales register, tax summary, GSTR-1 preparation, and GSTR-3B summary
+- Report access controls and audit logging
+
+## Phase 10 - Production Readiness
 
 - Security review
 - Backup automation

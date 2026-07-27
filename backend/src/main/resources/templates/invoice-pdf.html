@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8"/>
+<style>
+    body { font-family: sans-serif; color: #17312d; font-size: 11px; margin: 20px; }
+    h1 { color: #087f72; margin: 0 0 5px 0; }
+    h2 { color: #087f72; margin: 15px 0 5px 0; border-bottom: 2px solid #087f72; padding-bottom: 5px; }
+    .company-info { margin-bottom: 15px; }
+    .meta-table, .totals-table { width: 100%; margin: 12px 0; border-collapse: collapse; }
+    .meta-table td { border: 1px solid #ccd8d5; padding: 8px; vertical-align: top; width: 33.33%; }
+    table.items-table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+    table.items-table th, table.items-table td { border: 1px solid #ccd8d5; padding: 6px; text-align: left; }
+    table.items-table th { background: #eef5f3; color: #087f72; font-weight: bold; }
+    .right { text-align: right; }
+    .footer { margin-top: 25px; color: #526763; font-size: 10px; border-top: 1px solid #ccd8d5; padding-top: 10px; }
+    .terms-notes { white-space: pre-wrap; margin-bottom: 10px; }
+    .totals-table td { padding: 4px 8px; border: none; }
+    .totals-wrapper { width: 40%; float: right; margin-top: 15px; border: 1px solid #ccd8d5; background: #fcfdfe; padding: 8px; }
+    .clearfix::after { content: ""; clear: both; display: table; }
+</style>
+</head>
+<body>
+
+<div class="company-info">
+    <h1 th:text="${inv.companyNameSnapshot}">StockSync</h1>
+    <div th:text="${inv.companyAddressSnapshot}">123 Godown Road, GIDC</div>
+    <div><strong>GSTIN:</strong> <span th:text="${inv.companyGstinSnapshot}">24AAAAA1111A1Z1</span></div>
+</div>
+
+<h2>TAX INVOICE</h2>
+
+<table class="meta-table">
+    <tr>
+        <td>
+            <strong>Invoice Details</strong><br/>
+            <strong>Invoice No:</strong> <span th:text="${inv.invoiceNumber}">INV-001</span><br/>
+            <strong>Date:</strong> <span th:text="${inv.invoiceDate}">2026-08-01</span><br/>
+            <strong>Due Date:</strong> <span th:text="${inv.dueDate}">2026-08-31</span><br/>
+            <strong>Billing Period:</strong> <span th:text="${inv.periodStart}">2026-07-01</span> to <span th:text="${inv.periodEnd}">2026-07-31</span>
+        </td>
+        <td>
+            <strong>Billed To (Client)</strong><br/>
+            <span th:text="${inv.partyNameSnapshot}">Client Legal Name</span><br/>
+            <span th:text="${inv.partyAddressSnapshot}">Client Address</span><br/>
+            <strong>State:</strong> <span th:text="${inv.partyStateSnapshot}">Gujarat</span><br/>
+            <strong>GSTIN:</strong> <span th:text="${inv.partyGstinSnapshot ?: '-'}">GSTIN</span>
+        </td>
+        <td>
+            <strong>Site Details</strong><br/>
+            <strong>Site Name:</strong> <span th:text="${inv.siteNameSnapshot}">Site Name</span><br/>
+            <strong>Site Code:</strong> <span th:text="${inv.siteCodeSnapshot}">Site Code</span><br/>
+            <span th:text="${inv.siteAddressSnapshot}">Site Address</span><br/>
+            <strong>Contact:</strong> <span th:text="${inv.siteContactSnapshot ?: '-'}">Site Contact</span>
+        </td>
+    </tr>
+</table>
+
+<table class="items-table">
+    <thead>
+        <tr>
+            <th style="width: 5%;">#</th>
+            <th style="width: 15%;">Type / Code</th>
+            <th style="width: 45%;">Description</th>
+            <th class="right" style="width: 10%;">Qty</th>
+            <th class="right" style="width: 10%;">Days</th>
+            <th class="right" style="width: 15%;">Rate</th>
+            <th class="right" style="width: 15%;">Amount</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr th:each="i : ${inv.items}">
+            <td th:text="${i.sequenceNumber}">1</td>
+            <td>
+                <span th:text="${i.lineType}">RENTAL</span><br/>
+                <small th:if="${i.itemCodeSnapshot != null}" th:text="${i.itemCodeSnapshot}"></small>
+            </td>
+            <td>
+                <span th:text="${i.description}">Rental charges for scaffolding</span>
+                <div th:if="${i.sizeSnapshot != null}" style="font-size: 9px; color: #526763; margin-top: 2px;">
+                    <strong>Size:</strong> <span th:text="${i.sizeSnapshot}"></span> | 
+                    <strong>Unit:</strong> <span th:text="${i.unitSnapshot}"></span>
+                </div>
+            </td>
+            <td class="right" th:text="${i.quantity}">10.00</td>
+            <td class="right" th:text="${i.billableDays != null ? i.billableDays : '-'}">30</td>
+            <td class="right" th:text="${i.rate}">5.00</td>
+            <td class="right" th:text="${i.amount}">1500.00</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="clearfix">
+    <div class="totals-wrapper">
+        <table class="totals-table">
+            <tr>
+                <td>Subtotal</td>
+                <td class="right" th:text="${inv.subtotal}">1500.00</td>
+            </tr>
+            <tr th:if="${inv.discountAmount.signum() > 0}">
+                <td>Discount</td>
+                <td class="right" th:text="${'-' + inv.discountAmount}">0.00</td>
+            </tr>
+            <tr>
+                <td>Taxable Value</td>
+                <td class="right" th:text="${inv.taxableAmount}">1500.00</td>
+            </tr>
+            <tr th:if="${inv.cgstAmount.signum() > 0}">
+                <td>CGST</td>
+                <td class="right" th:text="${inv.cgstAmount}">0.00</td>
+            </tr>
+            <tr th:if="${inv.sgstAmount.signum() > 0}">
+                <td>SGST</td>
+                <td class="right" th:text="${inv.sgstAmount}">0.00</td>
+            </tr>
+            <tr th:if="${inv.igstAmount.signum() > 0}">
+                <td>IGST</td>
+                <td class="right" th:text="${inv.igstAmount}">0.00</td>
+            </tr>
+            <tr>
+                <td>Total Tax</td>
+                <td class="right" th:text="${inv.totalTax}">0.00</td>
+            </tr>
+            <tr th:if="${inv.roundOff.signum() != 0}">
+                <td>Round Off</td>
+                <td class="right" th:text="${inv.roundOff}">0.00</td>
+            </tr>
+            <tr style="font-weight: bold; border-top: 1px solid #ccd8d5; font-size: 12px; color: #087f72;">
+                <td>Grand Total</td>
+                <td class="right" th:text="${inv.grandTotal}">1500.00</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div class="footer">
+    <div class="terms-notes" th:if="${inv.terms != null}">
+        <strong>Terms &amp; Conditions:</strong><br/>
+        <span th:text="${inv.terms}"></span>
+    </div>
+    <div class="terms-notes" th:if="${inv.notes != null}">
+        <strong>Notes:</strong><br/>
+        <span th:text="${inv.notes}"></span>
+    </div>
+    <div style="margin-top: 30px; text-align: right;">
+        <p style="margin-bottom: 40px;">For <span th:text="${inv.companyNameSnapshot}">StockSync</span></p>
+        <p>Authorized Signatory</p>
+    </div>
+</div>
+
+</body>
+</html>

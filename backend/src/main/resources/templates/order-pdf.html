@@ -1,0 +1,12 @@
+<!DOCTYPE html><html xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"/>
+<style>body{font-family:sans-serif;color:#17312d;font-size:11px}h1{color:#087f72}table{border-collapse:collapse;width:100%;margin:12px 0}th,td{border:1px solid #ccd8d5;padding:6px}th{background:#eef5f3}.right{text-align:right}.sign{margin-top:50px}</style></head><body>
+<h1>StockSync — Site Order</h1>
+<p><b>Order Number:</b> <span th:text="${o.orderNumber}"></span> &#160; <b>Agreement:</b> <span th:text="${o.agreementNumber}"></span> &#160; <b>Status:</b> <span th:text="${o.status}"></span></p>
+<table><tr><td><b>Party</b><br/><span th:text="${o.partyName}"></span></td>
+<td><b>Site</b><br/><span th:text="${o.siteName}"></span></td>
+<td><b>Order Date</b><br/><span th:text="${o.orderDate}"></span></td></tr></table>
+<table><thead><tr><th>#</th><th>Code</th><th>Item snapshot</th><th>Unit</th><th class="right">Ordered</th><th class="right">Issued</th><th class="right">Remaining</th></tr></thead>
+<tbody><tr th:each="i,stat:${o.items}"><td th:text="${stat.index + 1}"></td><td th:text="${i.itemCode}"></td><td th:text="${i.itemName}"></td><td th:text="${i.unit}"></td><td class="right" th:text="${i.orderedQuantity}"></td><td class="right" th:text="${i.issuedQuantity}"></td><td class="right" th:text="${i.remainingQuantity}"></td></tr></tbody></table>
+<p><b>Notes</b><br/><span th:text="${o.notes ?: '-'}"></span></p>
+<table class="sign"><tr><td>For StockSync<br/><br/><br/>Authorised signatory</td><td>For Party<br/><br/><br/>Authorised signatory</td></tr></table>
+</body></html>

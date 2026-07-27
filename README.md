@@ -41,6 +41,9 @@ The system is intended for a shuttering-material business that needs to manage i
 14. [Phase 4 Manual Testing](docs/14_PHASE_4_MANUAL_TESTING.md)
 15. [Phase 4.1 Opening Stock Import](docs/15_PHASE_4_1_OPENING_STOCK_IMPORT.md)
 16. [Codex Project Instructions](CODEX_PROJECT_INSTRUCTIONS.md)
+17. [Phase 7 Rental Billing and Invoices](docs/22_PHASE_7_RENTAL_BILLING_AND_INVOICES.md)
+18. [Phase 8 Payments, TDS, Deposits, and Outstanding](docs/23_PHASE_8_PAYMENTS_TDS_DEPOSITS_OUTSTANDING.md)
+19. [Phase 9 Reports, GST Exports, and Analytics](docs/24_PHASE_9_REPORTS_GST_ANALYTICS.md)
 
 ## Important Product Decision
 
@@ -61,7 +64,7 @@ The system should therefore be structured as independent internal modules but de
 
 ## Current Implementation
 
-Phases 1 through 4.1 are implemented:
+Phases 1 through 8 are implemented:
 
 - Foundation, deployment, session authentication, user administration, and immutable audit logging
 - Master data for categories, items, parties, sites, vendors, and entity-linked documents
@@ -70,8 +73,14 @@ Phases 1 through 4.1 are implemented:
 - Quotation drafting and approval, agreement conversion and DOCX generation, and site orders with agreement quantity controls
 - Controlled client opening-stock import with Apache POI parsing, explicit item and party/site mapping,
   dry-run reconciliation, immutable ledger posting, audit reporting, and safe reversal
+- Quotation drafting, agreement conversion, agreement rental configuration, site orders, issued challans,
+  receiving challans, stock exceptions, site transfers, rental billing runs, rental invoice generation,
+  invoice PDFs, source allocation checks, and snapshot-preserving invoice issue
+- Payment receipts, partial/multi-invoice allocations, advances, TDS certificate tracking,
+  security-deposit receipts/refunds/explicit invoice adjustments, receipt PDFs, reversals, and
+  invoice/party/site/agreement outstanding summaries
 
-Challans, rental billing, payments, GST, and reporting remain future phases.
+GST filing, accounting journals, bank reconciliation, credit notes, and final reporting remain future phases.
 
 ## Phase 5B Agreements
 
@@ -175,6 +184,12 @@ Phase 4 is available at:
 Phase 4.1 is available at:
 
 - `http://localhost:5173/opening-stock-imports`
+
+Phase 8 finance workspaces are available at:
+
+- `http://localhost:5173/payments`
+- `http://localhost:5173/security-deposits`
+- `http://localhost:5173/outstanding`
 
 The original and prepared client workbooks are retained under `client-data/original` and
 `client-data/prepared`. Upload either controlled workbook from **Inventory → Opening Stock

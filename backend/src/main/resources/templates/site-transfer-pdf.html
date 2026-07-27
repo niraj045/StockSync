@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <style>
+        body { font-family: sans-serif; color: #17312d; font-size: 11px; }
+        h1 { color: #087f72; margin-bottom: 5px; }
+        .meta-table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+        .meta-table td { border: 1px solid #ccd8d5; padding: 6px; width: 25%; vertical-align: top; }
+        .items-table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+        .items-table th, .items-table td { border: 1px solid #ccd8d5; padding: 6px; }
+        .items-table th { background: #eef5f3; text-align: left; }
+        .right { text-align: right; }
+        .sign-table { margin-top: 50px; width: 100%; }
+        .sign-table td { width: 33%; text-align: center; border: none; padding-top: 50px; }
+    </style>
+</head>
+<body>
+    <h1>StockSync — Site to Site Material Transfer</h1>
+    <p>
+        <b>Transfer Number:</b> <span th:text="${t.transferNumber}"></span> &#160;&#160;
+        <b>Transfer Date:</b> <span th:text="${t.transferDate}"></span> &#160;&#160;
+        <b>Status:</b> <span th:text="${t.status}"></span>
+    </p>
+
+    <table class="meta-table">
+        <tr>
+            <td>
+                <b>Source Agreement</b><br/>
+                No: <span th:text="${t.sourceAgreementNumber}"></span><br/>
+                Party: <span th:text="${t.sourcePartyName}"></span>
+            </td>
+            <td>
+                <b>Source Site</b><br/>
+                <span th:text="${t.sourceSiteName}"></span>
+            </td>
+            <td>
+                <b>Destination Agreement</b><br/>
+                No: <span th:text="${t.destinationAgreementNumber}"></span><br/>
+                Party: <span th:text="${t.destinationPartyName}"></span>
+            </td>
+            <td>
+                <b>Destination Site</b><br/>
+                <span th:text="${t.destinationSiteName}"></span>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <b>Vehicle Number</b><br/>
+                <span th:text="${t.vehicleNumber ?: '-'}"></span>
+            </td>
+            <td>
+                <b>Driver Name</b><br/>
+                <span th:text="${t.driverName ?: '-'}"></span>
+            </td>
+            <td>
+                <b>Driver Phone</b><br/>
+                <span th:text="${t.driverPhone ?: '-'}"></span>
+            </td>
+            <td>
+                <b>Prepared By</b><br/>
+                <span th:text="${t.createdBy}"></span>
+            </td>
+        </tr>
+    </table>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Code</th>
+                <th>Item</th>
+                <th>Size</th>
+                <th>Unit</th>
+                <th class="right">Quantity</th>
+                <th class="right">Total Weight (Kg)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="i,stat:${t.items}">
+                <td th:text="${stat.index + 1}"></td>
+                <td th:text="${i.itemCode}"></td>
+                <td th:text="${i.itemName}"></td>
+                <td th:text="${i.size ?: '-'}"></td>
+                <td th:text="${i.unit}"></td>
+                <td class="right" th:text="${i.quantity}"></td>
+                <td class="right" th:text="${i.totalWeight}"></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p><b>Notes:</b> <span th:text="${t.notes ?: '-'}"></span></p>
+
+    <table class="sign-table">
+        <tr>
+            <td>
+                _____________________________<br/>
+                Source Site Signatory
+            </td>
+            <td>
+                _____________________________<br/>
+                Destination Site Signatory
+            </td>
+            <td>
+                _____________________________<br/>
+                Transporter Signatory
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

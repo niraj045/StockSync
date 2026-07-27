@@ -8,4 +8,5 @@ public interface AgreementRepository extends JpaRepository<Agreement,Long>,JpaSp
     boolean existsByQuotationId(Long quotationId);
     Optional<Agreement> findByQuotationId(Long quotationId);
     boolean existsBySiteIdAndStatusAndIdNot(Long siteId,com.stocksync.agreement.entity.AgreementStatus status,Long id);
+    java.util.List<Agreement> findByStatus(com.stocksync.agreement.entity.AgreementStatus status);
 }

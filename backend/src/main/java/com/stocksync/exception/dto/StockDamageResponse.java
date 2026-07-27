@@ -1,0 +1,53 @@
+package com.stocksync.exception.dto;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
+
+public record StockDamageResponse(
+    Long id,
+    String damageNumber,
+    String sourceType,
+    Long sourceReceivingChallanId,
+    String sourceReceivingChallanNumber,
+    Long sourceReceivingChallanItemId,
+    Long agreementId,
+    String agreementNumber,
+    Long partyId,
+    String partyName,
+    Long siteId,
+    String siteName,
+    Long itemId,
+    String itemCode,
+    String itemName,
+    String unit,
+    LocalDate damageDate,
+    BigDecimal quantity,
+    BigDecimal weight,
+    boolean repairable,
+    String damageType,
+    String conditionNotes,
+    String chargeMethod,
+    BigDecimal damageRate,
+    BigDecimal calculatedDamageAmount,
+    BigDecimal estimatedRepairCost,
+    BigDecimal actualRepairCost,
+    Long attachmentId,
+    String status,
+    Instant recordedAt,
+    String recordedBy,
+    Instant repairStartedAt,
+    String repairStartedBy,
+    Instant repairedAt,
+    String repairedBy,
+    Instant scrappedAt,
+    String scrappedBy,
+    Instant reversedAt,
+    String reversedBy,
+    String reversalReason,
+    Instant createdAt,
+    String createdBy,
+    Instant updatedAt,
+    String updatedBy,
+    long version
+) {}

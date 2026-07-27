@@ -71,7 +71,8 @@ public class AgreementService implements AgreementAccess {
    i.setSourceQuotationItem(source);i.setItem(source.getItem());i.setItemCodeSnapshot(source.getItemCodeSnapshot());i.setItemNameSnapshot(source.getItemNameSnapshot());
    i.setDescriptionSnapshot(source.getDescriptionSnapshot());i.setSizeSnapshot(source.getSizeSnapshot());i.setUnitSnapshot(source.getUnitSnapshot());
    i.setWeightSnapshot(source.getWeight());i.setAgreedQuantity(source.getQuantity());i.setUnitRate(source.getUnitRate());
-   i.setRentalRate(source.getRentalRate());i.setRentalType(source.getRentalType());i.setSequence(source.getSequence());i.setNotes(source.getNotes());lines.add(i);
+   i.setRentalRate(source.getRentalRate());i.setRentalType(source.getRentalType());i.setSequence(source.getSequence());i.setNotes(source.getNotes());
+   i.setArea(source.getArea()); lines.add(i);
   }a.replaceItems(lines);a.setCreatedBy(actor());a.setUpdatedBy(actor());Agreement saved=agreements.save(a);q.setStatus(QuotationStatus.CONVERTED);
   log("AGREEMENT_CREATED_FROM_QUOTATION",saved,"Source quotation "+q.getQuotationNumber(),http);
   log("QUOTATION_CONVERTED_TO_AGREEMENT",saved,"Agreement "+saved.getAgreementNumber(),http);return response(saved);
@@ -82,13 +83,28 @@ public class AgreementService implements AgreementAccess {
   validate(r);a.setAgreementDate(r.agreementDate());a.setEffectiveDate(r.effectiveDate());a.setExpiryDate(r.expiryDate());a.setBillingCycle(r.billingCycle());
   a.setCustomBillingCycleDays(r.customBillingCycleDays());a.setGracePeriodDays(zero(r.gracePeriodDays()));a.setMinimumBillingDays(zero(r.minimumBillingDays()));
   a.setSecurityDeposit(r.securityDeposit());a.setTerms(trim(r.terms()));a.setNotes(trim(r.notes()));
+  if(r.billingStartRule()!=null)a.setBillingStartRule(BillingStartRule.valueOf(r.billingStartRule()));
+  if(r.billingEndRule()!=null)a.setBillingEndRule(BillingEndRule.valueOf(r.billingEndRule()));
   a.setGeneratedDocument(null);a.setGeneratedFilename(null);a.setGeneratedStoragePath(null);a.setGeneratedAt(null);
   Map<Long,AgreementItem> originals=new HashMap<>();for(AgreementItem i:a.getItems())originals.put(i.getItem().getId(),i);
   List<AgreementItem> lines=new ArrayList<>();Set<Long> unique=new HashSet<>();for(AgreementItemRequest v:r.items()){
    if(!unique.add(v.itemId()))throw error("DUPLICATE_ITEM_LINE","Each item may appear only once");
    AgreementItem i=originals.get(v.itemId());if(i==null)throw error("AGREEMENT_ITEM_NOT_FROM_QUOTATION","Agreement items must originate from the quotation");
    i.setAgreedQuantity(v.contractedQuantity());i.setUnitRate(v.rate());i.setRentalRate(v.rate());i.setAreaRate(v.areaRate());i.setWeightRate(v.weightRate());
-   i.setLossRatePerPiece(v.lossRatePerPiece());i.setLossRatePerWeight(v.lossRatePerWeight());i.setDamageRate(v.damageRate());i.setSequence(zero(v.sequence()));i.setNotes(trim(v.notes()));lines.add(i);
+   i.setLossRatePerPiece(v.lossRatePerPiece());i.setLossRatePerWeight(v.lossRatePerWeight());i.setDamageRate(v.damageRate());i.setSequence(zero(v.sequence()));i.setNotes(trim(v.notes()));
+   List<AgreementItemSlab> slabsList = new ArrayList<>();
+   if(v.slabs() != null) {
+       for(AgreementItemSlabRequest slabReq : v.slabs()) {
+           AgreementItemSlab slab = new AgreementItemSlab();
+           slab.setStartDay(slabReq.startDay());
+           slab.setEndDay(slabReq.endDay());
+           slab.setRate(slabReq.rate());
+           slab.setAgreementItem(i);
+           slabsList.add(slab);
+       }
+   }
+   i.replaceSlabs(slabsList);
+   lines.add(i);
   }a.replaceItems(lines);a.setUpdatedBy(actor());Agreement saved=agreements.save(a);log("AGREEMENT_UPDATED",saved,"Draft updated",http);return response(saved);
  }
  @Transactional public AgreementResponse ready(Long id,HttpServletRequest h){Agreement a=require(id);expect(a,AgreementStatus.DRAFT);validateReady(a);a.setStatus(AgreementStatus.READY_FOR_REVIEW);a.setReadyForReviewAt(Instant.now());a.setReadyForReviewBy(actor());return saveLog(a,"AGREEMENT_READY_FOR_REVIEW","Ready for review",h);}
@@ -128,6 +144,31 @@ public class AgreementService implements AgreementAccess {
  private Agreement require(Long id){return agreements.findDetailedById(id).orElseThrow(()->error("AGREEMENT_NOT_FOUND","Agreement not found"));}
  private void expect(Agreement a,AgreementStatus status){if(a.getStatus()!=status)throw transition(a);} private BusinessRuleException transition(Agreement a){return error("INVALID_AGREEMENT_STATUS_TRANSITION","Operation is not allowed while agreement is "+a.getStatus());}
  private AgreementResponse saveLog(Agreement a,String action,String description,HttpServletRequest h){a.setUpdatedBy(actor());Agreement saved=agreements.save(a);log(action,saved,description,h);return response(saved);}
+ private AgreementItemResponse itemResponse(AgreementItem i) {
+    return new AgreementItemResponse(
+        i.getId(),
+        i.getSourceQuotationItem() == null ? null : i.getSourceQuotationItem().getId(),
+        i.getItem().getId(),
+        i.getItemCodeSnapshot(),
+        i.getItemNameSnapshot(),
+        i.getDescriptionSnapshot(),
+        i.getSizeSnapshot(),
+        i.getUnitSnapshot(),
+        i.getWeightSnapshot(),
+        i.getAgreedQuantity(),
+        i.getUnitRate(),
+        i.getRentalType(),
+        i.getAreaRate(),
+        i.getWeightRate(),
+        i.getLossRatePerPiece(),
+        i.getLossRatePerWeight(),
+        i.getDamageRate(),
+        i.getSequence(),
+        i.getNotes(),
+        i.getArea(),
+        i.getSlabs() == null ? Collections.emptyList() : i.getSlabs().stream().map(s -> new AgreementItemSlabResponse(s.getId(), s.getStartDay(), s.getEndDay(), s.getRate())).toList()
+    );
+  }
  private AgreementResponse response(Agreement a){return new AgreementResponse(a.getId(),a.getAgreementNumber(),a.getQuotation()==null?null:a.getQuotation().getId(),a.getQuotationNumberSnapshot(),a.getQuotationDateSnapshot(),
   a.getParty().getId(),a.getPartyLegalNameSnapshot(),a.getPartyTradeNameSnapshot(),a.getPartyGstinSnapshot(),a.getPartyPanSnapshot(),a.getPartyAddressSnapshot(),a.getPartyStateSnapshot(),a.getPartyContactSnapshot(),
   a.getSite().getId(),a.getSiteNameSnapshot(),a.getSiteCodeSnapshot(),a.getSiteAddressSnapshot(),a.getSiteContactSnapshot(),a.getAgreementDate(),a.getEffectiveDate(),a.getExpiryDate(),a.getRentalType(),a.getBillingCycle(),
@@ -135,7 +176,9 @@ public class AgreementService implements AgreementAccess {
   a.getTransportCharge(),a.getLoadingCharge(),a.getUnloadingCharge(),a.getOtherCharge(),a.getRoundOff(),a.getGrandTotal(),a.getTerms(),a.getNotes(),
   a.getGeneratedDocument()==null?null:a.getGeneratedDocument().getId(),a.getGeneratedFilename(),a.getGeneratedAt(),a.getReadyForReviewAt(),a.getReadyForReviewBy(),a.getActivatedAt(),a.getActivatedBy(),
   a.getTerminationReason(),a.getTerminatedAt(),a.getTerminatedBy(),a.getCancellationReason(),a.getCancelledAt(),a.getCancelledBy(),
-  a.getItems().stream().map(i->new AgreementItemResponse(i.getId(),i.getSourceQuotationItem()==null?null:i.getSourceQuotationItem().getId(),i.getItem().getId(),i.getItemCodeSnapshot(),i.getItemNameSnapshot(),i.getDescriptionSnapshot(),i.getSizeSnapshot(),i.getUnitSnapshot(),i.getWeightSnapshot(),i.getAgreedQuantity(),i.getUnitRate(),i.getRentalType(),i.getAreaRate(),i.getWeightRate(),i.getLossRatePerPiece(),i.getLossRatePerWeight(),i.getDamageRate(),i.getSequence(),i.getNotes())).toList(),
+  a.getItems().stream().map(this::itemResponse).toList(),
+  a.getBillingStartRule() == null ? "ISSUE_DATE_INCLUDED" : a.getBillingStartRule().name(),
+  a.getBillingEndRule() == null ? "RETURN_DATE_EXCLUDED" : a.getBillingEndRule().name(),
   a.getVersion(),a.getCreatedAt(),a.getCreatedBy(),a.getUpdatedAt(),a.getUpdatedBy());}
  private void log(String action,Agreement a,String description,HttpServletRequest req){User u=users.findByUsernameIgnoreCase(actor()).orElse(null);audit.log(u==null?null:u.getId(),actor(),action,"Agreement",String.valueOf(a.getId()),description,req);}
  private String actor(){var a=SecurityContextHolder.getContext().getAuthentication();return a==null?"system":a.getName();} private BusinessRuleException error(String c,String m){return new BusinessRuleException(c,m);}
