@@ -63,20 +63,34 @@ class Phase4IntegrationTest extends BaseIntegrationTest {
 
     @Test void approvedQuotationConvertsGeneratesAndActivatesAgreement() throws Exception {
         long quotationId=approveQuotation();
-        String converted=mvc.perform(post("/api/v1/quotations/{id}/convert",quotationId).with(csrf()).contentType(MediaType.APPLICATION_JSON)
-                .content("{\"effectiveDate\":\"2030-01-01\",\"expiryDate\":\"2030-12-31\",\"securityDeposit\":5000,\"notes\":\"Converted\"}"))
+        String converted=mvc.perform(post("/api/v1/agreements/from-quotation/{quotationId}",quotationId).with(csrf()))
             .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("DRAFT")).andExpect(jsonPath("$.items.length()").value(2))
             .andReturn().getResponse().getContentAsString();
         long agreementId=json.readTree(converted).get("id").asLong();
-        mvc.perform(post("/api/v1/agreements/{id}/generate",agreementId).with(csrf())).andExpect(status().isOk())
-            .andExpect(jsonPath("$.status").value("GENERATED")).andExpect(jsonPath("$.generated").value(true));
+
+        // Repeat conversion returns the same agreement
+        String repeatConverted=mvc.perform(post("/api/v1/agreements/from-quotation/{quotationId}",quotationId).with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        long repeatAgreementId=json.readTree(repeatConverted).get("id").asLong();
+        Assertions.assertEquals(agreementId, repeatAgreementId);
+
+        // Generate PDF
+        mvc.perform(post("/api/v1/agreements/{id}/generate-document",agreementId).with(csrf())).andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("DRAFT"))
+            .andExpect(jsonPath("$.generatedDocumentAttachmentId").exists());
+
+        // Transition to ready for review
+        mvc.perform(post("/api/v1/agreements/{id}/ready-for-review",agreementId).with(csrf())).andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("READY_FOR_REVIEW"));
+
+        // Get document
         mvc.perform(get("/api/v1/agreements/{id}/document",agreementId)).andExpect(status().isOk())
-            .andExpect(header().string("Content-Type","application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
-        mvc.perform(post("/api/v1/agreements/{id}/activate",agreementId).with(csrf())).andExpect(status().isOk())
+            .andExpect(header().string("Content-Type","application/pdf"));
+
+        // Activate
+        mvc.perform(post("/api/v1/agreements/{id}/activate",agreementId).with(user("admin").roles("ADMIN")).with(csrf())).andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("ACTIVE"));
-        mvc.perform(post("/api/v1/quotations/{id}/convert",quotationId).with(csrf()).contentType(MediaType.APPLICATION_JSON)
-                .content("{\"effectiveDate\":\"2030-01-01\",\"securityDeposit\":0}"))
-            .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("QUOTATION_ALREADY_CONVERTED"));
     }
 
     @Test void confirmedOrdersRespectAgreementAllocationAndExposeRemainingQuantity() throws Exception {
@@ -103,11 +117,11 @@ class Phase4IntegrationTest extends BaseIntegrationTest {
         .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();return json.readTree(result).get("id").asLong();}
     private long approveQuotation()throws Exception{long id=createQuotation();mvc.perform(post("/api/v1/quotations/{id}/send",id).with(csrf())).andExpect(status().isOk());
         mvc.perform(post("/api/v1/quotations/{id}/approve",id).with(user("admin").roles("ADMIN")).with(csrf())).andExpect(status().isOk());return id;}
-    private long activeAgreement()throws Exception{long q=approveQuotation();String body=mvc.perform(post("/api/v1/quotations/{id}/convert",q).with(csrf())
-        .contentType(MediaType.APPLICATION_JSON).content("{\"effectiveDate\":\"2030-01-01\",\"expiryDate\":\"2030-12-31\",\"securityDeposit\":0}"))
+    private long activeAgreement()throws Exception{long q=approveQuotation();String body=mvc.perform(post("/api/v1/agreements/from-quotation/{id}",q).with(csrf()))
         .andReturn().getResponse().getContentAsString();long id=json.readTree(body).get("id").asLong();
-        mvc.perform(post("/api/v1/agreements/{id}/generate",id).with(csrf())).andExpect(status().isOk());
-        mvc.perform(post("/api/v1/agreements/{id}/activate",id).with(csrf())).andExpect(status().isOk());return id;}
+        mvc.perform(post("/api/v1/agreements/{id}/generate-document",id).with(csrf())).andExpect(status().isOk());
+        mvc.perform(post("/api/v1/agreements/{id}/ready-for-review",id).with(csrf())).andExpect(status().isOk());
+        mvc.perform(post("/api/v1/agreements/{id}/activate",id).with(user("admin").roles("ADMIN")).with(csrf())).andExpect(status().isOk());return id;}
     private long createOrder(long agreementId,String plates,String props)throws Exception{String result=mvc.perform(post("/api/v1/orders").with(csrf())
         .contentType(MediaType.APPLICATION_JSON).content("""
             {"agreementId":%d,"orderDate":"2030-01-02","notes":"Dispatch requirement","items":[

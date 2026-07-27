@@ -125,7 +125,7 @@ start_mysql() {
 
   if [[ -f "$RUNTIME_DIR/mysql-needs-provisioning" ]]; then
     info "Creating database and local database user..."
-    "$MYSQL_CLIENT" --protocol=TCP -h 127.0.0.1 -P 3306 -u root <<SQL ||
+    "$MYSQL_CLIENT" -h localhost -P 3306 -u root <<SQL ||
 CREATE DATABASE IF NOT EXISTS \`$DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASSWORD';
 CREATE USER IF NOT EXISTS '$DB_USER'@'127.0.0.1' IDENTIFIED BY '$DB_PASSWORD';
@@ -216,7 +216,7 @@ stop_all() {
   stop_pid_file "$FRONTEND_PID_FILE" "Frontend"
   stop_pid_file "$BACKEND_PID_FILE" "Backend"
   if [[ -f "$MYSQL_PID_FILE" ]] && tcp_ready 3306; then
-    "$MYSQL_ADMIN" --protocol=TCP -h 127.0.0.1 -P 3306 \
+    "$MYSQL_ADMIN" -h localhost -P 3306 \
       -u root "--password=$MYSQL_ROOT_PASSWORD" shutdown >/dev/null 2>&1 || true
   fi
   stop_pid_file "$MYSQL_PID_FILE" "MySQL"

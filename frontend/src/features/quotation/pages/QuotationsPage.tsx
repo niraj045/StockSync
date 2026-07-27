@@ -16,7 +16,7 @@ export function QuotationsPage(){
   const [search,setSearch]=useState(''),[status,setStatus]=useState<string|undefined>(),[editing,setEditing]=useState<Quotation|null>(null),[selected,setSelected]=useState<Quotation|null>(null);
   const [form]=Form.useForm<Editor>();const partyId=Form.useWatch('partyId',form);const discountType=Form.useWatch('discountType',form);const watched=Form.useWatch([],form);
   const isEditorRoute=location.pathname==='/quotations/new'||Boolean(quotationId);
-  const quotations=useQuery({queryKey:['quotations',search,status],queryFn:async()=>(await apiClient.get<Page<Quotation>>('/quotations',{params:{search,status,size:50,sort:'quotationDate,desc'}})).data});
+  const quotations=useQuery({queryKey:['quotations',search,status],queryFn:async()=>(await apiClient.get<Page<Quotation>>('/quotations',{params:{search,status,size:50,sort:'id,desc'}})).data});
   const templates=useQuery({queryKey:['quotation-templates-active'],queryFn:async()=>(await apiClient.get<Page<Template>>('/quotation-templates',{params:{active:true,size:100}})).data.content});
   const parties=useQuery({queryKey:['parties-options'],queryFn:async()=>(await apiClient.get<Page<Option>>('/parties',{params:{active:true,size:200}})).data.content});
   const sites=useQuery({queryKey:['sites-options'],queryFn:async()=>(await apiClient.get<Page<Option>>('/sites',{params:{size:200}})).data.content});
@@ -46,7 +46,7 @@ export function QuotationsPage(){
       <h1 className="page-heading">{editing?'Edit quotation':'New quotation'}</h1>
       <p className="page-description">Configure commercial terms, item lines, taxes and totals.</p>
     </div>
-    <Form className="quotation-editor-form" form={form} layout="vertical" onFinish={v=>{const errors=validateQuotationEditor(v,sites.data??[]);if(errors.length){form.setFields(errors);return;}save.mutate(v);}}>
+    <Form className="quotation-editor-form" form={form} layout="vertical" onFinish={v=>{const sanitized={...v,discountValue:v.discountType==='NONE'||v.discountValue===undefined||v.discountValue===null?0:v.discountValue};const errors=validateQuotationEditor(sanitized,sites.data??[]);if(errors.length){form.setFields(errors);return;}save.mutate(sanitized);}}>
       <section className="quotation-form-section">
         <h2>Quotation details</h2>
         <div className="master-form-grid">

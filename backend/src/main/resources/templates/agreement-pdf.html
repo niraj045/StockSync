@@ -1,11 +1,11 @@
 <!DOCTYPE html><html xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"/>
 <style>body{font-family:sans-serif;color:#17312d;font-size:11px}h1{color:#087f72}table{border-collapse:collapse;width:100%;margin:12px 0}th,td{border:1px solid #ccd8d5;padding:6px}th{background:#eef5f3}.right{text-align:right}.sign{margin-top:50px}</style></head><body>
 <h1>StockSync — Shuttering Material Agreement</h1>
-<p><b>Agreement:</b> <span th:text="${a.agreementNumber}"></span> &nbsp; <b>Source quotation:</b> <span th:text="${a.sourceQuotationNumber}"></span></p>
+<p><b>Agreement:</b> <span th:text="${a.agreementNumber}"></span> &#160; <b>Source quotation:</b> <span th:text="${a.sourceQuotationNumber}"></span></p>
 <table><tr><td><b>Party</b><br/><span th:text="${a.partyName}"></span><br/><span th:text="${a.partyTradeName}"></span><br/>GSTIN: <span th:text="${a.partyGstin}"></span><br/><span th:text="${a.partyAddress}"></span></td>
 <td><b>Site</b><br/><span th:text="${a.siteName}"></span> (<span th:text="${a.siteCode}"></span>)<br/><span th:text="${a.siteAddress}"></span></td>
 <td><b>Agreement date</b><br/><span th:text="${a.agreementDate}"></span><br/><b>Effective / Expiry</b><br/><span th:text="${a.effectiveDate}"></span> / <span th:text="${a.expiryDate}"></span></td></tr></table>
-<p><b>Rental:</b> <span th:text="${a.rentalType}"></span> &nbsp; <b>Billing:</b> <span th:text="${a.billingCycle}"></span> &nbsp; <b>Grace:</b> <span th:text="${a.gracePeriodDays}"></span> days</p>
+<p><b>Rental:</b> <span th:text="${a.rentalType}"></span> &#160; <b>Billing:</b> <span th:text="${a.billingCycle}"></span> &#160; <b>Grace:</b> <span th:text="${a.gracePeriodDays}"></span> days</p>
 <table><thead><tr><th>#</th><th>Code</th><th>Item snapshot</th><th>Size</th><th>Unit</th><th>Quantity</th><th>Rate</th><th>Loss/piece</th><th>Damage</th></tr></thead>
 <tbody><tr th:each="i:${a.items}"><td th:text="${i.sequence}"></td><td th:text="${i.itemCode}"></td><td th:text="${i.itemName}"></td><td th:text="${i.size}"></td><td th:text="${i.unit}"></td><td th:text="${i.contractedQuantity}"></td><td th:text="${i.rate}"></td><td th:text="${i.lossRatePerPiece}"></td><td th:text="${i.damageRate}"></td></tr></tbody></table>
 <table><tr><td>Subtotal / Discount / Taxable</td><td class="right"><span th:text="${a.subtotal}"></span> / <span th:text="${a.discountAmount}"></span> / <span th:text="${a.taxableAmount}"></span></td></tr>

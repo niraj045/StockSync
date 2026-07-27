@@ -51,6 +51,22 @@ async function pageContains(text) {
 async function clickButton(text, scope) {
   const root = scope ?? driver;
   const locator = By.xpath(`.//button[.//span[normalize-space()=${literal(text)}] or normalize-space()=${literal(text)}]`);
+  for (let i = 0; i < 5; i++) {
+    try {
+      const button = await driver.wait(async () => {
+        const matches = await root.findElements(locator);
+        for (const match of matches) {
+          if (await match.isDisplayed()) return match;
+        }
+        return false;
+      }, 3000);
+      await driver.wait(until.elementIsEnabled(button), 3000);
+      await button.click();
+      return;
+    } catch (err) {
+      await driver.sleep(500);
+    }
+  }
   const button = await driver.wait(async () => {
     const matches = await root.findElements(locator);
     for (const match of matches) {
@@ -62,8 +78,31 @@ async function clickButton(text, scope) {
   await button.click();
 }
 
+async function clickRowButton(rowLocatorFn, buttonLocator) {
+  for (let i = 0; i < 5; i++) {
+    try {
+      const row = await rowLocatorFn();
+      const button = await row.findElement(buttonLocator);
+      await driver.wait(until.elementIsEnabled(button), 2000);
+      await driver.executeScript('arguments[0].click()', button);
+      return;
+    } catch (err) {
+      await driver.sleep(500);
+    }
+  }
+  const row = await rowLocatorFn();
+  const button = await row.findElement(buttonLocator);
+  await driver.executeScript('arguments[0].click()', button);
+}
+
 async function activeModal() {
-  return visible(By.xpath("//div[contains(@class,'ant-modal-content') and not(ancestor::div[contains(@style,'display: none')])]"));
+  const locator = By.xpath(
+    "//div[contains(@class,'ant-modal-content') and not(ancestor::div[contains(@style,'display: none')])]" +
+    " | //div[contains(@class,'ant-drawer-content') and not(ancestor::div[contains(@style,'display: none')])]" +
+    " | //div[contains(@class,'quotation-editor-page')]" +
+    " | //section[contains(@class,'workflow-editor-page')]"
+  );
+  return visible(locator);
 }
 
 async function fieldContainer(label, scope) {
@@ -76,12 +115,22 @@ async function fieldContainer(label, scope) {
 async function typeField(label, value, scope) {
   const container = await fieldContainer(label, scope);
   const input = await container.findElement(By.css('input, textarea'));
+  await driver.executeScript("arguments[0].scrollIntoView({block: 'center'});", input);
   await input.sendKeys(Key.chord(Key.CONTROL, 'a'), String(value));
 }
 
 async function selectField(label, optionText, scope) {
   const container = await fieldContainer(label, scope);
-  await (await container.findElement(By.css('.ant-select-selector'))).click();
+  const selector = await container.findElement(By.css('.ant-select-selector'));
+  await driver.executeScript("arguments[0].scrollIntoView({block: 'center'});", selector);
+  await selector.click();
+  await driver.sleep(300);
+  await driver.executeScript(() => {
+    const holders = document.querySelectorAll('.rc-virtual-list-holder');
+    for (const h of holders) {
+      h.scrollTop = h.scrollHeight;
+    }
+  });
   const option = await visible(By.xpath(
     `//div[contains(@class,'ant-select-item-option') and not(contains(@class,'ant-select-item-option-disabled'))]` +
     `[contains(normalize-space(.),${literal(optionText)})]`,
@@ -91,7 +140,9 @@ async function selectField(label, optionText, scope) {
 
 async function saveModal(expectedText) {
   const modal = await activeModal();
-  await clickButton('OK', modal);
+  const submitBtn = await modal.findElement(By.css('button.ant-btn-primary'));
+  await driver.wait(until.elementIsEnabled(submitBtn), timeout);
+  await submitBtn.click();
   await waitUntilClosed(modal);
   await pageContains(expectedText);
 }
@@ -201,62 +252,112 @@ async function createAndApproveQuotation() {
   await typeField('Security deposit', '10000', modal);
   await typeField('Terms', 'Monthly rent payable within seven days of invoice.', modal);
   await typeField('Notes', `Daily-operation E2E quotation ${runId}`, modal);
-  await clickButton('OK', modal);
-  await waitUntilClosed(modal);
+  const submitBtn = await modal.findElement(By.css('button.ant-btn-primary'));
+  await driver.wait(until.elementIsEnabled(submitBtn), timeout);
+  await submitBtn.click();
+  await driver.wait(async () => {
+    const url = await driver.getCurrentUrl();
+    return url.endsWith('/quotations');
+  }, timeout, 'Quotation page did not redirect');
   await pageContains(data.party);
 
-  const row = await visible(By.xpath(`//tr[.//td[contains(normalize-space(.),${literal(data.party)})]]`));
+  const getQuotationRow = async () => visible(By.xpath(`//tr[.//td[contains(normalize-space(.),${literal(data.party)})]]`));
+  const row = await getQuotationRow();
   const quotationNumber = (await row.findElements(By.css('td')))[0];
   const number = (await quotationNumber.getText()).trim();
   console.log(`✓ Draft quotation created: ${number}`);
 
-  const sendButton = await row.findElement(By.xpath(".//button[.//span[normalize-space()='Send']]"));
-  await driver.executeScript('arguments[0].click()', sendButton);
-  await clickButton('OK', await activeModal());
-  await driver.wait(async () => (await row.getText()).includes('SENT'), timeout);
+  await clickRowButton(getQuotationRow, By.xpath(".//button[.//span[normalize-space()='Send']]"));
+  await clickButton('OK');
+  await driver.wait(async () => {
+    try {
+      return (await (await getQuotationRow()).getText()).includes('SENT');
+    } catch {
+      return false;
+    }
+  }, timeout);
   console.log('✓ Quotation sent');
 
-  const approveButton = await row.findElement(By.xpath(".//button[.//span[normalize-space()='Approve']]"));
-  await driver.executeScript('arguments[0].click()', approveButton);
-  await clickButton('OK', await activeModal());
-  await driver.wait(async () => (await row.getText()).includes('APPROVED'), timeout);
-  await row.findElement(By.xpath(".//button[.//span[normalize-space()='PDF']]"));
+  await clickRowButton(getQuotationRow, By.xpath(".//button[.//span[normalize-space()='Approve']]"));
+  await clickButton('OK');
+  await driver.wait(async () => {
+    try {
+      return (await (await getQuotationRow()).getText()).includes('APPROVED');
+    } catch {
+      return false;
+    }
+  }, timeout);
+  await (await getQuotationRow()).findElement(By.xpath(".//button[.//span[normalize-space()='PDF']]"));
   console.log('✓ Quotation approved and PDF action is available');
   return number;
 }
 
-async function convertAndActivateAgreement() {
+async function convertAndActivateAgreement(quotationNumber) {
   await driver.get(`${baseUrl}/agreements`);
   await pageContains('Agreements');
   await (await visible(By.css('[data-testid="convert-agreement"]'))).click();
   const modal = await activeModal();
   await (await modal.findElement(By.css('[data-testid="approved-quotation-select"] .ant-select-selector'))).click();
-  await (await visible(By.css('.ant-select-item-option:not(.ant-select-item-option-disabled)'))).click();
-  await clickButton('OK', modal);
+  await (await visible(By.xpath(
+    `//div[contains(@class,'ant-select-item-option') and not(contains(@class,'ant-select-item-option-disabled'))]` +
+    `[contains(normalize-space(.),${literal(quotationNumber)})]`
+  ))).click();
+  const submitBtn = await modal.findElement(By.css('button.ant-btn-primary'));
+  await driver.wait(until.elementIsEnabled(submitBtn), timeout);
+  await submitBtn.click();
   await waitUntilClosed(modal);
+
+  // Close the automatically opened preview modal
+  const previewModal = await activeModal();
+  const closeBtn = await previewModal.findElement(By.css('.ant-modal-close'));
+  await closeBtn.click();
+  await waitUntilClosed(previewModal);
+
   await pageContains(data.party);
-  const row = await visible(By.xpath(`//tr[.//td[contains(normalize-space(.),${literal(data.party)})]]`));
+  const getAgreementRow = async () => visible(By.xpath(`//tr[.//td[contains(normalize-space(.),${literal(data.party)})]]`));
+  const row = await getAgreementRow();
   const cells = await row.findElements(By.css('td'));
   const number = (await cells[0].getText()).trim();
-  await driver.executeScript('arguments[0].click()', await row.findElement(By.css('[data-testid="ready-agreement"]')));
-  await clickButton('OK', await activeModal());
-  await driver.wait(async()=> (await row.getText()).includes('READY FOR REVIEW'),timeout);
-  await clickButton('Generate PDF',row); await clickButton('OK',await activeModal());
-  await driver.wait(async()=> (await row.findElements(By.xpath(".//button[contains(normalize-space(.),'PDF')]"))).length>0,timeout);
-  await driver.executeScript('arguments[0].click()', await row.findElement(By.css('[data-testid="activate-agreement"]')));
-  await clickButton('OK',await activeModal());
-  await driver.wait(async()=> (await row.getText()).includes('ACTIVE'),timeout);
-  if((await row.findElements(By.css('[data-testid="edit-agreement"]'))).length)throw new Error('ACTIVE agreement is still editable');
-  console.log(`âœ“ Agreement activated and read-only: ${number}`);
+  await clickRowButton(getAgreementRow, By.css('[data-testid="ready-agreement"]'));
+  await clickButton('OK');
+  await driver.wait(async () => {
+    try {
+      return (await (await getAgreementRow()).getText()).includes('READY FOR REVIEW');
+    } catch {
+      return false;
+    }
+  }, timeout);
+  await clickRowButton(getAgreementRow, By.xpath(".//button[contains(normalize-space(.),'Generate PDF') or .//span[contains(normalize-space(.),'Generate PDF')]]"));
+  await clickButton('OK');
+  await driver.wait(async () => {
+    try {
+      return (await (await getAgreementRow()).findElements(By.xpath(".//button[contains(normalize-space(.),'PDF')]"))).length > 0;
+    } catch {
+      return false;
+    }
+  }, timeout);
+  await clickRowButton(getAgreementRow, By.css('[data-testid="activate-agreement"]'));
+  await clickButton('OK');
+  await driver.wait(async () => {
+    try {
+      return (await (await getAgreementRow()).getText()).includes('ACTIVE');
+    } catch {
+      return false;
+    }
+  }, timeout);
+  if ((await (await getAgreementRow()).findElements(By.css('[data-testid="edit-agreement"]'))).length) throw new Error('ACTIVE agreement is still editable');
+  console.log(`✓ Agreement activated and read-only: ${number}`);
   return number;
 }
 
 try {
   console.log(`Running data-creating daily operation ${runId} against ${baseUrl}`);
   await driver.get(`${baseUrl}/login`);
+  await driver.sleep(1500);
   await (await visible(By.id('login_form_usernameOrEmail'))).sendKeys(username);
   await (await visible(By.id('login_form_password'))).sendKeys(password);
-  await clickButton('Sign In');
+  const loginBtn = await visible(By.css('button[type="submit"]'));
+  await driver.executeScript('arguments[0].click()', loginBtn);
   await pageContains('Shuttering Inventory Management');
   console.log('✓ ADMIN login');
 
@@ -266,7 +367,7 @@ try {
   await createParty();
   await createSite();
   const quotationNumber = await createAndApproveQuotation();
-  const agreementNumber = await convertAndActivateAgreement();
+  const agreementNumber = await convertAndActivateAgreement(quotationNumber);
 
   await driver.get(`${baseUrl}/audit-logs`);
   await pageContains('Activity audit');
@@ -279,7 +380,7 @@ try {
   await fs.mkdir(artifacts, { recursive: true });
   const screenshotPath = path.join(artifacts, `daily-operation-failure-${runId}.png`);
   await fs.writeFile(screenshotPath, await driver.takeScreenshot(), 'base64');
-  console.error(`\nFAIL: ${error.message}`);
+  console.error(`\nFAIL: ${error.message}\n${error.stack}`);
   console.error(`Screenshot: ${screenshotPath}`);
   try {
     const browserLogs = await driver.manage().logs().get('browser');

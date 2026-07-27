@@ -13,7 +13,7 @@ const money=(v?:number)=>new Intl.NumberFormat('en-IN',{style:'currency',currenc
 export function AgreementsPage(){
  const {user}=useAuth(),roles=user?.roles??[],admin=roles.includes('ROLE_ADMIN'),operations=roles.includes('ROLE_OPERATIONS'),canWrite=admin||operations;
  const {modal,message}=App.useApp(),qc=useQueryClient(),[search,setSearch]=useState(''),[status,setStatus]=useState<string>(),[selected,setSelected]=useState<Agreement>(),[editing,setEditing]=useState<Agreement>(),[convertOpen,setConvertOpen]=useState(false),[quotationId,setQuotationId]=useState<number>();const[form]=Form.useForm<Editor>();
- const agreements=useQuery({queryKey:['agreements',search,status],queryFn:async()=>(await apiClient.get<Page<Agreement>>('/agreements',{params:{search,status,size:50,sort:'agreementDate,desc'}})).data});
+ const agreements=useQuery({queryKey:['agreements',search,status],queryFn:async()=>(await apiClient.get<Page<Agreement>>('/agreements',{params:{search,status,size:50,sort:'id,desc'}})).data});
  const approved=useQuery({queryKey:['approved-quotations'],queryFn:async()=>(await apiClient.get<Page<Quotation>>('/quotations',{params:{status:'APPROVED',size:200}})).data.content,enabled:canWrite});
  const refresh=()=>{void qc.invalidateQueries({queryKey:['agreements']});void qc.invalidateQueries({queryKey:['approved-quotations']});void qc.invalidateQueries({queryKey:['quotations']});};
  const convert=useMutation({mutationFn:async(id:number)=>(await apiClient.post<Agreement>(`/agreements/from-quotation/${id}`)).data,onSuccess:a=>{message.success(`Created ${a.agreementNumber}`);setConvertOpen(false);setSelected(a);refresh();},onError:()=>message.error('Unable to convert quotation')});
