@@ -31,6 +31,10 @@
 @SET __MVNW_CMD__=
 @SET __MVNW_ERROR__=
 @SET __MVNW_PSMODULEP_SAVE=%PSModulePath%
+@IF NOT "%STOCKSYNC_JAVA_HOME%"=="" IF EXIST "%STOCKSYNC_JAVA_HOME%\bin\java.exe" @SET "JAVA_HOME=%STOCKSYNC_JAVA_HOME%"
+@IF NOT "%STOCKSYNC_JAVA_HOME%"=="" IF EXIST "%STOCKSYNC_JAVA_HOME%\bin\java.exe" @SET "PATH=%STOCKSYNC_JAVA_HOME%\bin;%PATH%"
+@IF "%STOCKSYNC_JAVA_HOME%"=="" IF EXIST "C:\tmp\stocksync-build-tools\jdk\jdk-21.0.11+10\bin\java.exe" @SET "JAVA_HOME=C:\tmp\stocksync-build-tools\jdk\jdk-21.0.11+10"
+@IF "%STOCKSYNC_JAVA_HOME%"=="" IF EXIST "C:\tmp\stocksync-build-tools\jdk\jdk-21.0.11+10\bin\java.exe" @SET "PATH=C:\tmp\stocksync-build-tools\jdk\jdk-21.0.11+10\bin;%PATH%"
 @SET PSModulePath=
 @FOR /F "usebackq tokens=1* delims==" %%A IN (`powershell -noprofile "& {$scriptDir='%~dp0'; $script='%__MVNW_ARG0_NAME__%'; icm -ScriptBlock ([Scriptblock]::Create((Get-Content -Raw '%~f0'))) -NoNewScope}"`) DO @(
   IF "%%A"=="MVN_CMD" (set __MVNW_CMD__=%%B) ELSE IF "%%B"=="" (echo %%A) ELSE (echo %%A=%%B)
@@ -79,7 +83,8 @@ if ($env:MVNW_REPOURL) {
 $distributionUrlName = $distributionUrl -replace '^.*/',''
 $distributionUrlNameMain = $distributionUrlName -replace '\.[^.]*$','' -replace '-bin$',''
 
-$MAVEN_M2_PATH = "$HOME/.m2"
+$MAVEN_M2_BASE = if ($HOME) { $HOME } else { $env:USERPROFILE }
+$MAVEN_M2_PATH = "$MAVEN_M2_BASE/.m2"
 if ($env:MAVEN_USER_HOME) {
   $MAVEN_M2_PATH = "$env:MAVEN_USER_HOME"
 }

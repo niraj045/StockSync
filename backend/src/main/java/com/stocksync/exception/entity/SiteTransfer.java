@@ -7,6 +7,7 @@ import com.stocksync.site.entity.Site;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.Instant;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,6 +64,9 @@ public class SiteTransfer extends AuditedEntity {
 
     @Column(name = "transporter_id")
     private Long transporterId;
+
+    @Column(name = "transport_charge", nullable = false, precision = 19, scale = 2)
+    private BigDecimal transportCharge = BigDecimal.ZERO;
 
     @Column(length = 1000)
     private String notes;
@@ -133,4 +137,6 @@ public class SiteTransfer extends AuditedEntity {
         item.setTransfer(this);
         this.items.add(item);
     }
+    public BigDecimal getTransportCharge() { return transportCharge; }
+    public void setTransportCharge(BigDecimal transportCharge) { this.transportCharge = transportCharge; }
 }

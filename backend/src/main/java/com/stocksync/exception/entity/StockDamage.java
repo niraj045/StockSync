@@ -36,7 +36,7 @@ public class StockDamage extends AuditedEntity {
     @JoinColumn(name = "source_receiving_challan_item_id")
     private ReceivingChallanItem sourceReceivingChallanItem;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "agreement_id")
     private Agreement agreement;
 

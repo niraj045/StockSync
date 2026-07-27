@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import com.stocksync.order.entity.SiteOrder;
 import java.time.LocalDate;
 import java.time.Instant;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,6 +33,15 @@ public class IssuedChallan {
 
     @Column(length = 1000)
     private String notes;
+
+    @Column(name = "transport_charge", nullable = false, precision = 19, scale = 2)
+    private BigDecimal transportCharge = BigDecimal.ZERO;
+
+    @Column(name = "loading_charge", nullable = false, precision = 19, scale = 2)
+    private BigDecimal loadingCharge = BigDecimal.ZERO;
+
+    @Column(name = "unloading_charge", nullable = false, precision = 19, scale = 2)
+    private BigDecimal unloadingCharge = BigDecimal.ZERO;
 
     @Column(name = "created_by", nullable = false, length = 50)
     private String createdBy;
@@ -65,4 +75,10 @@ public class IssuedChallan {
     public Instant getCreatedAt() { return createdAt; }
     public List<IssuedChallanItem> getItems() { return items; }
     public void setItems(List<IssuedChallanItem> v) { items = v; }
+    public BigDecimal getTransportCharge() { return transportCharge; }
+    public void setTransportCharge(BigDecimal v) { transportCharge = v; }
+    public BigDecimal getLoadingCharge() { return loadingCharge; }
+    public void setLoadingCharge(BigDecimal v) { loadingCharge = v; }
+    public BigDecimal getUnloadingCharge() { return unloadingCharge; }
+    public void setUnloadingCharge(BigDecimal v) { unloadingCharge = v; }
 }

@@ -66,6 +66,10 @@ public class Agreement extends AuditedEntity {
  @Column(name="closed_at") private Instant closedAt; @Column(name="closed_by") private String closedBy;
  @Column(name="cancellation_reason") private String cancellationReason; @Column(name="cancelled_at") private Instant cancelledAt; @Column(name="cancelled_by") private String cancelledBy;
  @OneToMany(mappedBy="agreement",cascade=CascadeType.ALL,orphanRemoval=true) @OrderBy("sequence ASC,id ASC") private List<AgreementItem> items=new ArrayList<>();
+ @Enumerated(EnumType.STRING) @Column(name="billing_start_rule",nullable=false,length=30) private BillingStartRule billingStartRule = BillingStartRule.ISSUE_DATE_INCLUDED;
+ @Enumerated(EnumType.STRING) @Column(name="billing_end_rule",nullable=false,length=30) private BillingEndRule billingEndRule = BillingEndRule.RETURN_DATE_EXCLUDED;
+ public BillingStartRule getBillingStartRule(){return billingStartRule;} public void setBillingStartRule(BillingStartRule v){billingStartRule=v;}
+ public BillingEndRule getBillingEndRule(){return billingEndRule;} public void setBillingEndRule(BillingEndRule v){billingEndRule=v;}
  public Long getId(){return id;} public String getAgreementNumber(){return agreementNumber;} public void setAgreementNumber(String v){agreementNumber=v;}
  public Quotation getQuotation(){return quotation;} public void setQuotation(Quotation v){quotation=v;} public AgreementTemplate getTemplate(){return template;} public void setTemplate(AgreementTemplate v){template=v;}
  public Party getParty(){return party;} public void setParty(Party v){party=v;} public Site getSite(){return site;} public void setSite(Site v){site=v;}

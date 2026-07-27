@@ -31,6 +31,7 @@ Templates use `/api/v1/quotation-templates`; quotations use `/api/v1/quotations`
 /api/v1/invoices
 /api/v1/payments
 /api/v1/security-deposits
+/api/v1/outstanding
 /api/v1/reports
 /api/v1/files
 /api/v1/audit-logs
@@ -202,3 +203,56 @@ Posting requires `{ "confirmed": true, "expectedChecksum": "<64 hex characters>"
 requires a nonblank reason. Important errors include `IMPORT_FILE_ALREADY_EXISTS`,
 `IMPORT_NOT_VALIDATED`, `IMPORT_TOTALS_UNEXPLAINED`, `IMPORT_ALREADY_POSTED`,
 `IMPORT_ALREADY_REVERSED`, and `IMPORT_REVERSAL_UNSAFE`.
+
+## 8.13 Phase 8 Payment and Outstanding APIs
+
+Payments use draft/post/reverse lifecycle endpoints. Posted receipts are immutable; corrections
+use reversal. Allocation endpoints only settle issued invoices and never change stock.
+
+```text
+GET/POST/PUT /api/v1/payments
+POST /api/v1/payments/{id}/post
+POST /api/v1/payments/{id}/allocate
+POST /api/v1/payments/{id}/reverse
+GET  /api/v1/payments/{id}/receipt
+PUT  /api/v1/payments/{id}/tds-details
+POST /api/v1/payments/{id}/tds/verify
+POST /api/v1/payments/{id}/tds/reject
+GET  /api/v1/payments/party/{partyId}/eligible-invoices
+GET  /api/v1/payments/party/{partyId}/available-advance
+```
+
+Security deposits are separate from normal receipt payments:
+
+```text
+GET/POST /api/v1/security-deposits
+POST /api/v1/security-deposits/receipt
+POST /api/v1/security-deposits/refund
+POST /api/v1/security-deposits/adjust-to-invoice
+POST /api/v1/security-deposits/{id}/reverse
+GET  /api/v1/security-deposits/agreement/{agreementId}/summary
+```
+
+Outstanding summaries are read-only:
+
+```text
+GET /api/v1/outstanding/invoices/{invoiceId}
+GET /api/v1/outstanding/sites/{siteId}
+GET /api/v1/outstanding/parties/{partyId}
+GET /api/v1/outstanding/agreements/{agreementId}
+```
+
+## 8.14 Phase 9 Reporting APIs
+
+Phase 9 reporting APIs are rooted at `/api/v1/reports`.
+
+- `GET /catalog` returns report definitions visible to the authenticated user.
+- `POST /{reportType}/preview` returns paginated report rows, totals, and warnings.
+- `POST /{reportType}/export` generates CSV, Excel, or PDF files and records export history.
+- `GET /exports` and `GET /exports/{id}/download` list and download generated exports.
+- `GET|POST|PUT|DELETE /saved-filters` manages private and shared report presets.
+- GST endpoints expose preparation data only and never submit GST returns.
+
+Report types are fixed server-side constants. Requests may provide typed filters
+such as date range, party, site, agreement, item, status, document number, user,
+month, page, and size.

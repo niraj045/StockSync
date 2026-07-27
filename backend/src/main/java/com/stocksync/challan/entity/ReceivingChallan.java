@@ -7,6 +7,7 @@ import com.stocksync.site.entity.Site;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.Instant;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,6 +56,12 @@ public class ReceivingChallan extends AuditedEntity {
 
     @Column(name = "transporter_id")
     private Long transporterId;
+
+    @Column(name = "transport_charge", nullable = false, precision = 19, scale = 2)
+    private BigDecimal transportCharge = BigDecimal.ZERO;
+
+    @Column(name = "handling_charge", nullable = false, precision = 19, scale = 2)
+    private BigDecimal handlingCharge = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "source_type", nullable = false, length = 30)
@@ -127,4 +134,8 @@ public class ReceivingChallan extends AuditedEntity {
         item.setReceivingChallan(this);
         this.items.add(item);
     }
+    public BigDecimal getTransportCharge() { return transportCharge; }
+    public void setTransportCharge(BigDecimal transportCharge) { this.transportCharge = transportCharge; }
+    public BigDecimal getHandlingCharge() { return handlingCharge; }
+    public void setHandlingCharge(BigDecimal handlingCharge) { this.handlingCharge = handlingCharge; }
 }

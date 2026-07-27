@@ -9,7 +9,11 @@ public enum DocumentType {
     SITE_TRANSFER("ST"),
     STOCK_LOSS("LOSS"),
     STOCK_DAMAGE("DMG"),
-    ITEM_EXCHANGE("EX");
+    ITEM_EXCHANGE("EX"),
+    BILLING_RUN("BR"),
+    INVOICE("INV"),
+    PAYMENT_RECEIPT("PR"),
+    SECURITY_DEPOSIT("SD");
 
     private final String prefix;
     DocumentType(String prefix) { this.prefix = prefix; }
