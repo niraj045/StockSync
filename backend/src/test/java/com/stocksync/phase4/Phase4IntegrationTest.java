@@ -98,10 +98,25 @@ class Phase4IntegrationTest extends BaseIntegrationTest {
         long first=createOrder(agreementId,"60","10");
         mvc.perform(post("/api/v1/orders/{id}/confirm",first).with(csrf())).andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("CONFIRMED")).andExpect(jsonPath("$.items[0].remainingQuantity").value(60.0));
+
         long second=createOrder(agreementId,"50","5");
+        // Should fail because first order (60) + second order (50) = 110, exceeding limit (100)
         mvc.perform(post("/api/v1/orders/{id}/confirm",second).with(csrf())).andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value("AGREEMENT_QUANTITY_EXCEEDED"));
         mvc.perform(get("/api/v1/orders/{id}",second)).andExpect(status().isOk()).andExpect(jsonPath("$.status").value("DRAFT"));
+
+        // Expose PDF of first confirmed order
+        mvc.perform(get("/api/v1/orders/{id}/pdf",first)).andExpect(status().isOk())
+            .andExpect(header().string("Content-Type","application/pdf"))
+            .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString("attachment")));
+
+        // Cancel first order (with issued quantity = 0)
+        mvc.perform(post("/api/v1/orders/{id}/cancel",first).with(csrf())).andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("CANCELLED"));
+
+        // Now confirming second order should succeed because first is cancelled
+        mvc.perform(post("/api/v1/orders/{id}/confirm",second).with(csrf())).andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("CONFIRMED"));
     }
 
     @Test @WithMockUser(username="viewer",roles="VIEWER")

@@ -350,6 +350,73 @@ async function convertAndActivateAgreement(quotationNumber) {
   return number;
 }
 
+async function createAndConfirmOrder(agreementNumber) {
+  await driver.get(`${baseUrl}/orders`);
+  await pageContains('Site Orders');
+  await (await visible(By.xpath("//button[.//span[normalize-space()='Create order']]"))).click();
+  const drawer = await activeModal();
+
+  // Select the Active Agreement
+  await selectField('Select Agreement', agreementNumber, drawer);
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  await typeField('Order Date', todayStr, drawer);
+
+  const itemSelect = await visible(By.xpath("//div[contains(@class,'ant-select-selector')][.//input[@id='items_0_itemId']]"));
+  await itemSelect.click();
+  await driver.sleep(300);
+
+  const option = await visible(By.xpath(
+    `//div[contains(@class,'ant-select-item-option') and not(contains(@class,'ant-select-item-option-disabled'))]` +
+    `[contains(normalize-space(.),${literal(data.itemCode)})]`
+  ));
+  await option.click();
+  await driver.sleep(300);
+
+  const qtyInput = await drawer.findElement(By.css('input.ant-input-number-input[placeholder="Qty"]'));
+  await qtyInput.sendKeys(Key.chord(Key.CONTROL, 'a'), '50');
+
+  const submitBtn = await drawer.findElement(By.xpath(".//button[.//span[normalize-space()='Create order']]"));
+  await submitBtn.click();
+  await waitUntilClosed(drawer);
+
+  console.log('✓ Site Order created in DRAFT');
+
+  await pageContains(agreementNumber);
+  const getOrderRow = async () => visible(By.xpath(`//tr[.//td[contains(normalize-space(.),${literal(agreementNumber)})]]`));
+  const orderNumber = await (await getOrderRow()).findElement(By.xpath("./td[1]")).getText();
+
+  await clickRowButton(getOrderRow, By.xpath(".//button[.//span[normalize-space()='Confirm']]"));
+  await clickButton('OK');
+
+  await driver.wait(async () => {
+    try {
+      return (await (await getOrderRow()).getText()).includes('CONFIRMED');
+    } catch {
+      return false;
+    }
+  }, timeout);
+
+  console.log(`✓ Site Order confirmed: ${orderNumber}`);
+
+  await clickRowButton(getOrderRow, By.xpath(".//button[normalize-space()='View']"));
+  const modal = await activeModal();
+
+  await pageContains('50');
+  await pageContains('0');
+
+  const closeBtn = await modal.findElement(By.css('.ant-modal-close'));
+  await closeBtn.click();
+  await waitUntilClosed(modal);
+
+  await clickRowButton(getOrderRow, By.xpath(".//button[.//span[normalize-space()='PDF']]"));
+  await driver.sleep(2000);
+
+  console.log('✓ Site Order PDF downloaded');
+  return orderNumber;
+}
+
+
 try {
   console.log(`Running data-creating daily operation ${runId} against ${baseUrl}`);
   await driver.get(`${baseUrl}/login`);
@@ -368,6 +435,7 @@ try {
   await createSite();
   const quotationNumber = await createAndApproveQuotation();
   const agreementNumber = await convertAndActivateAgreement(quotationNumber);
+  const orderNumber = await createAndConfirmOrder(agreementNumber);
 
   await driver.get(`${baseUrl}/audit-logs`);
   await pageContains('Activity audit');

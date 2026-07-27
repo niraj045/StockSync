@@ -46,6 +46,7 @@ export function AppLayout() {
     { key: '/opening-stock-imports', icon: <ImportOutlined />, label: <Tooltip placement="right" title="Opening Stock Import"><span>Opening Stock Import</span></Tooltip> },
     { key: '/quotations', icon: <FormOutlined />, label: 'Quotations' },
     { key: '/agreements', icon: <FileTextOutlined />, label: 'Agreements' },
+    { key: '/orders', icon: <FileTextOutlined />, label: 'Site Orders' },
     { key: '/quotation-templates', icon: <FileTextOutlined />, label: 'Quotation Templates' },
     { key: '/reports', icon: <FileTextOutlined />, label: 'Reports', disabled: true },
   ];
