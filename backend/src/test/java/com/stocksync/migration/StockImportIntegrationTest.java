@@ -431,6 +431,8 @@ class StockImportIntegrationTest extends BaseIntegrationTest {
         jdbc.update("DELETE FROM stock_import_rows");
         jdbc.update("DELETE FROM stock_import_batches");
         jdbc.update("DELETE FROM item_aliases");
+        jdbc.update("DELETE FROM issued_challan_items");
+        jdbc.update("DELETE FROM issued_challans");
         jdbc.update("DELETE FROM site_order_items");
         jdbc.update("DELETE FROM site_orders");
         jdbc.update("DELETE FROM agreement_items");

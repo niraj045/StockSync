@@ -30,6 +30,7 @@ class Phase4IntegrationTest extends BaseIntegrationTest {
 
     @BeforeEach void setup(){
         jdbc.update("UPDATE stock_import_rows SET posted_stock_transaction_id=NULL");
+        jdbc.update("DELETE FROM issued_challan_items");jdbc.update("DELETE FROM issued_challans");
         jdbc.update("DELETE FROM site_order_items");jdbc.update("DELETE FROM site_orders");jdbc.update("DELETE FROM agreement_items");
         jdbc.update("DELETE FROM agreements");jdbc.update("DELETE FROM quotation_items");jdbc.update("DELETE FROM quotations");
         jdbc.update("DELETE FROM agreement_templates");jdbc.update("DELETE FROM quotation_templates");jdbc.update("DELETE FROM stock_transactions");jdbc.update("DELETE FROM purchase_items");
