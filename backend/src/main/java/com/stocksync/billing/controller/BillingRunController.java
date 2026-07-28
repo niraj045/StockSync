@@ -1,6 +1,5 @@
 package com.stocksync.billing.controller;
 
-import com.stocksync.agreement.entity.Agreement;
 import com.stocksync.billing.dto.BillingRunDtos.*;
 import com.stocksync.billing.service.BillingRunService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -77,7 +76,7 @@ public class BillingRunController {
     }
 
     @GetMapping("/eligible-agreements")
-    public ResponseEntity<List<Agreement>> getEligibleAgreements() {
+    public ResponseEntity<List<EligibleAgreementResponse>> getEligibleAgreements() {
         return ResponseEntity.ok(service.getEligibleAgreements());
     }
 

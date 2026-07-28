@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 public record QuotationItemRequest(
         @NotNull Long itemId,
         @NotNull @DecimalMin(value="0.0001") BigDecimal quantity,
-        @NotNull @DecimalMin("0") BigDecimal rate,
+        @NotNull @DecimalMin(value="0.0001") BigDecimal rate,
         @NotNull RentalType rentalType,
         @DecimalMin("0") BigDecimal area,
         @DecimalMin("0") BigDecimal weight,

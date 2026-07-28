@@ -33,11 +33,11 @@ const reportRowKey = (row: ReportRow) => {
 export function ReportsPage() {
   const { message } = App.useApp();
   const queryClient = useQueryClient();
+  const [saveForm] = Form.useForm<{ name: string }>();
   const [category, setCategory] = useState('Inventory');
   const [reportType, setReportType] = useState<string>();
   const [filters, setFilters] = useState<ReportFilter>({ page: 0, size: 25 });
   const [saveOpen, setSaveOpen] = useState(false);
-  const [presetName, setPresetName] = useState('');
 
   const catalogQuery = useQuery({ queryKey: ['reports', 'catalog'], queryFn: reportsApi.catalog });
   const historyQuery = useQuery({ queryKey: ['reports', 'history'], queryFn: reportsApi.history });
@@ -66,13 +66,14 @@ export function ReportsPage() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: () => reportsApi.createSavedFilter({ name: presetName, reportType: selectedReport?.reportType ?? '', filters, shared: false }),
+    mutationFn: ({ name }: { name: string }) => reportsApi.createSavedFilter({ name: name.trim(), reportType: selectedReport?.reportType ?? '', filters, shared: false }),
     onSuccess: () => {
       message.success('Saved filter preset');
       setSaveOpen(false);
-      setPresetName('');
+      saveForm.resetFields();
       queryClient.invalidateQueries({ queryKey: ['reports', 'saved'] });
     },
+    onError: () => message.error('Unable to save filter preset'),
   });
 
   const deleteMutation = useMutation({
@@ -157,7 +158,16 @@ export function ReportsPage() {
           </div>
           <Space wrap>
             {selectedReport?.gstPreparation && <Tag color="gold">Preparation only</Tag>}
-            <Button icon={<SaveOutlined />} onClick={() => setSaveOpen(true)} disabled={!selectedReport}>Save preset</Button>
+            <Button
+              icon={<SaveOutlined />}
+              onClick={() => {
+                saveForm.resetFields();
+                setSaveOpen(true);
+              }}
+              disabled={!selectedReport}
+            >
+              Save preset
+            </Button>
             {selectedReport?.formats.includes('PDF') && <Button icon={<FilePdfOutlined />} onClick={() => exportMutation.mutate({ format: 'PDF' })}>PDF</Button>}
             {selectedReport?.formats.includes('EXCEL') && <Button icon={<FileExcelOutlined />} onClick={() => exportMutation.mutate({ format: 'EXCEL' })}>Excel</Button>}
             {selectedReport?.formats.includes('CSV') && <Button icon={<FileTextOutlined />} onClick={() => exportMutation.mutate({ format: 'CSV' })}>CSV</Button>}
@@ -201,13 +211,27 @@ export function ReportsPage() {
       <Modal
         title="Save Filter Preset"
         open={saveOpen}
-        onCancel={() => setSaveOpen(false)}
-        onOk={() => saveMutation.mutate()}
-        okButtonProps={{ disabled: !presetName.trim() }}
+        onCancel={() => {
+          setSaveOpen(false);
+          saveForm.resetFields();
+        }}
+        okButtonProps={{ htmlType: 'submit', form: 'save-report-preset-form', loading: saveMutation.isPending }}
       >
-        <Form layout="vertical">
-          <Form.Item label="Preset name">
-            <Input value={presetName} onChange={(event) => setPresetName(event.target.value)} />
+        <Form
+          id="save-report-preset-form"
+          form={saveForm}
+          layout="vertical"
+          onFinish={(values) => saveMutation.mutate(values)}
+        >
+          <Form.Item
+            name="name"
+            label="Preset name"
+            rules={[
+              { required: true, whitespace: true, message: 'Enter a preset name' },
+              { max: 120, message: 'Preset name must be 120 characters or less' },
+            ]}
+          >
+            <Input autoFocus />
           </Form.Item>
         </Form>
       </Modal>

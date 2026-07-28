@@ -1,5 +1,6 @@
 package com.stocksync.agreement.service;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import com.stocksync.common.pdf.PdfViewHelper;
 import com.stocksync.agreement.dto.AgreementResponse;
 import java.io.*;
 import java.util.Map;
@@ -11,7 +12,7 @@ public class AgreementPdfService {
  private final SpringTemplateEngine templates;
  public AgreementPdfService(SpringTemplateEngine templates){this.templates=templates;}
  public byte[] generate(AgreementResponse agreement){
-  Context c=new Context();c.setVariables(Map.of("a",agreement));
+  Context c=new Context();c.setVariables(Map.of("a",agreement,"fmt",PdfViewHelper.INSTANCE));
   try(ByteArrayOutputStream out=new ByteArrayOutputStream()){
    new PdfRendererBuilder().withHtmlContent(templates.process("agreement-pdf",c),null).toStream(out).run();return out.toByteArray();
   }catch(IOException e){throw new IllegalStateException("Unable to generate agreement PDF",e);}

@@ -3,12 +3,20 @@ import { App, Button, Card, Descriptions, Empty, Form, Input, InputNumber, Modal
 import { PlusOutlined, CalculatorOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
+import dayjs from 'dayjs';
 import { apiClient } from '../../../api/client';
 import { useAuth } from '../../auth/context/AuthContext';
 import type { BillingRun } from '../types';
-import type { Agreement } from '../../agreement/types';
 
 type Page<T> = { content: T[]; totalElements: number };
+type EligibleAgreement = {
+  id: number;
+  agreementNumber: string;
+  partyName: string;
+  siteName: string;
+  effectiveDate: string;
+  expiryDate?: string;
+};
 const money = (v?: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(v ?? 0);
 const errorMessage = (error: unknown, fallback: string) => {
   const err = error as { response?: { data?: { message?: string } } };
@@ -50,7 +58,7 @@ export function BillingRunsPage() {
 
   const eligibleAgreementsQuery = useQuery({
     queryKey: ['eligible-agreements'],
-    queryFn: async () => (await apiClient.get<Agreement[]>('/billing-runs/eligible-agreements')).data,
+    queryFn: async () => (await apiClient.get<EligibleAgreement[]>('/billing-runs/eligible-agreements')).data,
     enabled: createOpen
   });
 
@@ -159,6 +167,10 @@ export function BillingRunsPage() {
   const handleCreate = () => {
     if (!createAgreementId || !periodStart || !periodEnd) {
       message.error('All fields are required');
+      return;
+    }
+    if (dayjs(periodEnd).isAfter(dayjs(), 'day')) {
+      message.error('Billing period cannot end in the future');
       return;
     }
     createMutation.mutate({

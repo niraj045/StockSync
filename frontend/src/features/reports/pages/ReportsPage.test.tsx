@@ -7,6 +7,9 @@ import { ReportsPage } from './ReportsPage';
 
 const { post } = vi.hoisted(() => ({
   post: vi.fn((url: string) => {
+  if (url === '/reports/saved-filters') {
+    return Promise.resolve({ data: { id: 11, name: 'Demo preset', reportType: 'GST_SALES_REGISTER', filters: { page: 0, size: 25 }, ownerUsername: 'admin', shared: false, createdAt: '2026-07-28T00:00:00Z', updatedAt: '2026-07-28T00:00:00Z' } });
+  }
   if (url.endsWith('/export')) {
     return Promise.resolve({ data: { id: 7, reportType: 'GST_SALES_REGISTER', format: 'EXCEL', filename: 'gst.xlsx', status: 'SUCCESS', generatedAt: '2026-07-28T00:00:00Z' } });
   }
@@ -66,5 +69,18 @@ describe('Phase 9 Report Centre', () => {
     await waitFor(() => expect(post).toHaveBeenCalledWith('/reports/GST_SALES_REGISTER/export', expect.anything()));
     expect(open).toHaveBeenCalledWith('/api/v1/reports/exports/7/download', '_blank');
     open.mockRestore();
+  });
+
+  it('saves report filter presets from the modal OK button', async () => {
+    renderPage();
+    expect(await screen.findByText('GST Sales Register')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: /save preset/i }));
+    fireEvent.change(screen.getByLabelText(/preset name/i), { target: { value: 'Demo preset' } });
+    fireEvent.click(screen.getByRole('button', { name: /^ok$/i }));
+    await waitFor(() => expect(post).toHaveBeenCalledWith('/reports/saved-filters', expect.objectContaining({
+      name: 'Demo preset',
+      reportType: 'GST_SALES_REGISTER',
+      shared: false,
+    })));
   });
 });

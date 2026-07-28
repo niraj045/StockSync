@@ -265,8 +265,17 @@ public class BillingRunService {
     }
 
     @Transactional(readOnly = true)
-    public List<Agreement> getEligibleAgreements() {
-        return agreements.findByStatus(AgreementStatus.ACTIVE);
+    public List<EligibleAgreementResponse> getEligibleAgreements() {
+        return agreements.findByStatus(AgreementStatus.ACTIVE).stream()
+                .map(ag -> new EligibleAgreementResponse(
+                        ag.getId(),
+                        ag.getAgreementNumber(),
+                        ag.getPartyLegalNameSnapshot(),
+                        ag.getSiteNameSnapshot(),
+                        ag.getEffectiveDate(),
+                        ag.getExpiryDate()
+                ))
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -292,6 +301,9 @@ public class BillingRunService {
 
         if (ag.getExpiryDate() != null && end.isAfter(ag.getExpiryDate())) {
             end = ag.getExpiryDate();
+        }
+        if (end.isAfter(LocalDate.now())) {
+            end = LocalDate.now();
         }
 
         return Map.of("periodStart", start, "periodEnd", end);

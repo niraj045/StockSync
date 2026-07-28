@@ -1,17 +1,119 @@
-<!DOCTYPE html><html xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"/>
-<style>body{font-family:sans-serif;color:#17312d;font-size:11px}h1{color:#087f72}table{border-collapse:collapse;width:100%;margin:12px 0}th,td{border:1px solid #ccd8d5;padding:6px}th{background:#eef5f3}.right{text-align:right}.sign{margin-top:50px}</style></head><body>
-<h1>StockSync — Shuttering Material Agreement</h1>
-<p><b>Agreement:</b> <span th:text="${a.agreementNumber}"></span> &#160; <b>Source quotation:</b> <span th:text="${a.sourceQuotationNumber}"></span></p>
-<table><tr><td><b>Party</b><br/><span th:text="${a.partyName}"></span><br/><span th:text="${a.partyTradeName}"></span><br/>GSTIN: <span th:text="${a.partyGstin}"></span><br/><span th:text="${a.partyAddress}"></span></td>
-<td><b>Site</b><br/><span th:text="${a.siteName}"></span> (<span th:text="${a.siteCode}"></span>)<br/><span th:text="${a.siteAddress}"></span></td>
-<td><b>Agreement date</b><br/><span th:text="${a.agreementDate}"></span><br/><b>Effective / Expiry</b><br/><span th:text="${a.effectiveDate}"></span> / <span th:text="${a.expiryDate}"></span></td></tr></table>
-<p><b>Rental:</b> <span th:text="${a.rentalType}"></span> &#160; <b>Billing:</b> <span th:text="${a.billingCycle}"></span> &#160; <b>Grace:</b> <span th:text="${a.gracePeriodDays}"></span> days</p>
-<table><thead><tr><th>#</th><th>Code</th><th>Item snapshot</th><th>Size</th><th>Unit</th><th>Quantity</th><th>Rate</th><th>Loss/piece</th><th>Damage</th></tr></thead>
-<tbody><tr th:each="i:${a.items}"><td th:text="${i.sequence}"></td><td th:text="${i.itemCode}"></td><td th:text="${i.itemName}"></td><td th:text="${i.size}"></td><td th:text="${i.unit}"></td><td th:text="${i.contractedQuantity}"></td><td th:text="${i.rate}"></td><td th:text="${i.lossRatePerPiece}"></td><td th:text="${i.damageRate}"></td></tr></tbody></table>
-<table><tr><td>Subtotal / Discount / Taxable</td><td class="right"><span th:text="${a.subtotal}"></span> / <span th:text="${a.discountAmount}"></span> / <span th:text="${a.taxableAmount}"></span></td></tr>
-<tr><td>CGST / SGST / IGST</td><td class="right"><span th:text="${a.cgstAmount}"></span> / <span th:text="${a.sgstAmount}"></span> / <span th:text="${a.igstAmount}"></span></td></tr>
-<tr><td>Transport / Loading / Unloading / Other</td><td class="right"><span th:text="${a.transportCharge}"></span> / <span th:text="${a.loadingCharge}"></span> / <span th:text="${a.unloadingCharge}"></span> / <span th:text="${a.otherCharge}"></span></td></tr>
-<tr><td><b>Grand total / Security deposit</b></td><td class="right"><b th:text="${a.grandTotal}"></b> / <span th:text="${a.securityDeposit}"></span></td></tr></table>
-<p><b>Terms</b><br/><span th:text="${a.terms ?: '-'}"></span></p><p><b>Notes</b><br/><span th:text="${a.notes ?: '-'}"></span></p>
-<table class="sign"><tr><td>For StockSync<br/><br/><br/>Authorised signatory</td><td>For Party<br/><br/><br/>Authorised signatory</td></tr></table>
-</body></html>
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8"/>
+<style>
+@page{size:A4;margin:18mm 16mm}
+body{font-family:Arial,Helvetica,sans-serif;color:#111;font-size:11px;line-height:1.35}
+.top{text-align:right;font-size:10px;margin-bottom:14px}
+.ref-table{margin:8px 0 18px}.ref-table td{border:0;padding:0}
+.to{margin:10px 0 18px}
+.subject{text-align:center;font-weight:700;text-decoration:underline;margin:14px 0}
+.section-title{font-weight:700;text-decoration:underline;margin-top:14px}
+table{border-collapse:collapse;width:100%;margin:8px 0 12px}
+th,td{border:1px solid #333;padding:5px;vertical-align:top}
+th{text-align:center;font-weight:700}
+.center{text-align:center}.right{text-align:right}.bold{font-weight:700}
+.pre{white-space:pre-wrap}.sign{margin-top:28px}.accept{margin-top:38px}
+.meta td{width:33.33%}
+</style>
+</head>
+<body>
+<div class="top">
+  SteelFab Scaffoldings &amp; Engineering Private Limited
+</div>
+
+<table class="ref-table">
+  <tr>
+    <td>Ref. No.: <span th:text="${a.agreementNumber}">SFE/22/2026-2027</span></td>
+    <td class="right">Date: <span th:text="${fmt.date(a.agreementDate)}">22nd July 2026</span></td>
+  </tr>
+</table>
+
+<div class="to">
+  <div>To,</div>
+  <div class="bold" th:text="${a.partyName}">Client Name</div>
+  <div th:if="${a.partyAddress != null}" th:text="${a.partyAddress}">Address</div>
+  <div th:if="${a.partyGstin != null}">GSTIN: <span th:text="${a.partyGstin}">GSTIN</span></div>
+  <div th:if="${a.siteName != null}">Site: <span th:text="${a.siteName}">Site Name</span></div>
+</div>
+
+<p>Dear Sir,</p>
+<div class="subject">
+  Agreement for Supply of H frame Scaffolding Materials on Hire for
+  <span th:text="${a.siteName}">Site</span>.
+</div>
+
+<table class="meta">
+  <tr>
+    <td><span class="bold">Agreement Date</span><br/><span th:text="${fmt.shortDate(a.agreementDate)}">-</span></td>
+    <td><span class="bold">Effective Date</span><br/><span th:text="${fmt.shortDate(a.effectiveDate)}">-</span></td>
+    <td><span class="bold">Expiry Date</span><br/><span th:text="${fmt.shortDate(a.expiryDate)}">-</span></td>
+  </tr>
+</table>
+
+<div class="section-title">PART A: HIRE CHARGES &amp; COSTS</div>
+<table>
+  <thead>
+  <tr>
+    <th style="width:7%">Sr.No.</th>
+    <th>Items</th>
+    <th style="width:10%">Qty</th>
+    <th style="width:10%">Unit</th>
+    <th style="width:15%">Rate per nos. per Month</th>
+    <th style="width:11%">No of Months</th>
+    <th style="width:15%">Total Amount Rs.</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr th:each="i : ${a.items}">
+    <td class="center" th:text="${i.sequence}">1</td>
+    <td>
+      <div th:text="${i.itemName}">H frame</div>
+      <div th:if="${i.size != null}" th:text="${i.size}">Size</div>
+      <div th:if="${i.description != null}" th:text="${i.description}">Description</div>
+    </td>
+    <td class="right" th:text="${fmt.qty(i.contractedQuantity)}">0</td>
+    <td class="center" th:text="${i.unit ?: 'Nos.'}">Nos.</td>
+    <td class="right" th:text="${fmt.amount(i.rate)}">0</td>
+    <td class="center" th:text="${fmt.months(a.effectiveDate, a.expiryDate)}">1</td>
+    <td class="right" th:text="${fmt.amount(fmt.lineAmount(i.contractedQuantity, i.rate, fmt.months(a.effectiveDate, a.expiryDate)))}">0</td>
+  </tr>
+  <tr>
+    <td colspan="6" class="right bold">Total</td>
+    <td class="right bold" th:text="${fmt.amount(a.subtotal)}">0</td>
+  </tr>
+  <tr>
+    <td colspan="6" class="right">GST</td>
+    <td class="right" th:text="${fmt.amount(a.totalTax)}">0</td>
+  </tr>
+  <tr>
+    <td colspan="6" class="right bold">Grand Total</td>
+    <td class="right bold" th:text="${fmt.amount(a.grandTotal)}">0</td>
+  </tr>
+  </tbody>
+</table>
+
+<p><span class="bold">Amount in Words:</span> <span th:text="${fmt.amountInWords(a.grandTotal)}">Rupees Zero Only</span></p>
+<p><span class="bold">Security Deposit:</span> Rs. <span th:text="${fmt.amount(a.securityDeposit)}">0</span></p>
+
+<div class="section-title">PART B: TERMS AND CONDITIONS</div>
+<div class="pre" th:text="${fmt.hireTerms(a.terms)}">Terms and conditions</div>
+
+<div class="section-title" th:if="${fmt.hasText(a.notes)}">Notes</div>
+<div class="pre" th:if="${fmt.hasText(a.notes)}" th:text="${a.notes}">Notes</div>
+
+<div class="sign">
+  <p>For SteelFab Scaffoldings &amp; Engineering Private Limited</p>
+  <br/><br/>
+  <p class="bold">Authorised Signatory</p>
+</div>
+
+<div class="accept">
+  <p>Accepted and Confirmed</p>
+  <p class="bold" th:text="${a.partyName}">Client Name</p>
+  <br/><br/>
+  <p>Signature &amp; Seal</p>
+</div>
+</body>
+</html>

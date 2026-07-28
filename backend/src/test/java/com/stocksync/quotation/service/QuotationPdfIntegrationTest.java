@@ -143,8 +143,8 @@ class QuotationPdfIntegrationTest extends BaseIntegrationTest {
         try (PDDocument document = PDDocument.load(bytes)) {
             text = new PDFTextStripper().getText(document);
         }
-        assertThat(text).contains("QT/", originalParty, originalSite, originalItem, "1250 x 500", "PCS",
-                "25.00", "250.00", "Transport", "10.00", "Grand total", "306.80");
+        assertThat(text).contains("SteelFab Scaffoldings", "QT/", originalParty, originalSite, originalItem, "1250 x 500", "PCS",
+                "25", "250", "PART A", "HIRE CHARGES", "Grand Total", "306.80");
         assertThat(text).doesNotContain("Changed Party Master", "Changed Site Master", "Changed Item Master", "CHANGED SIZE");
     }
 

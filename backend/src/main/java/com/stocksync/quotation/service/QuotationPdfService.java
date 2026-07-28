@@ -1,6 +1,7 @@
 package com.stocksync.quotation.service;
 
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import com.stocksync.common.pdf.PdfViewHelper;
 import com.stocksync.quotation.dto.QuotationResponse;
 import java.io.*;
 import java.util.Map;
@@ -15,7 +16,7 @@ public class QuotationPdfService {
     public QuotationPdfService(QuotationService quotations,SpringTemplateEngine templates){this.quotations=quotations;this.templates=templates;}
     public PdfDocument generate(Long id){
         QuotationResponse quotation=quotations.get(id);
-        Context context=new Context();context.setVariables(Map.of("q",quotation));
+        Context context=new Context();context.setVariables(Map.of("q",quotation,"fmt",PdfViewHelper.INSTANCE));
         String html=templates.process("quotation-pdf",context);
         return render(quotation,html);
     }

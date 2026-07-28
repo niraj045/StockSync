@@ -21,6 +21,15 @@ public class BillingRunDtos {
         List<Long> selectedChargeIds
     ) {}
 
+    public record EligibleAgreementResponse(
+        Long id,
+        String agreementNumber,
+        String partyName,
+        String siteName,
+        LocalDate effectiveDate,
+        LocalDate expiryDate
+    ) {}
+
     public record BillingRunResponse(
         Long id,
         String billingRunNumber,
