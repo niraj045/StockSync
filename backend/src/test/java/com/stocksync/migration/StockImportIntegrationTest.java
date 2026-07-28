@@ -234,6 +234,7 @@ class StockImportIntegrationTest extends BaseIntegrationTest {
 
         assertThat(decimal("SELECT COALESCE(SUM(available_quantity),0) FROM stock_balances")).isEqualByComparingTo("25382");
         assertThat(decimal("SELECT COALESCE(SUM(issued_quantity),0) FROM stock_balances")).isEqualByComparingTo("20637");
+        assertThat(decimal("SELECT COALESCE(SUM(pending_quantity),0) FROM site_stock_balances")).isEqualByComparingTo("20637");
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM stock_transactions WHERE source_type='STOCK_IMPORT'", Integer.class)).isEqualTo(152);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM stock_transactions WHERE transaction_type='OPENING_GODOWN_BALANCE'", Integer.class)).isEqualTo(32);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM stock_transactions WHERE transaction_type='OPENING_SITE_BALANCE'", Integer.class)).isEqualTo(120);
@@ -257,6 +258,7 @@ class StockImportIntegrationTest extends BaseIntegrationTest {
 
         assertThat(decimal("SELECT COALESCE(SUM(available_quantity),0) FROM stock_balances")).isEqualByComparingTo("0");
         assertThat(decimal("SELECT COALESCE(SUM(issued_quantity),0) FROM stock_balances")).isEqualByComparingTo("0");
+        assertThat(decimal("SELECT COALESCE(SUM(pending_quantity),0) FROM site_stock_balances")).isEqualByComparingTo("0");
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM stock_transactions WHERE source_type='STOCK_IMPORT'", Integer.class)).isEqualTo(152);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM stock_transactions WHERE source_type='STOCK_IMPORT_REVERSAL'", Integer.class)).isEqualTo(152);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM user_activity_logs WHERE action='STOCK_IMPORT_REVERSED'", Integer.class)).isEqualTo(1);
@@ -425,6 +427,10 @@ class StockImportIntegrationTest extends BaseIntegrationTest {
 
     private void cleanDatabase() {
         jdbc.update("UPDATE stock_import_rows SET posted_stock_transaction_id=NULL");
+        jdbc.update("DELETE FROM loss_records");
+        jdbc.update("DELETE FROM damage_records");
+        jdbc.update("DELETE FROM site_transfer_items");
+        jdbc.update("DELETE FROM site_transfers");
         jdbc.update("DELETE FROM stock_transactions WHERE reversal_of_transaction_id IS NOT NULL");
         jdbc.update("DELETE FROM stock_transactions");
         jdbc.update("DELETE FROM stock_import_location_mappings");
@@ -449,6 +455,7 @@ class StockImportIntegrationTest extends BaseIntegrationTest {
         jdbc.update("DELETE FROM scrap_entries");
         jdbc.update("DELETE FROM stock_adjustments");
         jdbc.update("DELETE FROM stock_balances");
+        jdbc.update("DELETE FROM site_stock_balances");
         jdbc.update("DELETE FROM file_attachments");
         jdbc.update("DELETE FROM user_activity_logs");
         sites.deleteAll();

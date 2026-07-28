@@ -1,0 +1,34 @@
+{
+  "clientE2eDatabase": {
+    "items": 42,
+    "parties": 17,
+    "sites": 20,
+    "agreements": 4,
+    "quotations": 4,
+    "siteOrders": 3,
+    "issuedChallans": 4,
+    "receivingChallans": 2,
+    "siteTransfers": 2,
+    "billingRuns": 2,
+    "invoices": 1,
+    "paymentReceipts": 2,
+    "stockTransactions": 498,
+    "lossRecords": 3,
+    "damageRecords": 4,
+    "reportExports": 5,
+    "users": 4
+  },
+  "largeScaleDatabase": {
+    "items": 1200,
+    "parties": 180,
+    "sites": 540,
+    "agreements": 1200,
+    "orders": 5000,
+    "billingRuns": 10000,
+    "invoices": 10000,
+    "payments": 5000,
+    "stockTransactions": 100000,
+    "lossRecords": 2000,
+    "damageRecords": 2000
+  }
+}

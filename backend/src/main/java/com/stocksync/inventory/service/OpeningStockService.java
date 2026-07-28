@@ -13,14 +13,15 @@ import java.math.BigDecimal;import java.time.Instant;import java.util.Comparator
 @Service
 public class OpeningStockService implements OpeningStockAccess {
     private final ItemRepository items;private final StockBalanceRepository balances;private final StockTransactionRepository transactions;
-    private final PartyRepository parties;private final SiteRepository sites;private final JdbcTemplate jdbc;
+    private final SiteStockBalanceRepository siteBalances;private final PartyRepository parties;private final SiteRepository sites;private final JdbcTemplate jdbc;
     public OpeningStockService(ItemRepository items,StockBalanceRepository balances,StockTransactionRepository transactions,
-            PartyRepository parties,SiteRepository sites,JdbcTemplate jdbc){
-        this.items=items;this.balances=balances;this.transactions=transactions;this.parties=parties;this.sites=sites;this.jdbc=jdbc;}
+            SiteStockBalanceRepository siteBalances,PartyRepository parties,SiteRepository sites,JdbcTemplate jdbc){
+        this.items=items;this.balances=balances;this.transactions=transactions;this.siteBalances=siteBalances;this.parties=parties;this.sites=sites;this.jdbc=jdbc;}
     @Override @Transactional public Long post(OpeningCommand c){
         Item item=items.findById(c.itemId()).filter(Item::isActive)
             .orElseThrow(()->new BusinessRuleException("ITEM_NOT_FOUND_OR_INACTIVE","Active mapped item not found"));
         StockBalance balance=locked(item);apply(balance,c.stockBucket(),c.quantity(),true,item);
+        applySitePending(item,c.siteId(),c.stockBucket(),c.quantity(),true);
         StockTransaction tx=base(item,c.transactionType(),c.stockBucket(),c.snapshotDate(),c.quantity(),"IN","STOCK_IMPORT",
             c.rowId(),c.batchId(),c.rowId(),c.partyId(),c.siteId(),c.sourceDescription(),c.actor());
         return transactions.save(tx).getId();
@@ -30,6 +31,7 @@ public class OpeningStockService implements OpeningStockAccess {
         StockTransaction original=transactions.findById(c.originalTransactionId())
             .orElseThrow(()->new BusinessRuleException("IMPORT_TRANSACTION_NOT_FOUND","Original opening transaction not found"));
         StockBalance balance=locked(item);apply(balance,c.stockBucket(),c.quantity(),false,item);
+        applySitePending(item,c.siteId(),c.stockBucket(),c.quantity(),false);
         String reversalType="AVAILABLE".equals(c.stockBucket())?"OPENING_GODOWN_REVERSAL":"OPENING_SITE_REVERSAL";
         StockTransaction tx=base(item,reversalType,c.stockBucket(),c.reversalDate(),c.quantity(),"OUT",
             "STOCK_IMPORT_REVERSAL",c.rowId(),c.batchId(),c.rowId(),c.partyId(),c.siteId(),c.reason(),c.actor());
@@ -56,6 +58,18 @@ public class OpeningStockService implements OpeningStockAccess {
         else if("ISSUED".equals(bucket)){BigDecimal next=b.getIssuedQuantity().add(delta);if(next.signum()<0)throw insufficient(item,next);b.setIssuedQuantity(next);}
         else throw new BusinessRuleException("UNSUPPORTED_STOCK_BUCKET","Opening stock bucket is not supported");
         balances.save(b);
+    }
+    private void applySitePending(Item item,Long siteId,String bucket,BigDecimal quantity,boolean add){
+        if(!"ISSUED".equals(bucket))return;
+        if(siteId==null)throw new BusinessRuleException("OPENING_SITE_REQUIRED","Opening site stock requires a mapped site");
+        SiteStockBalance balance=siteBalances.findForUpdate(siteId,item.getId()).orElseGet(()->{
+            SiteStockBalance created=new SiteStockBalance();
+            created.setSite(sites.getReferenceById(siteId));created.setItem(item);
+            return siteBalances.saveAndFlush(created);
+        });
+        BigDecimal next=balance.getPendingQuantity().add(add?quantity:quantity.negate());
+        if(next.signum()<0)throw insufficient(item,next);
+        balance.setPendingQuantity(next);siteBalances.save(balance);
     }
     private BusinessRuleException insufficient(Item item,BigDecimal next){return new BusinessRuleException("IMPORT_REVERSAL_UNSAFE",
         "Reversal would make stock negative for "+item.getItemCode()+" (result "+next+")");}

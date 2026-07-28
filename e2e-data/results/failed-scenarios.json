@@ -1,0 +1,36 @@
+{
+  "remainingFailures": [
+    {
+      "classification": "ENVIRONMENT_ISSUE",
+      "step": "Requested MySQL 8.4 runtime",
+      "expected": "MySQL 8.4",
+      "actual": "Local isolated MySQL 8.0.46",
+      "impact": "All 18 migrations, application tests, and E2E workflows passed; version deviation remains documented."
+    },
+    {
+      "classification": "ENVIRONMENT_ISSUE",
+      "step": "Frontend runtime version",
+      "expected": "Node 20.19+ or 22.12+ for Vite 7",
+      "actual": "Node 22.11.0",
+      "impact": "Tests and build pass, but Vite prints an engine warning."
+    },
+    {
+      "classification": "PRODUCT_DEFECT",
+      "step": "Submit unknown damage type",
+      "expected": "Structured 400 validation response",
+      "actual": "500 response for unknown enum",
+      "impact": "Valid NON_REPAIRABLE workflow succeeds; invalid-enum error mapping remains a minor API issue."
+    }
+  ],
+  "fixedAndRerun": [
+    "CSRF frontend proxy/backend routing",
+    "Opening stock site pending projection and reversal",
+    "Damaged return stock projection and cancellation",
+    "Receiving challan PDF XML entity",
+    "Billing discovery for receiving-linked loss and damage charges",
+    "Five reporting SQL defects",
+    "Ant Design/Vitest dependency mismatch",
+    "Cross-suite integration-test cleanup order",
+    "Local scale generator shutdown ordering"
+  ]
+}

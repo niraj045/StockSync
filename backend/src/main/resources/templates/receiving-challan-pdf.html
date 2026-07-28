@@ -48,7 +48,7 @@
                 <th class="right">Damaged</th>
                 <th class="right">Lost</th>
                 <th class="right">Extra</th>
-                <th>Exchange (From &rarr; To)</th>
+                <th>Exchange (From → To)</th>
             </tr>
         </thead>
         <tbody>
@@ -63,7 +63,7 @@
                 <td class="right" th:text="${i.lostQuantity}"></td>
                 <td class="right" th:text="${i.extraReturnedQuantity}"></td>
                 <td>
-                    <span th:if="${i.exchangedQuantity > 0}" th:text="${i.exchangedQuantity} + ' ' + ${i.exchangedFromItemCode} + ' &rarr; ' + ${i.exchangedToItemCode}"></span>
+                    <span th:if="${i.exchangedQuantity > 0}" th:text="${i.exchangedQuantity} + ' ' + ${i.exchangedFromItemCode} + ' → ' + ${i.exchangedToItemCode}"></span>
                     <span th:if="${i.exchangedQuantity == 0}">-</span>
                 </td>
             </tr>

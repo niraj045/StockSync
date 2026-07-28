@@ -282,6 +282,7 @@ public class ReceivingChallanService {
             // 2. Update global stock balances
             balance.setAvailableQuantity(balance.getAvailableQuantity().add(line.getGoodReturnedQuantity()));
             balance.setIssuedQuantity(balance.getIssuedQuantity().subtract(normalQty));
+            balance.setDamagedQuantity(balance.getDamagedQuantity().add(line.getDamagedReturnedQuantity()));
             balance.setLostQuantity(balance.getLostQuantity().add(line.getLostQuantity()));
 
             if (line.getExtraReturnedQuantity().compareTo(BigDecimal.ZERO) > 0) {
@@ -400,6 +401,7 @@ public class ReceivingChallanService {
 
             balance.setAvailableQuantity(balance.getAvailableQuantity().subtract(line.getGoodReturnedQuantity()));
             balance.setIssuedQuantity(balance.getIssuedQuantity().add(normalQty));
+            balance.setDamagedQuantity(balance.getDamagedQuantity().subtract(line.getDamagedReturnedQuantity()));
             balance.setLostQuantity(balance.getLostQuantity().subtract(line.getLostQuantity()));
 
             if (line.getExtraReturnedQuantity().compareTo(BigDecimal.ZERO) > 0) {

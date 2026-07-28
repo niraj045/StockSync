@@ -222,6 +222,7 @@ public class ReportQueryService {
         status(sql, f, "lr.status");
         doc(sql, f, "lr.loss_number");
         sql.append("""
+
                 UNION ALL
                 SELECT 'DAMAGE', dr.damage_number, dr.damage_date, p.legal_name, s.site_name, i.item_name,
                        dr.quantity, dr.weight, dr.status, dr.calculated_damage_amount, dr.source_type
@@ -233,6 +234,7 @@ public class ReportQueryService {
         status(sql, f, "dr.status");
         doc(sql, f, "dr.damage_number");
         sql.append("""
+
                 UNION ALL
                 SELECT 'SCRAP', se.scrap_number, se.scrap_date, NULL, NULL, i.item_name,
                        si.quantity, NULL, 'POSTED', 0, se.reason
@@ -339,7 +341,7 @@ public class ReportQueryService {
                 SELECT so.order_number document_number, so.order_date date, p.legal_name party, s.site_name site, so.status status,
                        SUM(soi.ordered_quantity) ordered_quantity, COALESCE(SUM(issued.issued_quantity),0) issued_quantity,
                        SUM(soi.ordered_quantity) - COALESCE(SUM(issued.issued_quantity),0) remaining_quantity
-                FROM site_orders so JOIN site_order_items soi ON soi.site_order_id=so.id JOIN parties p ON p.id=so.party_id JOIN sites s ON s.id=so.site_id
+                FROM site_orders so JOIN site_order_items soi ON soi.order_id=so.id JOIN parties p ON p.id=so.party_id JOIN sites s ON s.id=so.site_id
                 LEFT JOIN (SELECT ic.site_order_id, ici.item_id, SUM(ici.quantity) issued_quantity FROM issued_challans ic JOIN issued_challan_items ici ON ici.issued_challan_id=ic.id GROUP BY ic.site_order_id, ici.item_id) issued ON issued.site_order_id=so.id AND issued.item_id=soi.item_id
                 WHERE 1=1
                 """);
@@ -402,7 +404,7 @@ public class ReportQueryService {
     private QuerySpec damageRecords(ReportFilterRequest f) { return simpleException(f, "damage_records", "damage_number", "damage_date", "calculated_damage_amount"); }
 
     private QuerySpec simpleException(ReportFilterRequest f, String table, String number, String date, String charge) {
-        Sql sql = new Sql(("SELECT %s document_number, %s date, p.legal_name party, s.site_name site, i.item_name item, quantity, weight, status, %s charges FROM %s r JOIN parties p ON p.id=r.party_id JOIN sites s ON s.id=r.site_id JOIN items i ON i.id=r.item_id WHERE 1=1 ")
+        Sql sql = new Sql(("SELECT r.%s document_number, r.%s date, p.legal_name party, s.site_name site, i.item_name item, r.quantity, r.weight, r.status, r.%s charges FROM %s r JOIN parties p ON p.id=r.party_id JOIN sites s ON s.id=r.site_id JOIN items i ON i.id=r.item_id WHERE 1=1 ")
                 .formatted(number, date, charge, table));
         common(sql, f, "r.party_id", "r.site_id", "r.agreement_id", "r.item_id");
         date(sql, f, "r." + date);
@@ -483,7 +485,7 @@ public class ReportQueryService {
     private QuerySpec agreements(ReportFilterRequest f) {
         Sql sql = new Sql("""
                 SELECT a.agreement_number document_number, a.agreement_date date, p.legal_name party, s.site_name site, a.status,
-                       a.start_date, a.end_date, a.security_deposit, a.billing_cycle
+                       a.effective_date start_date, a.expiry_date end_date, a.security_deposit, a.billing_cycle
                 FROM agreements a JOIN parties p ON p.id=a.party_id JOIN sites s ON s.id=a.site_id WHERE 1=1
                 """);
         common(sql, f, "a.party_id", "a.site_id", "a.id", null);

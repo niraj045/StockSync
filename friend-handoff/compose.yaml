@@ -1,0 +1,77 @@
+name: stocksync-friend
+
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: shuttering_inventory_e2e
+      MYSQL_USER: inventory_user
+      MYSQL_PASSWORD: inventory_password
+      MYSQL_ROOT_PASSWORD: stocksync_friend_root
+      TZ: UTC
+    ports:
+      - "127.0.0.1:${FRIEND_DB_PORT:-3309}:3306"
+    volumes:
+      - friend_mysql_data:/var/lib/mysql
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/20-stocksync-seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    networks:
+      - friend_internal
+
+  backend:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: shuttering_inventory_e2e
+      DB_USER: inventory_user
+      DB_PASSWORD: inventory_password
+      FILE_STORAGE_PATH: /app/storage
+      SESSION_COOKIE_SECURE: "false"
+      TZ: UTC
+    volumes:
+      - ./storage:/app/storage
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/actuator/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    networks:
+      - friend_internal
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "127.0.0.1:${FRIEND_APP_PORT:-8088}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks:
+      - friend_internal
+
+volumes:
+  friend_mysql_data:
+
+networks:
+  friend_internal:
+    driver: bridge

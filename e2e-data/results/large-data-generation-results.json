@@ -1,0 +1,22 @@
+{
+  "result": "PASS",
+  "database": "shuttering_inventory_e2e_large",
+  "profile": "LARGE",
+  "seed": 20260728,
+  "guardedLocalOnly": true,
+  "counts": {
+    "items": 1200,
+    "parties": 180,
+    "sites": 540,
+    "agreements": 1200,
+    "orders": 5000,
+    "billingRuns": 10000,
+    "invoices": 10000,
+    "payments": 5000,
+    "stockTransactions": 100000,
+    "lossRecords": 2000,
+    "damageRecords": 2000
+  },
+  "clientLedgerKeptSeparate": true,
+  "note": "The initial generator process populated all target rows but exposed shutdown ordering noise; shutdown was fixed to wait for remaining application runners."
+}

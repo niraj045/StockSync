@@ -37,6 +37,7 @@ Thumbs.db
 storage/
 data/
 backups/
+e2e-data/
 
 # Local source material and assistant transcripts
 /*.xlsx

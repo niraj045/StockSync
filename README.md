@@ -122,6 +122,21 @@ docker compose down
 
 `docker compose down` preserves the named MySQL and uploaded-file volumes. Add `--volumes` only when intentionally deleting local persisted data.
 
+## One-command populated testing handoff
+
+To give another tester the current populated E2E database, generated documents,
+and application in one commit, they only need Docker and this command:
+
+```bash
+./setup-friend.sh
+```
+
+It starts an isolated copy at `http://127.0.0.1:8088/login` and exposes its
+MySQL database at `127.0.0.1:3309`. See
+[friend-handoff/README.md](friend-handoff/README.md) for credentials, reset, and
+port-override commands. This bundle is local test data and must not be deployed
+publicly.
+
 ## Local Development without Containers
 
 For a one-command Windows setup, open Git Bash in the repository root and run:

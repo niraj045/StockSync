@@ -1,0 +1,16 @@
+{
+  "result": "PASS",
+  "formula": "issued invoice total - posted cash - posted TDS - posted deposit adjustments",
+  "issuedInvoiceTotal": 102471,
+  "postedCashAllocations": 40000,
+  "postedTdsAllocations": 2000,
+  "postedDepositAdjustments": 5000,
+  "expectedOutstanding": 55471,
+  "invoiceActual": 55471,
+  "partyOutstandingReportActual": 55471,
+  "siteOutstandingReportActual": 55471,
+  "ageingReportActual": 55471,
+  "reversedPaymentExcluded": true,
+  "cashTdsAndDepositKeptSeparate": true,
+  "difference": 0
+}

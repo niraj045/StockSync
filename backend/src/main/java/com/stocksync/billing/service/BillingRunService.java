@@ -369,7 +369,7 @@ public class BillingRunService {
             SELECT sl.id, sl.loss_number, sl.calculated_recovery_amount, i.item_name
             FROM loss_records sl
             JOIN items i ON sl.item_id = i.id
-            WHERE sl.agreement_id = ? AND sl.source_type = 'MANUAL_SITE_DECLARATION' 
+            WHERE sl.agreement_id = ?
               AND sl.status = 'APPROVED' AND sl.loss_date BETWEEN ? AND ?
             """, (rs, rowNum) -> {
                 long id = rs.getLong(1);
@@ -386,8 +386,8 @@ public class BillingRunService {
             SELECT sd.id, sd.damage_number, sd.calculated_damage_amount, sd.estimated_repair_cost, sd.actual_repair_cost, sd.repairable, i.item_name
             FROM damage_records sd
             JOIN items i ON sd.item_id = i.id
-            WHERE sd.agreement_id = ? AND sd.source_type = 'MANUAL_SITE_DECLARATION'
-              AND sd.status IN ('RECORDED', 'UNDER_REPAIR', 'REPAIRED', 'SCRAPPED') 
+            WHERE sd.agreement_id = ?
+              AND sd.status IN ('RECORDED', 'UNDER_REPAIR', 'REPAIRED', 'SCRAPPED')
               AND sd.damage_date BETWEEN ? AND ?
             """, (rs, rowNum) -> {
                 long id = rs.getLong(1);

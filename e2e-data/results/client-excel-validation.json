@@ -1,0 +1,26 @@
+{
+  "result": "PASS",
+  "sourceFile": "client-data/original/Stock of material as on 25-07-26.xlsx",
+  "sourceFileModified": false,
+  "sourceFormat": "STEELFAB_STOCK_SNAPSHOT_V1",
+  "sourceItemRows": 42,
+  "nonZeroBalances": 152,
+  "partySiteTotal": 20637,
+  "godownTotal": 25382,
+  "combinedOpeningTotal": 46019,
+  "postedBatchId": 1,
+  "postedTransactions": 152,
+  "commercialFieldsAbsentRemainNull": true,
+  "operationalDocumentsCreatedByImport": 0,
+  "duplicateUploadRejected": true,
+  "duplicatePostRejected": true,
+  "reversalProof": {
+    "batchId": 2,
+    "sourceRows": 42,
+    "balances": 152,
+    "postedTotal": 46019,
+    "originalTransactionsRetained": 152,
+    "compensatingTransactionsCreated": 152,
+    "repostAfterReversalRejected": true
+  }
+}

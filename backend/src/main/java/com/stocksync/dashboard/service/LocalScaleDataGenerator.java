@@ -70,7 +70,18 @@ public class LocalScaleDataGenerator implements ApplicationRunner, Ordered {
                 parties.size(), sites.size(), items.size(), agreements.size(), counts.orders(), counts.invoices(), counts.stockTransactions());
         printTimings();
         if (exitWhenComplete) {
-            SpringApplication.exit(context, () -> 0);
+            Thread shutdown = new Thread(() -> {
+                try {
+                    // Let the remaining ApplicationRunner beans finish before
+                    // closing infrastructure such as the EntityManagerFactory.
+                    Thread.sleep(250);
+                } catch (InterruptedException interrupted) {
+                    Thread.currentThread().interrupt();
+                }
+                SpringApplication.exit(context, () -> 0);
+            }, "local-scale-shutdown");
+            shutdown.setDaemon(false);
+            shutdown.start();
         }
     }
 

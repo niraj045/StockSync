@@ -22,7 +22,12 @@ const editor = (changes: Partial<QuotationEditor> = {}): QuotationEditor => ({
 });
 const sites = [{ id: 20, partyId: 10, siteName: 'Own', status: 'ACTIVE' }, { id: 21, partyId: 11, siteName: 'Other', status: 'ACTIVE' }];
 
-function Actions({ roles, status = 'DRAFT', onAction = vi.fn(), onPdf = vi.fn() }:{ roles:string[]; status?:string; onAction?:ReturnType<typeof vi.fn>; onPdf?:ReturnType<typeof vi.fn> }) {
+function Actions({ roles, status = 'DRAFT', onAction = vi.fn(), onPdf = vi.fn() }:{
+  roles:string[];
+  status?:string;
+  onAction?:(name: string, needsReason?: boolean) => void;
+  onPdf?:() => void;
+}) {
   const permission = quotationPermissions(roles);
   return <QuotationActionButtons q={quotation(status)} {...permission} onView={vi.fn()} onEdit={vi.fn()} onAction={onAction} onPdf={onPdf}/>;
 }

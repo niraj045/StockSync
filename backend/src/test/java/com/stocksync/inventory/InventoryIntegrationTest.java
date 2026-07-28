@@ -30,6 +30,10 @@ class InventoryIntegrationTest extends BaseIntegrationTest {
 
     @BeforeEach void setup(){
         jdbc.update("UPDATE stock_import_rows SET posted_stock_transaction_id=NULL");
+        jdbc.update("DELETE FROM loss_records");
+        jdbc.update("DELETE FROM damage_records");
+        jdbc.update("DELETE FROM site_transfer_items");
+        jdbc.update("DELETE FROM site_transfers");
         jdbc.update("DELETE FROM receiving_challan_items");jdbc.update("DELETE FROM receiving_challans");
         jdbc.update("DELETE FROM issued_challan_items");jdbc.update("DELETE FROM issued_challans");
         jdbc.update("DELETE FROM site_order_items");jdbc.update("DELETE FROM site_orders");jdbc.update("DELETE FROM agreement_items");
@@ -38,6 +42,7 @@ class InventoryIntegrationTest extends BaseIntegrationTest {
         jdbc.update("DELETE FROM stock_transactions");jdbc.update("DELETE FROM purchase_items");jdbc.update("DELETE FROM scrap_items");
         jdbc.update("DELETE FROM stock_adjustment_items");jdbc.update("DELETE FROM purchases");jdbc.update("DELETE FROM scrap_entries");
         jdbc.update("DELETE FROM stock_adjustments");jdbc.update("DELETE FROM stock_balances");
+        jdbc.update("DELETE FROM site_stock_balances");
         jdbc.update("DELETE FROM stock_import_location_mappings");jdbc.update("DELETE FROM stock_import_rows");
         jdbc.update("DELETE FROM stock_import_batches");jdbc.update("DELETE FROM item_aliases");
         items.deleteAll();categories.deleteAll();vendors.deleteAll();

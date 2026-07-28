@@ -1,0 +1,29 @@
+{
+  "result": "PASS",
+  "admin": {
+    "fullWorkflow": "ALLOWED",
+    "userAdministration": "ALLOWED"
+  },
+  "operations": {
+    "reportRead": 200,
+    "validOrderCreate": 200,
+    "billingCalculationReachedBusinessValidation": 400,
+    "paymentReverse": 403,
+    "userAdministration": 403
+  },
+  "accounts": {
+    "reportRead": 200,
+    "validOrderCreate": 403,
+    "billingCalculationReachedBusinessValidation": 400,
+    "paymentReverse": 403,
+    "userAdministration": 403
+  },
+  "viewer": {
+    "reportRead": 200,
+    "validOrderCreate": 403,
+    "billingCreate": 403,
+    "paymentReverse": 403,
+    "userAdministration": 403
+  },
+  "note": "HTTP 400 on an allowed authorization probe means method authorization passed and the intentionally overlapping business request was rejected by domain validation."
+}

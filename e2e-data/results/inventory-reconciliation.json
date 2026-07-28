@@ -1,0 +1,46 @@
+{
+  "result": "PASS",
+  "opening": {
+    "godown": 25382,
+    "site": 20637,
+    "total": 46019
+  },
+  "documentMovements": {
+    "issued": 600,
+    "goodReturns": 160,
+    "damagedReturns": 20,
+    "lostOnReceiving": 10,
+    "manualDamage": 3,
+    "manualLoss": 1,
+    "repairedToAvailable": 10,
+    "scrapped": 2,
+    "transfers": 6,
+    "transferNetAcrossSites": 0
+  },
+  "expected": {
+    "godownAvailable": 24952,
+    "sitePending": 21043,
+    "damaged": 11,
+    "lost": 11,
+    "scrapped": 2,
+    "physicalCurrentStock": 46006,
+    "currentAccountableStock": 46017
+  },
+  "databaseActual": {
+    "godownAvailable": 24952,
+    "sitePending": 21043,
+    "damaged": 11,
+    "lost": 11,
+    "scrapped": 2
+  },
+  "dashboardActual": {
+    "godownAvailable": 24952,
+    "materialAtSites": 21043,
+    "damaged": 11,
+    "lost": 11,
+    "scrapped": 2,
+    "physicalCurrentStock": 46006,
+    "currentAccountableStock": 46017
+  },
+  "allDifferences": 0
+}

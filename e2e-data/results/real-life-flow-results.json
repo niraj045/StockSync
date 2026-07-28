@@ -1,0 +1,73 @@
+{
+  "result": "PASS",
+  "party": "E2E ABC Construction Pvt Ltd 20260728",
+  "sites": [
+    "E2E Wakad Commercial Project",
+    "E2E Baner Residential Project"
+  ],
+  "materials": ["MAT-001 H frames", "MAT-004 bracings"],
+  "quotation": {
+    "id": 1,
+    "statusPath": ["DRAFT", "SENT", "APPROVED"],
+    "grandTotal": 8378,
+    "pdfValid": true
+  },
+  "agreement": {
+    "id": 1,
+    "documentGenerated": true,
+    "activated": true,
+    "duplicateConversionIdempotent": true
+  },
+  "orderAndIssue": {
+    "ordered": {"hFrames": 100, "bracings": 200},
+    "challan1": {"hFrames": 60, "bracings": 120},
+    "challan2": {"hFrames": 40, "bracings": 80},
+    "statusPath": ["CONFIRMED", "PARTIALLY_FULFILLED", "FULFILLED"],
+    "overIssueRejected": true,
+    "pdfsValid": true
+  },
+  "receiving": {
+    "good": 80,
+    "damaged": 10,
+    "lost": 5,
+    "postIdempotent": true,
+    "postedDocumentImmutable": true,
+    "pdfValid": true
+  },
+  "exceptionsAndTransfer": {
+    "receivingDamageRepaired": 10,
+    "manualDamageScrapped": 2,
+    "siteTransfer": 3,
+    "transferLedgerNet": 0,
+    "transferPostIdempotent": true
+  },
+  "billing": {
+    "sourceAgreementRunId": 1,
+    "rentalSubtotal": 86840,
+    "grandTotal": 102471,
+    "segments": 6,
+    "overlappingRunRejected": true,
+    "destinationRunId": 2,
+    "destinationRentalSubtotal": 1085,
+    "lossCharge": 1500,
+    "damageCharge": 500,
+    "destinationGrandTotal": 3640
+  },
+  "invoiceAndSettlement": {
+    "invoiceId": 1,
+    "invoiceTotal": 102471,
+    "cashAllocated": 40000,
+    "tdsAllocated": 2000,
+    "depositAdjusted": 5000,
+    "outstanding": 55471,
+    "paymentReversalRestoredOutstanding": true,
+    "invoiceAndReceiptPdfsValid": true
+  },
+  "reports": {
+    "previewTypesTested": 28,
+    "previewTypesPassed": 28,
+    "csvExcelPdfDownloadPassed": true,
+    "gstExportsPassed": true,
+    "historyPassed": true
+  }
+}
