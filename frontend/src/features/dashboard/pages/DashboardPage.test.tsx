@@ -80,6 +80,7 @@ describe('Phase 10 DashboardPage', () => {
     authState.user = { ...authState.user, roles: ['ROLE_VIEWER'] };
     authState.get.mockResolvedValue({ data: { ...overview, quickActions: [], roleMode: 'READ_ONLY' } });
     renderPage();
-    expect(await screen.findByText('No create or approval actions for this role')).toBeVisible();
+    expect(await screen.findByText('READ ONLY view')).toBeVisible();
+    expect(screen.queryByText('Create site order')).not.toBeInTheDocument();
   });
 });
