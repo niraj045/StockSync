@@ -49,12 +49,25 @@ textarea {
 }
 
 .app-sider {
+  position: sticky !important;
+  top: 0;
+  height: 100vh;
   background: var(--navy) !important;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.app-sider .ant-layout-sider-children,
+.app-mobile-drawer .ant-drawer-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .app-sider .ant-layout-sider-trigger {
+  height: 48px;
+  line-height: 48px;
   background: #0b2322 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .brand {
@@ -100,29 +113,117 @@ textarea {
 }
 
 .app-menu {
-  padding: 12px;
+  padding: 6px 10px;
   background: transparent !important;
 }
 
-.app-menu .ant-menu-item {
-  height: 44px;
-  margin: 6px 0;
-  border-radius: 8px;
-  color: #b7cdca;
+.app-navigation-scroll {
+  min-height: 0;
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-color: #315553 transparent;
+  scrollbar-width: thin;
 }
 
-.app-menu .ant-menu-item:not(.ant-menu-item-selected):hover {
+.app-navigation-pinned {
+  flex: 0 0 auto;
+  padding-bottom: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.app-menu .ant-menu-item,
+.app-menu .ant-menu-submenu-title {
+  height: 40px;
+  margin: 3px 0;
+  padding-inline: 14px !important;
+  border-radius: 7px;
+  color: #b7cdca;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 40px;
+}
+
+.app-menu .ant-menu-submenu .ant-menu-item {
+  position: relative;
+  height: 35px;
+  margin: 1px 0;
+  padding-left: 47px !important;
+  color: #a9bfbc;
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 35px;
+}
+
+.app-menu .ant-menu-submenu .ant-menu-item .ant-menu-item-icon {
+  display: none;
+}
+
+.app-menu .ant-menu-item .anticon,
+.app-menu .ant-menu-submenu-title .anticon {
+  min-width: 16px;
+  font-size: 16px;
+}
+
+.app-menu .ant-menu-item:not(.ant-menu-item-selected):hover,
+.app-menu .ant-menu-submenu-title:hover {
   color: #fff !important;
   background: var(--navy-soft) !important;
 }
 
 .app-menu .ant-menu-item-selected {
+  position: relative;
   color: #fff !important;
+  background: #135552 !important;
+}
+
+.app-menu .ant-menu-submenu .ant-menu-item-selected::before {
+  content: "";
+  position: absolute;
+  top: 7px;
+  bottom: 7px;
+  left: 29px;
+  width: 3px;
+  background: #57d2c5;
+  border-radius: 999px;
+}
+
+.app-menu > .ant-menu-item-selected {
   background: var(--teal) !important;
+}
+
+.app-menu .ant-menu-submenu-selected > .ant-menu-submenu-title {
+  color: #fff;
+}
+
+.app-menu .ant-menu-sub {
+  background: rgba(0, 0, 0, 0.1) !important;
 }
 
 .app-menu .ant-menu-item-disabled {
   color: #57736f !important;
+}
+
+.sider-collapsed .brand {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.sider-collapsed .app-menu {
+  padding-inline: 7px;
+}
+
+.sider-collapsed .app-menu .ant-menu-item,
+.sider-collapsed .app-menu .ant-menu-submenu-title {
+  padding-inline: calc(50% - 8px) !important;
+}
+
+.app-mobile-drawer .brand {
+  flex: 0 0 76px;
+}
+
+.app-mobile-drawer .app-navigation-pinned {
+  padding-bottom: 12px;
 }
 
 .app-header {
@@ -135,6 +236,19 @@ textarea {
   background: rgba(255, 255, 255, 0.94);
   border-bottom: 1px solid var(--line);
   backdrop-filter: blur(12px);
+}
+
+.header-leading {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobile-menu-button {
+  flex: 0 0 auto;
+  color: #075c5a;
+  border-color: #cddbd8;
 }
 
 .header-context {

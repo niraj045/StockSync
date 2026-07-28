@@ -1,78 +1,104 @@
 import {
-  AppstoreOutlined,
-  DashboardOutlined,
-  FileTextOutlined,
-  ShopOutlined,
-  TeamOutlined,
-  HistoryOutlined,
   UserOutlined,
   DownOutlined,
   KeyOutlined,
   LogoutOutlined,
   BuildOutlined,
-  TagsOutlined,
-  ToolOutlined,
-  FormOutlined,
-  ImportOutlined,
-  CreditCardOutlined,
-  SafetyCertificateOutlined,
-  CalculatorOutlined,
-  BarChartOutlined,
+  MenuOutlined,
 } from '@ant-design/icons';
-import { Layout, Menu, Typography, Dropdown, Avatar, Tooltip } from 'antd';
-import { useState } from 'react';
+import { Layout, Menu, Typography, Dropdown, Avatar, Drawer, Button } from 'antd';
+import type { ItemType } from 'antd/es/menu/interface';
+import { useEffect, useMemo, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../features/auth/context/AuthContext';
+import {
+  activeRoute,
+  activeSection,
+  dashboardItem,
+  reportsItem,
+  sectionMenuItem,
+  visibleSections,
+} from './navigation';
 
 const { Header, Content, Sider } = Layout;
+const MOBILE_QUERY = '(max-width: 991px)';
 
 export function AppLayout() {
   const { user, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobile, setMobile] = useState(() => window.matchMedia(MOBILE_QUERY).matches);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const sections = useMemo(() => visibleSections(user?.roles ?? []), [user?.roles]);
+  const regularSections = sections.filter((section) => !section.pinned && section.key !== 'customers-setup');
+  const customersSetup = sections.find((section) => section.key === 'customers-setup');
+  const administration = sections.find((section) => section.pinned);
+  const currentRoute = activeRoute(location.pathname);
+  const currentSection = activeSection(location.pathname, sections);
+  const [openSection, setOpenSection] = useState<string | undefined>(currentSection);
+
+  useEffect(() => {
+    const media = window.matchMedia(MOBILE_QUERY);
+    const handleChange = (event: MediaQueryListEvent) => {
+      setMobile(event.matches);
+      if (!event.matches) setDrawerOpen(false);
+    };
+    setMobile(media.matches);
+    media.addEventListener('change', handleChange);
+    return () => media.removeEventListener('change', handleChange);
+  }, []);
+
+  useEffect(() => {
+    setOpenSection(currentSection);
+  }, [currentSection]);
 
   const handleLogout = async () => {
     await logout();
     navigate('/login');
   };
 
-  // Build dynamic navigation items based on role
-  const navigationItems = [
-    { key: '/', icon: <DashboardOutlined />, label: 'Dashboard' },
-    { key: '/categories', icon: <TagsOutlined />, label: 'Categories' },
-    { key: '/items', icon: <AppstoreOutlined />, label: 'Items' },
-    { key: '/parties', icon: <TeamOutlined />, label: 'Parties' },
-    { key: '/sites', icon: <ShopOutlined />, label: 'Sites' },
-    { key: '/vendors', icon: <ToolOutlined />, label: 'Vendors' },
-    { key: '/documents', icon: <FileTextOutlined />, label: 'Documents' },
-    { key: '/inventory', icon: <AppstoreOutlined />, label: 'Inventory' },
-    { key: '/opening-stock-imports', icon: <ImportOutlined />, label: <Tooltip placement="right" title="Opening Stock Import"><span>Opening Stock Import</span></Tooltip> },
-    { key: '/quotations', icon: <FormOutlined />, label: 'Quotations' },
-    { key: '/agreements', icon: <FileTextOutlined />, label: 'Agreements' },
-    { key: '/billing-runs', icon: <FileTextOutlined />, label: 'Billing Runs' },
-    { key: '/invoices', icon: <FileTextOutlined />, label: 'Invoices' },
-    { key: '/payments', icon: <CreditCardOutlined />, label: 'Payments' },
-    { key: '/security-deposits', icon: <SafetyCertificateOutlined />, label: 'Security Deposits' },
-    { key: '/outstanding', icon: <CalculatorOutlined />, label: 'Outstanding' },
-    { key: '/orders', icon: <FileTextOutlined />, label: 'Site Orders' },
-    { key: '/challans/issued', icon: <FileTextOutlined />, label: 'Issued Challans' },
-    { key: '/challans/receiving', icon: <FileTextOutlined />, label: 'Receiving Challans' },
-    { key: '/stock-losses', icon: <FileTextOutlined />, label: 'Stock Losses' },
-    { key: '/stock-damages', icon: <FileTextOutlined />, label: 'Stock Damages' },
-    { key: '/item-exchanges', icon: <FileTextOutlined />, label: 'Item Exchanges' },
-    { key: '/site-transfers', icon: <FileTextOutlined />, label: 'Site Transfers' },
-    { key: '/quotation-templates', icon: <FileTextOutlined />, label: 'Quotation Templates' },
-    { key: '/reports', icon: <BarChartOutlined />, label: 'Reports' },
-  ];
+  const onOpenChange = (keys: string[]) => {
+    setOpenSection(keys.find((key) => key !== openSection));
+  };
 
-  // If user is Admin, add user management and audit logs links
-  if (user?.roles.includes('ROLE_ADMIN')) {
-    navigationItems.push(
-      { key: '/users', icon: <TeamOutlined />, label: 'User Management' },
-      { key: '/audit-logs', icon: <HistoryOutlined />, label: 'Audit Logs' }
-    );
-  }
+  const onNavigate = (key: string) => {
+    navigate(key);
+    setDrawerOpen(false);
+  };
+
+  const menu = (items: ItemType[], className = '') => (
+    <Menu
+      className={`app-menu ${className}`}
+      theme="dark"
+      mode="inline"
+      inlineCollapsed={!mobile && collapsed}
+      triggerSubMenuAction="click"
+      selectedKeys={[currentRoute]}
+      openKeys={collapsed && !mobile ? undefined : openSection ? [openSection] : []}
+      items={items}
+      onOpenChange={onOpenChange}
+      onClick={({ key }) => onNavigate(key)}
+    />
+  );
+
+  const navigation = (
+    <>
+      <div className="app-navigation-scroll">
+        {menu([
+          dashboardItem,
+          ...regularSections.map(sectionMenuItem),
+          reportsItem,
+          ...(customersSetup ? [sectionMenuItem(customersSetup)] : []),
+        ])}
+      </div>
+      {administration && (
+        <div className="app-navigation-pinned">
+          {menu([sectionMenuItem(administration)], 'app-menu-administration')}
+        </div>
+      )}
+    </>
+  );
 
   const profileMenuItems = {
     items: [
@@ -99,41 +125,39 @@ export function AppLayout() {
 
   return (
     <Layout className={`app-shell ${collapsed ? 'sider-collapsed' : ''}`}>
-      <Sider
-        className="app-sider"
-        collapsible
-        collapsed={collapsed}
-        onCollapse={setCollapsed}
-        breakpoint="lg"
-        theme="dark"
-        width={238}
-        collapsedWidth={72}
-      >
-        <div className="brand" aria-label="StockSync">
-          <span className="brand-mark"><BuildOutlined /></span>
-          {!collapsed && (
-            <span className="brand-copy">
-              <span className="brand-name">StockSync</span>
-              <span className="brand-caption">Shuttering control</span>
-            </span>
-          )}
-        </div>
-        <Menu
-          className="app-menu"
+      {!mobile && <Sider
+          className="app-sider"
+          collapsible
+          collapsed={collapsed}
+          onCollapse={setCollapsed}
           theme="dark"
-          mode="inline"
-          selectedKeys={[location.pathname]}
-          items={navigationItems}
-          onClick={({ key }) => navigate(key)}
-        />
-      </Sider>
+          width={248}
+          collapsedWidth={68}
+        >
+          <Brand collapsed={collapsed} />
+          {navigation}
+        </Sider>}
+      <Drawer
+        className="app-mobile-drawer"
+        placement="left"
+        width={288}
+        open={mobile && drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        styles={{ body: { padding: 0, background: '#0c302f' }, header: { display: 'none' } }}
+      >
+        <Brand collapsed={false} />
+        {navigation}
+      </Drawer>
       <Layout>
         <Header className="app-header">
-          <div className="header-context">
+          <div className="header-leading">
+            {mobile && <Button className="mobile-menu-button" aria-label="Open navigation" icon={<MenuOutlined />} onClick={() => setDrawerOpen(true)} />}
+            <div className="header-context">
             <span className="header-eyebrow">Operations workspace</span>
             <Typography.Title level={4} className="app-title">
               Shuttering Inventory Management
             </Typography.Title>
+            </div>
           </div>
 
           <Dropdown menu={profileMenuItems} trigger={['click']}>
@@ -154,5 +178,19 @@ export function AppLayout() {
         </Content>
       </Layout>
     </Layout>
+  );
+}
+
+function Brand({ collapsed }: { collapsed: boolean }) {
+  return (
+    <div className="brand" aria-label="StockSync">
+      <span className="brand-mark"><BuildOutlined /></span>
+      {!collapsed && (
+        <span className="brand-copy">
+          <span className="brand-name">StockSync</span>
+          <span className="brand-caption">Shuttering control</span>
+        </span>
+      )}
+    </div>
   );
 }
