@@ -1,13 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Alert, Button, Card, Checkbox, Col, Descriptions, Empty, Form, Input, Modal, Radio, Row,
+  Alert, Button, Card, Checkbox, Col, Descriptions, Empty, Form, Input, Modal, Popconfirm, Radio, Row,
   Select, Space, Statistic, Table, Tabs, Tag, Typography, Upload, message,
 } from 'antd';
 import { FormDrawer } from '../../../components/FormDrawer';
 import {
   CheckCircleOutlined, CloudUploadOutlined, FileSearchOutlined, LinkOutlined, ReloadOutlined,
-  RollbackOutlined, SafetyCertificateOutlined,
+  RollbackOutlined, SafetyCertificateOutlined, ThunderboltOutlined,
 } from '@ant-design/icons';
 import type { UploadFile } from 'antd';
 import { apiClient } from '../../../api/client';
@@ -367,6 +367,20 @@ export function OpeningStockImportPage() {
     onError: (error) => message.error(apiError(error)),
   });
 
+  const autoMap = useMutation({
+    mutationFn: async () => (await apiClient.post<Preview>(`/stock-imports/${selectedId}/auto-map`)).data,
+    onSuccess: (result) => {
+      result.postable
+        ? message.success('Auto-mapped and validated. Admin can post opening stock now.')
+        : message.warning(`${result.errorRows} row(s) still need review after auto-map`);
+      refreshSelected();
+      queryClient.invalidateQueries({ queryKey: ['stock-import-item-options'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-import-party-options'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-import-site-options'] });
+    },
+    onError: (error) => message.error(apiError(error)),
+  });
+
   const post = useMutation({
     mutationFn: async (values: { expectedChecksum: string; confirmed: boolean }) =>
       (await apiClient.post<Preview>(`/stock-imports/${selectedId}/post`, values)).data,
@@ -471,6 +485,15 @@ export function OpeningStockImportPage() {
       {selectedId && currentBatch && currentPreview && <Card className="premium-card"
         title={<Space><span>{currentBatch.batchCode}</span><Tag color={statusColor[currentBatch.status]}>{currentBatch.status.replaceAll('_', ' ')}</Tag></Space>}
         extra={<Space wrap>
+          {canPrepare && editable && <Popconfirm
+            title="Auto-map this opening stock import?"
+            description="Creates legacy items and one party/site per source column, confirms known ambiguous rows, and validates. Posting still needs admin confirmation."
+            okText="Auto-map"
+            cancelText="Cancel"
+            onConfirm={() => autoMap.mutate()}
+          >
+            <Button icon={<ThunderboltOutlined />} loading={autoMap.isPending}>Auto-map from Excel</Button>
+          </Popconfirm>}
           {canPrepare && editable && <Button icon={<SafetyCertificateOutlined />} loading={validate.isPending} onClick={() => validate.mutate()}>Validate</Button>}
           {isAdmin && currentBatch.status === 'VALIDATED' &&
             <Button type="primary" icon={<CheckCircleOutlined />} disabled={!currentPreview.postable}

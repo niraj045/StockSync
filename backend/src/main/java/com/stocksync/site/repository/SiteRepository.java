@@ -8,4 +8,5 @@ public interface SiteRepository extends JpaRepository<Site,Long>, JpaSpecificati
     boolean existsBySiteCodeIgnoreCaseAndIdNot(String code, Long id);
     boolean existsByPartyIdAndStatusNot(Long partyId, com.stocksync.site.entity.SiteStatus status);
     Optional<Site> findByIdAndPartyId(Long id,Long partyId);
+    Optional<Site> findBySiteCodeIgnoreCase(String code);
 }

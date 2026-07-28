@@ -88,6 +88,12 @@ public class StockImportController {
         return service.validate(id, request);
     }
 
+    @PostMapping("/{id}/auto-map")
+    @PreAuthorize("hasAnyRole('ADMIN','OPERATIONS')")
+    public StockImportPreviewResponse autoMap(@PathVariable Long id, HttpServletRequest request) {
+        return service.autoMap(id, request);
+    }
+
     @GetMapping("/{id}/preview")
     public StockImportPreviewResponse preview(@PathVariable Long id) {
         return service.preview(id);

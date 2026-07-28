@@ -11,7 +11,9 @@ import com.stocksync.migration.entity.*;
 import com.stocksync.migration.parser.SteelfabStockSnapshotParser;
 import com.stocksync.migration.repository.*;
 import com.stocksync.party.entity.Party;
+import com.stocksync.party.repository.PartyRepository;
 import com.stocksync.site.entity.Site;
+import com.stocksync.site.repository.SiteRepository;
 import com.stocksync.site.service.ImportLocationAccess;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.Predicate;
@@ -33,13 +35,16 @@ public class StockImportService {
     private final StockImportLocationMappingRepository locationMappings;private final ItemAliasRepository aliases;
     private final SteelfabStockSnapshotParser parser;private final ImportItemAccess itemAccess;private final ImportLocationAccess locationAccess;
     private final OpeningStockAccess stock;private final UserRepository users;private final UserActivityLogService audit;
+    private final PartyRepository partyRepository;private final SiteRepository siteRepository;
     private final EntityManager entityManager;private final Path storageRoot;
     public StockImportService(StockImportBatchRepository batches,StockImportRowRepository rows,
             StockImportLocationMappingRepository locationMappings,ItemAliasRepository aliases,SteelfabStockSnapshotParser parser,
             ImportItemAccess itemAccess,ImportLocationAccess locationAccess,OpeningStockAccess stock,UserRepository users,
-            UserActivityLogService audit,EntityManager entityManager,@Value("${stocksync.file-storage-path}")String storageRoot){
+            UserActivityLogService audit,PartyRepository partyRepository,SiteRepository siteRepository,
+            EntityManager entityManager,@Value("${stocksync.file-storage-path}")String storageRoot){
         this.batches=batches;this.rows=rows;this.locationMappings=locationMappings;this.aliases=aliases;this.parser=parser;
         this.itemAccess=itemAccess;this.locationAccess=locationAccess;this.stock=stock;this.users=users;this.audit=audit;
+        this.partyRepository=partyRepository;this.siteRepository=siteRepository;
         this.entityManager=entityManager;this.storageRoot=Paths.get(storageRoot).toAbsolutePath().normalize();}
 
     @Transactional
@@ -144,6 +149,59 @@ public class StockImportService {
         if(!preview.postable())throw rule("IMPORT_TOTALS_UNEXPLAINED","Mapped and excluded totals do not reconcile to source totals");
         log("STOCK_IMPORT_VALIDATED",batch,"Corrected combined total "+preview.expectedCombinedTotal(),http);return preview;
     }
+
+    @Transactional
+    public StockImportPreviewResponse autoMap(Long id,HttpServletRequest http){
+        StockImportBatch batch=editable(id);List<StockImportRow> all=rows.findByBatchIdOrderBySourceExcelRowAscSourceExcelColumnAsc(id);
+        Map<Integer,List<StockImportRow>> bySourceRow=all.stream().collect(Collectors.groupingBy(StockImportRow::getSourceExcelRow,TreeMap::new,Collectors.toList()));
+        int createdOrMappedItems=0;
+        for(List<StockImportRow> sourceRows:bySourceRow.values()){
+            StockImportRow selected=sourceRows.getFirst();String sr=selected.getSourceSrNumber();
+            String code="MAT-"+String.format("%03d",Integer.parseInt(sr));String name=selected.getNormalizedItemSuggestion()==null||
+                selected.getNormalizedItemSuggestion().isBlank()?selected.getSourceItemName():selected.getNormalizedItemSuggestion();
+            ImportItemAccess.ItemView item=itemAccess.byCode(code).filter(ImportItemAccess.ItemView::active)
+                .orElseGet(()->itemAccess.create(code,name,actor()));
+            Item reference=entityManager.getReference(Item.class,item.id());boolean confirm=isAmbiguous(selected.getSourceItemName());
+            sourceRows.forEach(r->{r.setExcluded(false);r.setExclusionReason(null);r.setMappedItem(reference);
+                r.setDuplicateConfirmed(confirm);evaluate(r);});
+            createdOrMappedItems++;
+        }
+        rows.saveAll(all);
+
+        Map<String,List<StockImportRow>> byColumn=all.stream().filter(r->r.getLocationType()==ImportLocationType.PARTY_OR_SITE)
+            .collect(Collectors.groupingBy(StockImportRow::getSourceExcelColumn,TreeMap::new,Collectors.toList()));
+        int createdOrMappedLocations=0;
+        for(var entry:byColumn.entrySet()){
+            String column=entry.getKey();List<StockImportRow> columnRows=entry.getValue();String label=columnRows.getFirst().getSourceLocationName();
+            StockImportLocationMapping existing=locationMappings.findByBatchIdAndSourceExcelColumn(id,column).orElse(null);
+            Party party;Site site;
+            if(existing!=null){party=existing.getMappedParty();site=existing.getMappedSite();}
+            else{
+                String siteCode="LEGACY-"+column;
+                Optional<Party> partyMatch=partyRepository.findByLegalNameIgnoreCase(label).filter(Party::isActive);
+                Optional<Site> siteMatch=siteRepository.findBySiteCodeIgnoreCase(siteCode)
+                    .filter(s->s.getStatus()!=com.stocksync.site.entity.SiteStatus.CLOSED);
+                var resolved=partyMatch.isPresent()&&siteMatch.isPresent()&&siteMatch.get().getParty().getId().equals(partyMatch.get().getId())
+                    ? new ImportLocationAccess.LocationView(partyMatch.get().getId(),partyMatch.get().getLegalName(),siteMatch.get().getId(),siteMatch.get().getSiteName())
+                    : locationAccess.resolve(null,null,true,label,true,label,siteCode,actor());
+                party=entityManager.getReference(Party.class,resolved.partyId());site=entityManager.getReference(Site.class,resolved.siteId());
+                StockImportLocationMapping mapping=new StockImportLocationMapping();mapping.setBatch(batch);mapping.setSourceExcelColumn(column);
+                mapping.setSourceLocationName(label);mapping.setMappedParty(party);mapping.setMappedSite(site);mapping.setCreatedBy(actor());mapping.setUpdatedBy(actor());
+                locationMappings.save(mapping);
+            }
+            Party mappedParty=party;Site mappedSite=site;columnRows.forEach(r->{r.setMappedParty(mappedParty);r.setMappedSite(mappedSite);evaluate(r);});
+            createdOrMappedLocations++;
+        }
+        rows.saveAll(all);refreshCounts(batch);
+        boolean unresolved=all.stream().anyMatch(r->!r.isExcluded()&&(r.getValidationStatus()==ImportValidationStatus.MAPPING_REQUIRED||r.getValidationStatus()==ImportValidationStatus.ERROR));
+        batch.setStatus(unresolved?ImportBatchStatus.MAPPING_REQUIRED:ImportBatchStatus.VALIDATED);batches.save(batch);
+        StockImportPreviewResponse preview=preview(batch,all);if(!unresolved&&!preview.postable())
+            throw rule("IMPORT_TOTALS_UNEXPLAINED","Mapped totals do not reconcile to source totals");
+        log("STOCK_IMPORT_MAPPING_UPDATED",batch,"Auto-mapped "+createdOrMappedItems+" source items and "+createdOrMappedLocations+" party/site columns",http);
+        if(preview.postable())log("STOCK_IMPORT_VALIDATED",batch,"Auto-map validated corrected combined total "+preview.expectedCombinedTotal(),http);
+        return preview;
+    }
+
     @Transactional(readOnly=true)public StockImportPreviewResponse preview(Long id){StockImportBatch batch=batch(id);
         return preview(batch,rows.findByBatchIdOrderBySourceExcelRowAscSourceExcelColumnAsc(id));}
     @Transactional

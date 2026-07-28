@@ -271,6 +271,40 @@ class StockImportIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    void autoMapCreatesLegacyItemsAndLocationsThenValidatesForPosting() throws Exception {
+        JsonNode uploaded = uploadWorkbook();
+        long id = uploaded.get("id").asLong();
+
+        mvc.perform(post("/api/v1/stock-imports/{id}/auto-map", id).with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("VALIDATED"))
+                .andExpect(jsonPath("$.postable").value(true))
+                .andExpect(jsonPath("$.mappedRows").value(152))
+                .andExpect(jsonPath("$.warningRows").value(org.hamcrest.Matchers.greaterThan(0)))
+                .andExpect(jsonPath("$.errorRows").value(0))
+                .andExpect(jsonPath("$.mappedPartyTotal").value(20637.0))
+                .andExpect(jsonPath("$.mappedGodownTotal").value(25382.0));
+
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM items", Integer.class)).isEqualTo(42);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM parties", Integer.class)).isEqualTo(16);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM sites", Integer.class)).isEqualTo(16);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM stock_import_location_mappings", Integer.class)).isEqualTo(16);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM stock_import_rows WHERE mapped_item_id IS NULL", Integer.class)).isZero();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM stock_import_rows WHERE location_type='PARTY_OR_SITE' AND mapped_site_id IS NULL", Integer.class)).isZero();
+
+        mvc.perform(post("/api/v1/stock-imports/{id}/post", id)
+                        .with(user("admin").roles("ADMIN")).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(postBody(uploaded.get("fileChecksum").asText())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("POSTED"))
+                .andExpect(jsonPath("$.postedRows").value(152));
+
+        assertThat(decimal("SELECT COALESCE(SUM(available_quantity),0) FROM stock_balances")).isEqualByComparingTo("25382");
+        assertThat(decimal("SELECT COALESCE(SUM(issued_quantity),0) FROM stock_balances")).isEqualByComparingTo("20637");
+    }
+
+    @Test
     void postingFailureRollsBackEveryBalanceAndLedgerWrite() throws Exception {
         PreparedBatch prepared = prepareFullyMappedBatch();
         mvc.perform(post("/api/v1/stock-imports/{id}/validate", prepared.id()).with(csrf()))
