@@ -11,6 +11,8 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.*;
 import org.springframework.data.domain.*;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,7 @@ public class QuotationTemplateService {
     }
 
     @Transactional(readOnly=true)
+    @Cacheable(cacheNames = "quotationTemplates")
     public Page<QuotationTemplateResponse> list(String search, Boolean active, Pageable pageable) {
         return templates.findAll((root,q,cb)->{
             List<Predicate> p=new ArrayList<>();
@@ -38,19 +41,23 @@ public class QuotationTemplateService {
             return cb.and(p.toArray(Predicate[]::new));
         },pageable).map(this::response);
     }
-    @Transactional(readOnly=true) public QuotationTemplateResponse get(Long id){return response(required(id));}
-    @Transactional public QuotationTemplateResponse create(QuotationTemplateRequest r,HttpServletRequest req){
+    @Transactional(readOnly=true) @Cacheable(cacheNames = "quotationTemplates", key = "'id:' + #id")
+    public QuotationTemplateResponse get(Long id){return response(required(id));}
+    @Transactional @CacheEvict(cacheNames = "quotationTemplates", allEntries = true)
+    public QuotationTemplateResponse create(QuotationTemplateRequest r,HttpServletRequest req){
         if(templates.existsByTemplateCodeIgnoreCase(r.templateCode().trim())) duplicate();
         QuotationTemplate t=new QuotationTemplate(); apply(t,r); t.setCreatedBy(actor());t.setUpdatedBy(actor());
         t=templates.save(t); log("QUOTATION_TEMPLATE_CREATED",t,req); return response(t);
     }
-    @Transactional public QuotationTemplateResponse update(Long id,QuotationTemplateRequest r,HttpServletRequest req){
+    @Transactional @CacheEvict(cacheNames = "quotationTemplates", allEntries = true)
+    public QuotationTemplateResponse update(Long id,QuotationTemplateRequest r,HttpServletRequest req){
         QuotationTemplate t=required(id);
         if(r.version()==null||t.getVersion()!=r.version())throw new ObjectOptimisticLockingFailureException(QuotationTemplate.class,id);
         if(templates.existsByTemplateCodeIgnoreCaseAndIdNot(r.templateCode().trim(),id))duplicate();
         apply(t,r);t.setUpdatedBy(actor());t=templates.save(t);log("QUOTATION_TEMPLATE_UPDATED",t,req);return response(t);
     }
-    @Transactional public QuotationTemplateResponse active(Long id,boolean active,HttpServletRequest req){
+    @Transactional @CacheEvict(cacheNames = "quotationTemplates", allEntries = true)
+    public QuotationTemplateResponse active(Long id,boolean active,HttpServletRequest req){
         QuotationTemplate t=required(id);t.setActive(active);t.setUpdatedBy(actor());t=templates.save(t);
         log(active?"QUOTATION_TEMPLATE_ACTIVATED":"QUOTATION_TEMPLATE_DEACTIVATED",t,req);return response(t);
     }
@@ -75,4 +82,3 @@ public class QuotationTemplateService {
     private void log(String action,QuotationTemplate t,HttpServletRequest req){var u=users.findByUsernameIgnoreCase(actor()).orElse(null);
         audit.log(u==null?null:u.getId(),actor(),action,"QuotationTemplate",String.valueOf(t.getId()),t.getTemplateCode(),req);}
 }
-

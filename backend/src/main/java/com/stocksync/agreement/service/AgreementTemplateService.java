@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,6 +33,7 @@ public class AgreementTemplateService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "agreementTemplates")
     public List<AgreementTemplateResponse> list() {
         return repository.findAllByOrderByNameAsc().stream()
                 .map(this::response)
@@ -38,6 +41,7 @@ public class AgreementTemplateService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "agreementTemplates", allEntries = true)
     public AgreementTemplateResponse upload(String name, String description, MultipartFile file) {
         if (name == null || name.isBlank()) {
             throw new BusinessRuleException("TEMPLATE_NAME_REQUIRED", "Template name is required");

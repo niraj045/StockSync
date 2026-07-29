@@ -9,6 +9,8 @@ import com.stocksync.inventory.repository.ItemRepository;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ public class MasterDataService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "categories")
     public Page<CategoryResponse> categories(String search, Boolean active, Pageable pageable) {
         return categoryRepository.findAll((root, query, cb) -> {
             var predicates = new ArrayList<Predicate>();
@@ -42,6 +45,7 @@ public class MasterDataService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "categories", allEntries = true)
     public CategoryResponse createCategory(CategoryRequest request) {
         if (categoryRepository.existsByNameIgnoreCase(request.name().trim())) {
             throw new BusinessRuleException("CATEGORY_NAME_ALREADY_EXISTS", "Category name already exists");
@@ -54,6 +58,7 @@ public class MasterDataService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "categories", allEntries = true)
     public CategoryResponse updateCategory(Long id, CategoryRequest request) {
         ItemCategory category = category(id);
         checkVersion(category.getVersion(), request.version(), ItemCategory.class, id);

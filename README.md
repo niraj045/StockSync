@@ -46,6 +46,7 @@ The system is intended for a shuttering-material business that needs to manage i
 19. [Phase 9 Reports, GST Exports, and Analytics](docs/24_PHASE_9_REPORTS_GST_ANALYTICS.md)
 20. [Phase 10 Operational Dashboard and Local Scale Validation](docs/25_PHASE_10_DASHBOARD_AND_LOCAL_SCALE_VALIDATION.md)
 21. [Tomorrow Handoff](docs/26_TOMORROW_HANDOFF.md)
+22. [Phase 11 Production Readiness](docs/27_PHASE_11_PRODUCTION_READINESS.md)
 
 ## Important Product Decision
 
@@ -121,6 +122,25 @@ docker compose down
 ```
 
 `docker compose down` preserves the named MySQL and uploaded-file volumes. Add `--volumes` only when intentionally deleting local persisted data.
+
+### Repeatable local deployment
+
+The production-like local deployment uses the production Spring profile, the
+Nginx frontend, persistent Docker volumes, and a host-only MySQL port. Configure
+`.env` from `.env.example`, then use:
+
+```bash
+./deploy-local.sh start
+./deploy-local.sh status
+./deploy-local.sh logs
+./deploy-local.sh stop
+```
+
+The defaults expose the application at `http://127.0.0.1:8088/login` and MySQL
+at `127.0.0.1:3009`. The script waits for every service to become healthy,
+applies Flyway migrations through backend startup, ensures the local
+`admin / Password123` test account exists, and verifies the frontend, backend,
+and database. The local test password must be changed for a real deployment.
 
 ## One-command populated testing handoff
 

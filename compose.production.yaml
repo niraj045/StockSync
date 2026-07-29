@@ -1,0 +1,159 @@
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    command:
+      - --slow-query-log=ON
+      - --long-query-time=0.5
+      - --log-output=TABLE
+      - --performance-schema=ON
+      - --max-connections=50
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      TZ: UTC
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    mem_limit: ${MYSQL_MEMORY_LIMIT:-768m}
+    cpus: ${MYSQL_CPU_LIMIT:-0.75}
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
+    networks:
+      - stocksync_internal
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-10}
+      DB_POOL_MIN_IDLE: ${DB_POOL_MIN_IDLE:-2}
+      DB_LEAK_DETECTION_MS: ${DB_LEAK_DETECTION_MS:-0}
+      FILE_STORAGE_PATH: /app/storage
+      SESSION_COOKIE_SECURE: "true"
+      SESSION_TIMEOUT: ${SESSION_TIMEOUT:-30m}
+      JAVA_TOOL_OPTIONS: >-
+        -XX:MaxRAMPercentage=${JAVA_MAX_RAM_PERCENTAGE:-75}
+        -XX:+ExitOnOutOfMemoryError
+        -Djava.security.egd=file:/dev/urandom
+      TZ: UTC
+    volumes:
+      - uploaded_files:/app/storage
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8080/actuator/health/readiness"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 45s
+    stop_grace_period: 40s
+    mem_limit: ${BACKEND_MEMORY_LIMIT:-768m}
+    cpus: ${BACKEND_CPU_LIMIT:-1.0}
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: 20m
+        max-file: "5"
+    networks:
+      - stocksync_internal
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${APP_HTTP_PORT:-80}:80"
+      - "${APP_HTTPS_PORT:-443}:443"
+    environment:
+      SERVER_NAME: ${SERVER_NAME}
+    volumes:
+      - ./deployment/nginx-production.conf:/etc/nginx/templates/default.conf.template:ro
+      - ./deployment/proxy_params:/etc/nginx/proxy_params:ro
+      - ${TLS_CERT_PATH:-./deployment/tls/fullchain.pem}:/etc/nginx/tls/fullchain.pem:ro
+      - ${TLS_KEY_PATH:-./deployment/tls/privkey.pem}:/etc/nginx/tls/privkey.pem:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--no-check-certificate", "--tries=1", "--spider", "https://127.0.0.1/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    mem_limit: ${FRONTEND_MEMORY_LIMIT:-128m}
+    cpus: ${FRONTEND_CPU_LIMIT:-0.25}
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
+    networks:
+      - stocksync_internal
+
+  backup:
+    image: mysql:8.4
+    restart: unless-stopped
+    entrypoint: ["/bin/bash", "/opt/stocksync/backup.sh"]
+    environment:
+      DB_HOST: mysql
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
+    volumes:
+      - ./deployment/backup/backup.sh:/opt/stocksync/backup.sh:ro
+      - uploaded_files:/source/uploads:ro
+      - backups:/backups
+      - ${OFFSITE_BACKUP_PATH:-./backups/offsite}:/offsite
+    depends_on:
+      mysql:
+        condition: service_healthy
+    mem_limit: ${BACKUP_MEMORY_LIMIT:-128m}
+    cpus: ${BACKUP_CPU_LIMIT:-0.20}
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    networks:
+      - stocksync_internal
+
+volumes:
+  mysql_data:
+  uploaded_files:
+  backups:
+
+networks:
+  stocksync_internal:
+    driver: bridge
+    internal: true
