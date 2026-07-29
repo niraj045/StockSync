@@ -1,6 +1,7 @@
 package com.stocksync.agreement.controller;
 
 import com.stocksync.agreement.dto.AgreementTemplateResponse;
+import com.stocksync.agreement.dto.AgreementTemplateAnalysisResponse;
 import com.stocksync.agreement.service.AgreementTemplateService;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
@@ -45,5 +46,17 @@ public class AgreementTemplateController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
                         .filename(d.filename(), StandardCharsets.UTF_8).build().toString())
                 .body(d.resource());
+    }
+
+    @GetMapping("/{id}/analysis")
+    @PreAuthorize("hasRole('ADMIN')")
+    public AgreementTemplateAnalysisResponse analysis(@PathVariable Long id) {
+        return service.analysis(id);
+    }
+
+    @PostMapping("/{id}/validate-analysis")
+    @PreAuthorize("hasRole('ADMIN')")
+    public AgreementTemplateResponse validateAnalysis(@PathVariable Long id) {
+        return service.validateAnalysis(id);
     }
 }

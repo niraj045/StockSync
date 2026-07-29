@@ -1,7 +1,9 @@
 package com.stocksync.agreement.service;
 
 import com.stocksync.agreement.dto.AgreementTemplateResponse;
+import com.stocksync.agreement.dto.AgreementTemplateAnalysisResponse;
 import com.stocksync.agreement.entity.AgreementTemplate;
+import com.stocksync.agreement.entity.AgreementTemplateAnalysisStatus;
 import com.stocksync.agreement.entity.AgreementTemplateRenderingMode;
 import com.stocksync.agreement.repository.AgreementTemplateRepository;
 import com.stocksync.common.exception.BusinessRuleException;
@@ -22,14 +24,22 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Map;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class AgreementTemplateService {
     private final AgreementTemplateRepository repository;
+    private final AgreementPdfTemplateAnalyzer analyzer;
+    private final ObjectMapper objectMapper;
     private final Path root;
 
-    public AgreementTemplateService(AgreementTemplateRepository repository, @Value("${stocksync.file-storage-path}") String root) {
+    public AgreementTemplateService(AgreementTemplateRepository repository, AgreementPdfTemplateAnalyzer analyzer,
+                                    ObjectMapper objectMapper, @Value("${stocksync.file-storage-path}") String root) {
         this.repository = repository;
+        this.analyzer = analyzer;
+        this.objectMapper = objectMapper;
         this.root = Paths.get(root).toAbsolutePath().normalize();
     }
 
@@ -74,7 +84,7 @@ public class AgreementTemplateService {
         template.setStoredFilename(stored);
         template.setContentType(contentType);
         template.setFileSize(file.getSize());
-        template.setActive(true);
+        template.setActive(false);
         // Temporary placeholder path
         template.setStoragePath("temp");
         template.setCreatedBy(actor());
@@ -95,6 +105,16 @@ public class AgreementTemplateService {
         }
 
         template.setStoragePath(root.relativize(destination).toString());
+        if (contentType.equals("application/pdf")) {
+            var analysis = analyzer.analyze(destination);
+            template.setPageCount(analysis.pageCount());
+            template.setChecksumSha256(analysis.checksum());
+            template.setExtractedText(analysis.text());
+            template.setDetectedFieldsJson(analyzer.json(analysis));
+            template.setAnalysisStatus(AgreementTemplateAnalysisStatus.REVIEW_REQUIRED);
+        } else {
+            template.setAnalysisStatus(AgreementTemplateAnalysisStatus.NOT_ANALYZED);
+        }
         template = repository.save(template);
 
         return response(template);
@@ -114,6 +134,33 @@ public class AgreementTemplateService {
         return new Download(new FileSystemResource(path), template.getOriginalFilename(), template.getContentType());
     }
 
+    @Transactional(readOnly = true)
+    public AgreementTemplateAnalysisResponse analysis(Long id) {
+        AgreementTemplate template = repository.findById(id)
+                .orElseThrow(() -> new BusinessRuleException("TEMPLATE_NOT_FOUND", "Agreement template not found"));
+        Map<String, Object> stored = readAnalysis(template.getDetectedFieldsJson());
+        @SuppressWarnings("unchecked")
+        Map<String, String> fields = (Map<String, String>) stored.getOrDefault("fields", Map.of());
+        @SuppressWarnings("unchecked")
+        List<String> warnings = (List<String>) stored.getOrDefault("warnings", List.of());
+        return new AgreementTemplateAnalysisResponse(template.getId(), template.getName(), template.getAnalysisStatus().name(),
+                Optional.ofNullable(template.getPageCount()).orElse(0), template.getChecksumSha256(), fields, warnings,
+                Optional.ofNullable(template.getExtractedText()).orElse(""));
+    }
+
+    @Transactional
+    @CacheEvict(cacheNames = "agreementTemplates", allEntries = true)
+    public AgreementTemplateResponse validateAnalysis(Long id) {
+        AgreementTemplate template = repository.findById(id)
+                .orElseThrow(() -> new BusinessRuleException("TEMPLATE_NOT_FOUND", "Agreement template not found"));
+        if (template.getAnalysisStatus() != AgreementTemplateAnalysisStatus.REVIEW_REQUIRED) {
+            throw new BusinessRuleException("TEMPLATE_NOT_READY_FOR_VALIDATION", "Only analysed drafts can be validated");
+        }
+        template.setAnalysisStatus(AgreementTemplateAnalysisStatus.VALIDATED);
+        template.setUpdatedBy(actor());
+        return response(repository.save(template));
+    }
+
     private AgreementTemplateResponse response(AgreementTemplate t) {
         return new AgreementTemplateResponse(
                 t.getId(),
@@ -124,6 +171,8 @@ public class AgreementTemplateService {
                 t.getLayoutKey(),
                 t.isBuiltIn(),
                 t.getTemplateVersion(),
+                t.getAnalysisStatus().name(),
+                t.getPageCount(),
                 t.getOriginalFilename(),
                 t.getContentType(),
                 t.getFileSize(),
@@ -131,6 +180,15 @@ public class AgreementTemplateService {
                 t.getVersion(),
                 t.getCreatedAt()
         );
+    }
+
+    private Map<String, Object> readAnalysis(String json) {
+        if (json == null || json.isBlank()) return Map.of();
+        try {
+            return objectMapper.readValue(json, new TypeReference<>() {});
+        } catch (Exception e) {
+            throw new IllegalStateException("Stored template analysis is invalid", e);
+        }
     }
 
     private String actor() {

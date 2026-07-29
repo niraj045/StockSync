@@ -54,6 +54,7 @@ export const navigationSections: NavigationSection[] = [
       { key: '/quotations', label: 'Quotations' },
       { key: '/quotation-templates', label: 'Quotation Templates' },
       { key: '/agreements', label: 'Agreements' },
+      { key: '/agreement-templates', label: 'Agreement Templates' },
       { key: '/orders', label: 'Site Orders' },
     ],
   },

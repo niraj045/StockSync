@@ -14,6 +14,12 @@ public class AgreementTemplate extends AuditedEntity {
     @Column(name="layout_key",length=100) private String layoutKey;
     @Column(name="built_in",nullable=false) private boolean builtIn;
     @Column(name="template_version",nullable=false) private int templateVersion=1;
+    @Enumerated(EnumType.STRING) @Column(name="analysis_status",nullable=false,length=30)
+    private AgreementTemplateAnalysisStatus analysisStatus=AgreementTemplateAnalysisStatus.NOT_ANALYZED;
+    @Column(name="page_count") private Integer pageCount;
+    @Column(name="checksum_sha256",length=64) private String checksumSha256;
+    @Lob @Column(name="extracted_text",columnDefinition="LONGTEXT") private String extractedText;
+    @Lob @Column(name="detected_fields_json",columnDefinition="LONGTEXT") private String detectedFieldsJson;
     @Column(name="original_filename",length=255) private String originalFilename;
     @Column(name="stored_filename",unique=true,length=255) private String storedFilename;
     @Column(name="content_type",length=100) private String contentType;
@@ -32,4 +38,9 @@ public class AgreementTemplate extends AuditedEntity {
     public String getLayoutKey(){return layoutKey;} public void setLayoutKey(String v){layoutKey=v;}
     public boolean isBuiltIn(){return builtIn;} public void setBuiltIn(boolean v){builtIn=v;}
     public int getTemplateVersion(){return templateVersion;} public void setTemplateVersion(int v){templateVersion=v;}
+    public AgreementTemplateAnalysisStatus getAnalysisStatus(){return analysisStatus;} public void setAnalysisStatus(AgreementTemplateAnalysisStatus v){analysisStatus=v;}
+    public Integer getPageCount(){return pageCount;} public void setPageCount(Integer v){pageCount=v;}
+    public String getChecksumSha256(){return checksumSha256;} public void setChecksumSha256(String v){checksumSha256=v;}
+    public String getExtractedText(){return extractedText;} public void setExtractedText(String v){extractedText=v;}
+    public String getDetectedFieldsJson(){return detectedFieldsJson;} public void setDetectedFieldsJson(String v){detectedFieldsJson=v;}
 }

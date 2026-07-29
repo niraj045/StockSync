@@ -18,6 +18,7 @@ const OpeningStockImportPage = lazy(() => import('../../features/migration/pages
 const QuotationTemplatesPage = lazy(() => import('../../features/quotation/pages/QuotationTemplatesPage').then((module) => ({ default: module.QuotationTemplatesPage })));
 const QuotationsPage = lazy(() => import('../../features/quotation/pages/QuotationsPage').then((module) => ({ default: module.QuotationsPage })));
 const AgreementsPage = lazy(() => import('../../features/agreement/pages/AgreementsPage').then((module) => ({ default: module.AgreementsPage })));
+const AgreementTemplatesPage = lazy(() => import('../../features/agreement/pages/AgreementTemplatesPage').then((module) => ({ default: module.AgreementTemplatesPage })));
 const BillingRunsPage = lazy(() => import('../../features/billing/pages/BillingRunsPage').then((module) => ({ default: module.BillingRunsPage })));
 const InvoicesPage = lazy(() => import('../../features/billing/pages/InvoicesPage').then((module) => ({ default: module.InvoicesPage })));
 const InvoiceDetailsPage = lazy(() => import('../../features/billing/pages/InvoiceDetailsPage').then((module) => ({ default: module.InvoiceDetailsPage })));
@@ -88,6 +89,7 @@ export const router = createBrowserRouter([
       { path: 'quotations/new', element: deferred(<QuotationsPage />) },
       { path: 'quotations/:quotationId/edit', element: deferred(<QuotationsPage />) },
       { path: 'agreements', element: deferred(<AgreementsPage />) },
+      { path: 'agreement-templates', element: deferred(<AgreementTemplatesPage />) },
       { path: 'billing-runs', element: deferred(<BillingRunsPage />) },
       { path: 'invoices', element: deferred(<InvoicesPage />) },
       { path: 'invoices/:id', element: deferred(<InvoiceDetailsPage />) },
