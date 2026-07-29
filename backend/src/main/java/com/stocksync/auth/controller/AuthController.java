@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -50,8 +51,11 @@ public class AuthController {
     public ResponseEntity<Void> getCsrfToken(HttpServletRequest request) {
         CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
         if (csrfToken != null) {
-            // Force token generation to set cookie
-            csrfToken.getToken();
+            String token = csrfToken.getToken();
+            return ResponseEntity.noContent()
+                    .header("X-CSRF-TOKEN", token)
+                    .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, "X-CSRF-TOKEN")
+                    .build();
         }
         return ResponseEntity.noContent().build();
     }

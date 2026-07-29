@@ -1,0 +1,241 @@
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { apiClient, apiErrorMessage } from '../api/client';
+import { AppButton, Card, EmptyBlock, Field } from '../components/ui';
+import type { RootStackParams } from '../navigation/types';
+import { colors } from '../theme';
+import type { IssuedChallan, Page, SiteOrder, StockBalance } from '../types/api';
+import { localDate, quantity } from '../utils/format';
+
+type Props = NativeStackScreenProps<RootStackParams, 'CreateIssuedChallan'>;
+
+export function CreateIssuedChallanScreen({ navigation, route }: Props) {
+  const [orders, setOrders] = useState<SiteOrder[]>([]);
+  const [stock, setStock] = useState<StockBalance[]>([]);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [quantities, setQuantities] = useState<Record<number, string>>({});
+  const [dispatchDate, setDispatchDate] = useState(localDate());
+  const [vehicleNumber, setVehicleNumber] = useState('');
+  const [driverName, setDriverName] = useState('');
+  const [notes, setNotes] = useState('');
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [orderResponse, stockResponse] = await Promise.all([
+          apiClient.get<Page<SiteOrder>>('/orders', { params: { size: 200, sort: 'id,desc' } }),
+          apiClient.get<Page<StockBalance>>('/stock/balances', { params: { size: 500 } }),
+        ]);
+        const eligibleOrders = orderResponse.data.content.filter((order) =>
+          order.status === 'CONFIRMED' || order.status === 'PARTIALLY_FULFILLED');
+        const stockRows = stockResponse.data.content;
+        setOrders(eligibleOrders);
+        setStock(stockRows);
+        const requestedOrder = eligibleOrders.find((order) => order.id === route.params?.orderId);
+        if (requestedOrder) {
+          setSelectedId(requestedOrder.id);
+          setQuantities(Object.fromEntries(requestedOrder.items
+            .filter((item) => Number(item.remainingQuantity) > 0)
+            .map((item) => {
+              const available = Number(stockRows.find((balance) => balance.itemId === item.itemId)?.availableQuantity ?? 0);
+              return [item.itemId, String(Math.min(Number(item.remainingQuantity), available))];
+            })));
+        }
+      } catch (cause) {
+        setError(apiErrorMessage(cause, 'Unable to load confirmed orders.'));
+      } finally {
+        setLoading(false);
+      }
+    };
+    void load();
+  }, [route.params?.orderId]);
+
+  const selected = orders.find((order) => order.id === selectedId);
+  const dispatchItems = useMemo(
+    () => selected?.items.filter((item) => Number(item.remainingQuantity) > 0) ?? [],
+    [selected],
+  );
+
+  const chooseOrder = (order: SiteOrder) => {
+    setSelectedId(order.id);
+    setQuantities(Object.fromEntries(order.items
+      .filter((item) => Number(item.remainingQuantity) > 0)
+      .map((item) => {
+        const available = Number(stock.find((balance) => balance.itemId === item.itemId)?.availableQuantity ?? 0);
+        return [item.itemId, String(Math.min(Number(item.remainingQuantity), available))];
+      })));
+    setPickerOpen(false);
+  };
+
+  const validate = () => {
+    if (!selected) return 'Select a confirmed site order.';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dispatchDate)) return 'Dispatch date must use YYYY-MM-DD.';
+    const positive = dispatchItems.filter((item) => Number(quantities[item.itemId]) > 0);
+    if (!positive.length) return 'Enter a dispatch quantity for at least one item.';
+    for (const item of positive) {
+      const value = Number(quantities[item.itemId]);
+      const available = Number(stock.find((balance) => balance.itemId === item.itemId)?.availableQuantity ?? 0);
+      if (value > Number(item.remainingQuantity)) return `${item.itemName} exceeds the order balance.`;
+      if (value > available) return `${item.itemName} exceeds godown stock (${quantity(available)}).`;
+    }
+    return null;
+  };
+
+  const submit = async () => {
+    const validation = validate();
+    if (validation) {
+      Alert.alert('Check dispatch quantities', validation);
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const response = await apiClient.post<IssuedChallan>('/challans/issued', {
+        siteOrderId: selectedId,
+        dispatchDate,
+        vehicleNumber: vehicleNumber.trim() || null,
+        driverName: driverName.trim() || null,
+        notes: notes.trim() || null,
+        items: dispatchItems
+          .filter((item) => Number(quantities[item.itemId]) > 0)
+          .map((item) => ({ itemId: item.itemId, quantity: Number(quantities[item.itemId]) })),
+      });
+      navigation.replace('IssuedChallanDetail', { challan: response.data });
+    } catch (cause) {
+      Alert.alert('Challan not created', apiErrorMessage(cause, 'Unable to generate the issued challan.'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.root}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+        <Text style={styles.label}>Confirmed site order</Text>
+        <Pressable style={styles.selector} onPress={() => setPickerOpen(true)} disabled={loading}>
+          <View style={styles.selectorCopy}>
+            <Text style={selected ? styles.selectorValue : styles.selectorPlaceholder}>
+              {selected ? selected.orderNumber : loading ? 'Loading orders...' : 'Select order'}
+            </Text>
+            {selected ? <Text style={styles.selectorMeta}>{selected.partyName} | {selected.siteName}</Text> : null}
+          </View>
+          <Ionicons name="chevron-down" size={20} color={colors.muted} />
+        </Pressable>
+
+        <View style={styles.twoFields}>
+          <View style={styles.half}><Field label="Dispatch date" value={dispatchDate} onChangeText={setDispatchDate} placeholder="YYYY-MM-DD" /></View>
+          <View style={styles.half}><Field label="Vehicle number" value={vehicleNumber} onChangeText={setVehicleNumber} autoCapitalize="characters" /></View>
+        </View>
+        <Field label="Driver name" value={driverName} onChangeText={setDriverName} />
+        <Field label="Notes" value={notes} onChangeText={setNotes} multiline />
+
+        <Text style={styles.heading}>Dispatch items</Text>
+        {!selected ? (
+          <Card><EmptyBlock title="Select an order" message="Its remaining items will be loaded here." /></Card>
+        ) : dispatchItems.map((item) => {
+          const available = Number(stock.find((balance) => balance.itemId === item.itemId)?.availableQuantity ?? 0);
+          return (
+            <Card key={item.itemId} style={styles.item}>
+              <Text style={styles.code}>{item.itemCode}</Text>
+              <Text style={styles.itemName}>{item.itemName}</Text>
+              <View style={styles.balanceRow}>
+                <Text style={styles.balance}>Order: {quantity(item.remainingQuantity)}</Text>
+                <Text style={[styles.balance, available <= 0 && styles.noStock]}>Godown: {quantity(available)}</Text>
+              </View>
+              <View style={styles.quantityRow}>
+                <Text style={styles.quantityLabel}>Dispatch quantity</Text>
+                <TextInput
+                  keyboardType="decimal-pad"
+                  onChangeText={(value) => setQuantities((current) => ({ ...current, [item.itemId]: value }))}
+                  selectTextOnFocus
+                  style={styles.quantityInput}
+                  value={quantities[item.itemId] ?? '0'}
+                />
+                <Text style={styles.unit}>{item.unit}</Text>
+              </View>
+            </Card>
+          );
+        })}
+        <AppButton title="Generate issued challan" onPress={submit} loading={submitting} disabled={loading || !!error} />
+      </ScrollView>
+
+      <Modal animationType="slide" transparent visible={pickerOpen} onRequestClose={() => setPickerOpen(false)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.sheet}>
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>Select confirmed order</Text>
+              <Pressable accessibilityLabel="Close" onPress={() => setPickerOpen(false)} style={styles.close}>
+                <Ionicons name="close" size={24} color={colors.ink} />
+              </Pressable>
+            </View>
+            <ScrollView contentContainerStyle={styles.orderList}>
+              {orders.length ? orders.map((order) => (
+                <Pressable key={order.id} onPress={() => chooseOrder(order)} style={styles.order}>
+                  <View style={styles.orderCopy}>
+                    <Text style={styles.orderNumber}>{order.orderNumber}</Text>
+                    <Text style={styles.orderParty}>{order.partyName}</Text>
+                    <Text style={styles.orderSite}>{order.siteName}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+                </Pressable>
+              )) : <EmptyBlock title="No confirmed orders" message="Confirm a site order before issuing material." />}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+    </KeyboardAvoidingView>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.canvas },
+  content: { padding: 18, paddingBottom: 34, gap: 15 },
+  error: { color: colors.red, backgroundColor: colors.redSoft, borderRadius: 8, padding: 12 },
+  label: { color: colors.ink, fontSize: 14, fontWeight: '700', marginBottom: -8 },
+  selector: { minHeight: 58, borderRadius: 8, borderWidth: 1, borderColor: colors.line, backgroundColor: '#fff', paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center' },
+  selectorCopy: { flex: 1 },
+  selectorValue: { color: colors.ink, fontSize: 16, fontWeight: '800' },
+  selectorPlaceholder: { color: '#98A2B3', fontSize: 16 },
+  selectorMeta: { color: colors.muted, fontSize: 11, marginTop: 3 },
+  twoFields: { flexDirection: 'row', gap: 10 },
+  half: { flex: 1 },
+  heading: { color: colors.ink, fontSize: 20, fontWeight: '900', marginTop: 4 },
+  item: {},
+  code: { color: colors.primary, fontSize: 11, fontWeight: '900' },
+  itemName: { color: colors.ink, fontSize: 16, fontWeight: '800', marginTop: 3 },
+  balanceRow: { flexDirection: 'row', gap: 16, marginTop: 9 },
+  balance: { color: colors.muted, fontSize: 12, fontWeight: '600' },
+  noStock: { color: colors.red },
+  quantityRow: { flexDirection: 'row', alignItems: 'center', marginTop: 13, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.line },
+  quantityLabel: { color: colors.ink, fontWeight: '700', flex: 1 },
+  quantityInput: { width: 90, height: 44, borderWidth: 1, borderColor: colors.primary, borderRadius: 7, backgroundColor: '#fff', color: colors.ink, fontSize: 17, fontWeight: '800', textAlign: 'right', paddingHorizontal: 10 },
+  unit: { color: colors.muted, fontSize: 11, width: 48, marginLeft: 7 },
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(4, 25, 23, 0.45)', justifyContent: 'flex-end' },
+  sheet: { maxHeight: '78%', backgroundColor: colors.surface, borderTopLeftRadius: 12, borderTopRightRadius: 12, paddingBottom: 20 },
+  sheetHeader: { minHeight: 64, paddingHorizontal: 18, borderBottomWidth: 1, borderBottomColor: colors.line, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  sheetTitle: { color: colors.ink, fontSize: 19, fontWeight: '900' },
+  close: { padding: 8 },
+  orderList: { padding: 14 },
+  order: { minHeight: 82, padding: 14, borderBottomWidth: 1, borderBottomColor: colors.line, flexDirection: 'row', alignItems: 'center' },
+  orderCopy: { flex: 1 },
+  orderNumber: { color: colors.primary, fontWeight: '900' },
+  orderParty: { color: colors.ink, fontSize: 15, fontWeight: '800', marginTop: 4 },
+  orderSite: { color: colors.muted, fontSize: 12, marginTop: 2 },
+});
