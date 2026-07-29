@@ -7,6 +7,7 @@ import java.util.List;
 
 public record AgreementResponse(
  Long id,String agreementNumber,Long sourceQuotationId,String sourceQuotationNumber,LocalDate sourceQuotationDate,
+ Long templateId,String templateCode,String templateName,String templateLayoutKey,Integer templateVersion,
  Long partyId,String partyName,String partyTradeName,String partyGstin,String partyPan,String partyAddress,String partyState,String partyContact,
  Long siteId,String siteName,String siteCode,String siteAddress,String siteContact,
  LocalDate agreementDate,LocalDate effectiveDate,LocalDate expiryDate,RentalType rentalType,BillingCycle billingCycle,

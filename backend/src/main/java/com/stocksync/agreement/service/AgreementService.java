@@ -3,6 +3,7 @@ package com.stocksync.agreement.service;
 import com.stocksync.agreement.dto.*;
 import com.stocksync.agreement.entity.*;
 import com.stocksync.agreement.repository.AgreementRepository;
+import com.stocksync.agreement.repository.AgreementTemplateRepository;
 import com.stocksync.audit.service.UserActivityLogService;
 import com.stocksync.auth.entity.User;
 import com.stocksync.auth.repository.UserRepository;
@@ -31,12 +32,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AgreementService implements AgreementAccess {
  private final AgreementRepository agreements; private final QuotationRepository quotations; private final ItemRepository items;
+ private final AgreementTemplateRepository templates;
  private final FileAttachmentRepository attachments; private final DocumentNumberService numbers; private final AgreementPdfService pdf;
  private final UserRepository users; private final UserActivityLogService audit; private final Path storageRoot;
- public AgreementService(AgreementRepository agreements,QuotationRepository quotations,ItemRepository items,
+ public AgreementService(AgreementRepository agreements,QuotationRepository quotations,ItemRepository items,AgreementTemplateRepository templates,
    FileAttachmentRepository attachments,DocumentNumberService numbers,AgreementPdfService pdf,UserRepository users,
    UserActivityLogService audit,@Value("${stocksync.file-storage-path}")String root){
-  this.agreements=agreements;this.quotations=quotations;this.items=items;this.attachments=attachments;this.numbers=numbers;
+  this.agreements=agreements;this.quotations=quotations;this.items=items;this.templates=templates;this.attachments=attachments;this.numbers=numbers;
   this.pdf=pdf;this.users=users;this.audit=audit;this.storageRoot=Paths.get(root).toAbsolutePath().normalize();
  }
 
@@ -56,7 +58,7 @@ public class AgreementService implements AgreementAccess {
  @Transactional(readOnly=true) public AgreementResponse get(Long id){return response(require(id));}
 
  @Transactional
- public AgreementResponse convert(Long quotationId,HttpServletRequest http){
+ public AgreementResponse convert(Long quotationId,QuotationConversionRequest request,HttpServletRequest http){
   Optional<Agreement> existing=agreements.findByQuotationId(quotationId);if(existing.isPresent())return response(require(existing.get().getId()));
   Quotation q=quotations.findDetailedForUpdate(quotationId).orElseThrow(()->error("QUOTATION_NOT_FOUND","Quotation not found"));
   existing=agreements.findByQuotationId(quotationId);if(existing.isPresent())return response(require(existing.get().getId()));
@@ -65,8 +67,15 @@ public class AgreementService implements AgreementAccess {
   if(q.getSite().getStatus()==SiteStatus.CLOSED)throw error("SITE_CLOSED","Closed site cannot receive an agreement");
   if(!q.getSite().getParty().getId().equals(q.getParty().getId()))throw error("SITE_PARTY_MISMATCH","Site does not belong to quotation party");
   LocalDate today=LocalDate.now(); Agreement a=new Agreement();a.setAgreementNumber(numbers.next(DocumentType.AGREEMENT,today));
-  a.setQuotation(q);a.setParty(q.getParty());a.setSite(q.getSite());a.setAgreementDate(today);a.setEffectiveDate(today);a.setRentalType(q.getRentalType());
+  if(request!=null&&request.templateId()!=null){
+   AgreementTemplate template=templates.findById(request.templateId()).filter(AgreementTemplate::isActive)
+    .orElseThrow(()->error("AGREEMENT_TEMPLATE_NOT_FOUND_OR_INACTIVE","Active agreement template not found"));
+   a.setTemplate(template);
+  }
+  LocalDate effective=request==null?today:request.effectiveDate();
+  a.setQuotation(q);a.setParty(q.getParty());a.setSite(q.getSite());a.setAgreementDate(today);a.setEffectiveDate(effective);a.setExpiryDate(request==null?null:request.expiryDate());a.setRentalType(q.getRentalType());
   a.setBillingCycle(BillingCycle.MONTHLY);a.setStatus(AgreementStatus.DRAFT);copySnapshots(a,q);copyCommercials(a,q);
+  if(request!=null){a.setSecurityDeposit(request.securityDeposit());a.setNotes(trim(request.notes()));}
   List<AgreementItem> lines=new ArrayList<>();for(QuotationItem source:q.getItems()){AgreementItem i=new AgreementItem();
    i.setSourceQuotationItem(source);i.setItem(source.getItem());i.setItemCodeSnapshot(source.getItemCodeSnapshot());i.setItemNameSnapshot(source.getItemNameSnapshot());
    i.setDescriptionSnapshot(source.getDescriptionSnapshot());i.setSizeSnapshot(source.getSizeSnapshot());i.setUnitSnapshot(source.getUnitSnapshot());
@@ -76,6 +85,10 @@ public class AgreementService implements AgreementAccess {
   }a.replaceItems(lines);a.setCreatedBy(actor());a.setUpdatedBy(actor());Agreement saved=agreements.save(a);q.setStatus(QuotationStatus.CONVERTED);
   log("AGREEMENT_CREATED_FROM_QUOTATION",saved,"Source quotation "+q.getQuotationNumber(),http);
   log("QUOTATION_CONVERTED_TO_AGREEMENT",saved,"Agreement "+saved.getAgreementNumber(),http);return response(saved);
+ }
+
+ @Transactional public AgreementResponse convert(Long quotationId,HttpServletRequest http){
+  return convert(quotationId,null,http);
  }
 
  @Transactional public AgreementResponse update(Long id,AgreementRequest r,HttpServletRequest http){
@@ -169,7 +182,8 @@ public class AgreementService implements AgreementAccess {
         i.getSlabs() == null ? Collections.emptyList() : i.getSlabs().stream().map(s -> new AgreementItemSlabResponse(s.getId(), s.getStartDay(), s.getEndDay(), s.getRate())).toList()
     );
   }
- private AgreementResponse response(Agreement a){return new AgreementResponse(a.getId(),a.getAgreementNumber(),a.getQuotation()==null?null:a.getQuotation().getId(),a.getQuotationNumberSnapshot(),a.getQuotationDateSnapshot(),
+ private AgreementResponse response(Agreement a){AgreementTemplate template=a.getTemplate();return new AgreementResponse(a.getId(),a.getAgreementNumber(),a.getQuotation()==null?null:a.getQuotation().getId(),a.getQuotationNumberSnapshot(),a.getQuotationDateSnapshot(),
+  template==null?null:template.getId(),template==null?null:template.getTemplateCode(),template==null?null:template.getName(),template==null?null:template.getLayoutKey(),template==null?null:template.getTemplateVersion(),
   a.getParty().getId(),a.getPartyLegalNameSnapshot(),a.getPartyTradeNameSnapshot(),a.getPartyGstinSnapshot(),a.getPartyPanSnapshot(),a.getPartyAddressSnapshot(),a.getPartyStateSnapshot(),a.getPartyContactSnapshot(),
   a.getSite().getId(),a.getSiteNameSnapshot(),a.getSiteCodeSnapshot(),a.getSiteAddressSnapshot(),a.getSiteContactSnapshot(),a.getAgreementDate(),a.getEffectiveDate(),a.getExpiryDate(),a.getRentalType(),a.getBillingCycle(),
   a.getCustomBillingCycleDays(),a.getGracePeriodDays(),a.getMinimumBillingDays(),a.getStatus(),a.getSecurityDeposit(),a.getSubtotal(),a.getDiscountAmount(),a.getTaxableAmount(),a.getCgstAmount(),a.getSgstAmount(),a.getIgstAmount(),a.getTotalTax(),

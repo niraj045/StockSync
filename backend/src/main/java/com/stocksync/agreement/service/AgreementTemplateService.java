@@ -2,6 +2,7 @@ package com.stocksync.agreement.service;
 
 import com.stocksync.agreement.dto.AgreementTemplateResponse;
 import com.stocksync.agreement.entity.AgreementTemplate;
+import com.stocksync.agreement.entity.AgreementTemplateRenderingMode;
 import com.stocksync.agreement.repository.AgreementTemplateRepository;
 import com.stocksync.common.exception.BusinessRuleException;
 import org.springframework.beans.factory.annotation.Value;
@@ -68,6 +69,7 @@ public class AgreementTemplateService {
         AgreementTemplate template = new AgreementTemplate();
         template.setName(name.trim());
         template.setDescription(description == null || description.isBlank() ? null : description.trim());
+        template.setRenderingMode(AgreementTemplateRenderingMode.REFERENCE);
         template.setOriginalFilename(original);
         template.setStoredFilename(stored);
         template.setContentType(contentType);
@@ -102,6 +104,9 @@ public class AgreementTemplateService {
     public Download download(Long id) {
         AgreementTemplate template = repository.findById(id)
                 .orElseThrow(() -> new BusinessRuleException("TEMPLATE_NOT_FOUND", "Agreement template not found"));
+        if (template.getRenderingMode() == AgreementTemplateRenderingMode.NATIVE) {
+            throw new BusinessRuleException("NATIVE_TEMPLATE_HAS_NO_SOURCE_FILE", "Built-in templates do not have a downloadable source file");
+        }
         Path path = root.resolve(template.getStoragePath()).normalize();
         if (!path.startsWith(root) || !Files.isRegularFile(path)) {
             throw new BusinessRuleException("FILE_NOT_FOUND", "Stored template file not found");
@@ -112,8 +117,13 @@ public class AgreementTemplateService {
     private AgreementTemplateResponse response(AgreementTemplate t) {
         return new AgreementTemplateResponse(
                 t.getId(),
+                t.getTemplateCode(),
                 t.getName(),
                 t.getDescription(),
+                t.getRenderingMode().name(),
+                t.getLayoutKey(),
+                t.isBuiltIn(),
+                t.getTemplateVersion(),
                 t.getOriginalFilename(),
                 t.getContentType(),
                 t.getFileSize(),

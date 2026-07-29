@@ -16,7 +16,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import java.math.BigDecimal;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -93,6 +96,39 @@ class Phase4IntegrationTest extends BaseIntegrationTest {
         // Activate
         mvc.perform(post("/api/v1/agreements/{id}/activate",agreementId).with(user("admin").roles("ADMIN")).with(csrf())).andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("ACTIVE"));
+    }
+
+    @Test void nativeRocksTemplateGeneratesFivePageAgreementFromSnapshots() throws Exception {
+        jdbc.update("""
+            INSERT INTO agreement_templates(
+              template_code,name,description,rendering_mode,layout_key,built_in,template_version,
+              file_size,active,version,created_at,created_by,updated_at,updated_by
+            ) VALUES('ROCKS_TEST','Rocks Test','Test native layout','NATIVE','rocks-logs-v1',true,1,
+              0,true,0,NOW(6),'test',NOW(6),'test')
+            """);
+        long templateId=jdbc.queryForObject("SELECT id FROM agreement_templates WHERE template_code='ROCKS_TEST'",Long.class);
+        long quotationId=approveQuotation();
+        String converted=mvc.perform(post("/api/v1/agreements/from-quotation/{id}",quotationId).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"templateId":%d,"effectiveDate":"2030-01-01","expiryDate":"2030-06-30",
+                     "securityDeposit":700000,"notes":"Native layout verification"}
+                    """.formatted(templateId)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.templateLayoutKey").value("rocks-logs-v1"))
+            .andReturn().getResponse().getContentAsString();
+        long agreementId=json.readTree(converted).get("id").asLong();
+        mvc.perform(post("/api/v1/agreements/{id}/generate-document",agreementId).with(csrf()))
+            .andExpect(status().isOk());
+        byte[] pdf=mvc.perform(get("/api/v1/agreements/{id}/document",agreementId))
+            .andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray();
+        try(PDDocument document=PDDocument.load(pdf)){
+            String text=new PDFTextStripper().getText(document);
+            assertThat(document.getNumberOfPages()).isEqualTo(5);
+            assertThat(text).contains("PART A: HIRE CHARGES & COSTS","CURRENTLY AGREED MATERIAL",
+                "PART B: TERMS AND CONDITIONS","Phase Four Construction","Phase Four Site",
+                "Native layout verification");
+        }
     }
 
     @Test void confirmedOrdersRespectAgreementAllocationAndExposeRemainingQuantity() throws Exception {

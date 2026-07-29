@@ -26,7 +26,9 @@ public class AgreementController {
   return service.list(search,agreementNumber,quotationId,partyId,siteId,status,effectiveDateFrom,effectiveDateTo,expiryDateFrom,expiryDateTo,pageable);}
  @GetMapping("/{id}") public AgreementResponse get(@PathVariable Long id){return service.get(id);}
  @PostMapping("/from-quotation/{quotationId}") @PreAuthorize("hasAnyRole('ADMIN','OPERATIONS')")
- public AgreementResponse convert(@PathVariable Long quotationId,HttpServletRequest h){return service.convert(quotationId,h);}
+ public AgreementResponse convert(@PathVariable Long quotationId,@Valid @RequestBody(required=false) QuotationConversionRequest body,HttpServletRequest h){
+  return service.convert(quotationId,body,h);
+ }
  @PutMapping("/{id}") @PreAuthorize("hasAnyRole('ADMIN','OPERATIONS')")
  public AgreementResponse update(@PathVariable Long id,@Valid @RequestBody AgreementRequest r,HttpServletRequest h){return service.update(id,r,h);}
  @PostMapping("/{id}/ready-for-review") @PreAuthorize("hasAnyRole('ADMIN','OPERATIONS')") public AgreementResponse ready(@PathVariable Long id,HttpServletRequest h){return service.ready(id,h);}
