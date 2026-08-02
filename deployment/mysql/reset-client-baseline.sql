@@ -1,5 +1,5 @@
--- DESTRUCTIVE: remove all operational/client data while preserving the permanent
--- StockSync login baseline, Flyway history, roles, and SteelFab PDF template.
+-- DESTRUCTIVE: remove all operational/client data while preserving every user,
+-- role assignment, Flyway migration, quotation template, and agreement template.
 -- Run only after Flyway has applied V23 or later.
 SET FOREIGN_KEY_CHECKS = 0;
 
@@ -54,21 +54,6 @@ TRUNCATE TABLE stock_transactions;
 TRUNCATE TABLE tds_details;
 TRUNCATE TABLE user_activity_logs;
 TRUNCATE TABLE vendors;
-
-DELETE assignment
-FROM user_roles assignment
-JOIN users user ON user.id = assignment.user_id
-WHERE LOWER(user.username) NOT IN (
-    'admin', 'rohit.admin', 'karan.admin', 'vikram.admin', 'aman.operations', 'suresh.store'
-);
-
-DELETE FROM users
-WHERE LOWER(username) NOT IN (
-    'admin', 'rohit.admin', 'karan.admin', 'vikram.admin', 'aman.operations', 'suresh.store'
-);
-
-DELETE FROM quotation_templates
-WHERE template_code <> 'STEELFAB_EXACT_HIRE_V1';
 
 UPDATE quotation_templates
 SET active = TRUE,
