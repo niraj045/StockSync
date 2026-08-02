@@ -20,7 +20,7 @@ export function MoreScreen({ navigation }: Props) {
   const canExportGst = user?.roles.some((role) => role === 'ROLE_ADMIN' || role === 'ROLE_ACCOUNTS') ?? false;
   return (
     <View style={[styles.content, { paddingTop: insets.top + 18 }]}>
-      <PageHeader eyebrow="StockSync mobile" title="Account" />
+      <PageHeader eyebrow="SteelFab" title="Account" />
       <Card>
         <View style={styles.profile}>
           <View style={styles.avatar}>

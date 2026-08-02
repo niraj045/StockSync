@@ -219,7 +219,7 @@ export function LoadingBlock() {
   return (
     <View style={styles.center}>
       <ActivityIndicator size="large" color={colors.primary} />
-      <Text style={styles.muted}>Loading StockSync...</Text>
+      <Text style={styles.muted}>Loading SteelFab...</Text>
     </View>
   );
 }

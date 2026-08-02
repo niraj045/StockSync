@@ -99,7 +99,7 @@ export function UserFormModal({ visible, onCancel, onSuccess, userToEdit }: User
     <FormDrawer
       open={visible}
       title={userToEdit ? 'Edit User' : 'Create User'}
-      subtitle={userToEdit ? 'Update profile details and assigned access roles.' : 'Create a user and assign the appropriate StockSync roles.'}
+      subtitle={userToEdit ? 'Update profile details and assigned access roles.' : 'Create a user and assign the appropriate SteelFab roles.'}
       okText={userToEdit ? 'Save Changes' : 'Create'}
       onClose={onCancel}
       loading={loading}

@@ -148,7 +148,7 @@ export function AuditLogPage() {
         <div>
           <h1 className="page-heading">Activity audit</h1>
           <p className="page-description">
-            Review security events and administrative changes across StockSync.
+            Review security events and administrative changes across SteelFab.
           </p>
         </div>
         <Space>

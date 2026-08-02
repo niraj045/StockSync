@@ -243,7 +243,7 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
       const response = await apiClient.post<QuotationTemplate>('/quotation-templates', {
         templateCode: templateCode.trim().toUpperCase(),
         name: templateName.trim(),
-        description: 'Primary client quotation template created from StockSync mobile',
+        description: 'Primary client quotation template created from SteelFab mobile',
         companyName: companyName.trim(),
         companyAddress: companyAddress.trim() || null,
         companyGstin: companyGstin.trim().toUpperCase() || null,

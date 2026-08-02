@@ -43,7 +43,7 @@ export function DashboardScreen() {
       <View style={styles.welcome}>
         <View>
           <Text style={styles.hello}>Hello!</Text>
-          <Text style={styles.userName}>{user?.fullName ?? 'StockSync user'}</Text>
+          <Text style={styles.userName}>{user?.fullName ?? 'SteelFab user'}</Text>
         </View>
         <View style={styles.avatar}><Text style={styles.avatarText}>{user?.fullName?.charAt(0).toUpperCase() ?? 'S'}</Text></View>
       </View>

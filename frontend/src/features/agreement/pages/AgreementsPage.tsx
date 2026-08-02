@@ -38,7 +38,7 @@ export function AgreementsPage(){
    </Form.Item>
    <Form.Item name="templateId" label="Agreement design"
     extra="Native designs generate the final layout. Uploaded PDFs remain reference documents.">
-    <Select allowClear placeholder="StockSync standard design" options={(templates.data??[]).filter(t=>t.active).map(t=>({
+    <Select allowClear placeholder="SteelFab standard design" options={(templates.data??[]).filter(t=>t.active).map(t=>({
      value:t.id,label:`${t.name} — ${t.renderingMode==='NATIVE'?'generates PDF':'reference only'}`
     }))}/>
    </Form.Item>

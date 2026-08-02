@@ -52,6 +52,6 @@ export async function initializeCsrf() {
 export function apiErrorMessage(error: unknown, fallback: string) {
   if (!axios.isAxiosError(error)) return fallback;
   const data = error.response?.data as { message?: string } | undefined;
-  if (!error.response) return 'Cannot reach the StockSync server. Check the server address and network.';
+  if (!error.response) return 'Cannot reach the SteelFab server. Check the server address and network.';
   return data?.message ?? fallback;
 }

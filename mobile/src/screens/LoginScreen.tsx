@@ -46,7 +46,7 @@ export function LoginScreen() {
             <Ionicons name="layers-outline" size={30} color="#fff" />
           </View>
           <View>
-            <Text style={styles.brandName}>StockSync</Text>
+            <Text style={styles.brandName}>SteelFab</Text>
             <Text style={styles.brandTag}>SHUTTERING CONTROL</Text>
           </View>
         </View>

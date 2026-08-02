@@ -11,7 +11,7 @@ import type { ItemType } from 'antd/es/menu/interface';
 import { useEffect, useMemo, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../features/auth/context/AuthContext';
-import { COMPANY_NAME } from '../app/branding';
+import { COMPANY_NAME, COMPANY_SHORT_NAME } from '../app/branding';
 import {
   activeRoute,
   activeSection,
@@ -183,11 +183,11 @@ export function AppLayout() {
 
 function Brand({ collapsed }: { collapsed: boolean }) {
   return (
-    <div className="brand" aria-label="StockSync">
+    <div className="brand" aria-label={COMPANY_SHORT_NAME}>
       <span className="brand-mark"><BuildOutlined /></span>
       {!collapsed && (
         <span className="brand-copy">
-          <span className="brand-name">StockSync</span>
+          <span className="brand-name">{COMPANY_SHORT_NAME}</span>
           <span className="brand-caption">Shuttering control</span>
         </span>
       )}

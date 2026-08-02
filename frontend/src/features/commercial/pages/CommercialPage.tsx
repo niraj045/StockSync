@@ -331,9 +331,9 @@ export function CommercialPage({ kind }: { kind: Kind }) {
         </>}
         <Form.Item name="templateId" label="Document template"
           extra={templates.data?.length
-            ? 'Leave empty to use the built-in StockSync agreement layout.'
-            : 'No uploaded templates found. The built-in StockSync agreement layout will be used.'}>
-          <Select allowClear loading={templates.isLoading} placeholder="StockSync default template"
+            ? 'Leave empty to use the built-in SteelFab agreement layout.'
+            : 'No uploaded templates found. The built-in SteelFab agreement layout will be used.'}>
+          <Select allowClear loading={templates.isLoading} placeholder="SteelFab default template"
             notFoundContent={templates.isLoading ? 'Loading templates...' : 'No uploaded templates'}
             options={(templates.data ?? []).filter((template) => template.active !== false)
               .map((template) => ({ value: template.id, label: template.name }))} />

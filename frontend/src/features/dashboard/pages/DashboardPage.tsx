@@ -266,7 +266,7 @@ export function DashboardPage() {
             <button className="dashboard-document-row" key={`${document.type}-${document.id}`} onClick={() => navigate(document.targetPath)}>
               <span>{document.type}</span>
               <code>{document.number}</code>
-              <span>StockSync operation</span>
+              <span>SteelFab operation</span>
               <span>{dayjs(document.documentDate).format('DD MMM')}</span>
               <StatusPill value={document.status} />
             </button>

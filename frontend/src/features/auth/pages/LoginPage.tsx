@@ -3,7 +3,7 @@ import { Form, Input, Button, Alert } from 'antd';
 import { BuildOutlined, LockOutlined, UserOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../context/AuthContext';
-import { COMPANY_NAME } from '../../../app/branding';
+import { COMPANY_NAME, COMPANY_SHORT_NAME } from '../../../app/branding';
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -40,7 +40,7 @@ export function LoginPage() {
       <section className="login-brand-panel">
         <div className="login-brand">
           <span className="brand-mark"><BuildOutlined /></span>
-          StockSync
+          {COMPANY_SHORT_NAME}
         </div>
         <div className="login-message">
           <h1>{COMPANY_NAME}</h1>
@@ -49,14 +49,14 @@ export function LoginPage() {
             and billing operations in one workspace.
           </p>
         </div>
-        <div className="login-panel-footer">{COMPANY_NAME} | Powered by StockSync</div>
+        <div className="login-panel-footer">{COMPANY_NAME}</div>
       </section>
 
       <section className="login-form-panel">
         <div className="login-card">
           <span className="login-eyebrow">Welcome back</span>
           <h2 className="login-logo">Sign in to your workspace</h2>
-          <p className="login-subtitle">Use your StockSync username or registered email.</p>
+          <p className="login-subtitle">Use your SteelFab username or registered email.</p>
 
           {errorMsg && (
             <Alert message={errorMsg} type="error" showIcon style={{ marginBottom: 24 }} />

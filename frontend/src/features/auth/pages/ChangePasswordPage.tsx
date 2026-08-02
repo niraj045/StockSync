@@ -35,7 +35,7 @@ export function ChangePasswordPage() {
     <div className="form-page">
       <div className="form-page-intro">
         <h1>Change password</h1>
-        <p>Choose a strong password to keep your StockSync account secure.</p>
+        <p>Choose a strong password to keep your SteelFab account secure.</p>
       </div>
       <Card className="premium-card">
         {errorMsg && (

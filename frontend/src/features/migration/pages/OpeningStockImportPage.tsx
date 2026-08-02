@@ -594,7 +594,7 @@ export function OpeningStockImportPage() {
         onSubmit={() => uploadForm.submit()} loading={upload.isPending} width={620}>
         <Alert type="info" showIcon style={{ marginBottom: 16 }}
           message="Controlled format: STEELFAB_STOCK_SNAPSHOT_V1"
-          description="StockSync reads Sheet1, item names from B, party/site balances from C:R, and godown balances from U. Source totals T and V are ignored." />
+          description="SteelFab reads Sheet1, item names from B, party/site balances from C:R, and godown balances from U. Source totals T and V are ignored." />
         <Form form={uploadForm} layout="vertical" onFinish={(values) => upload.mutate(values)}>
           <Form.Item name="file" label="XLSX workbook" valuePropName="fileList"
             getValueFromEvent={(event) => event?.fileList} rules={[{ required: true, message: 'Select the XLSX workbook' }]}>
@@ -655,7 +655,7 @@ export function OpeningStockImportPage() {
         onSubmit={() => locationForm.submit()} loading={mapLocation.isPending}>
         {mappingLocation && <Alert type="info" showIcon style={{ marginBottom: 16 }}
           message={`${mappingLocation.sourceExcelColumn}: ${mappingLocation.sourceLocationName}`}
-          description="This source label is preserved. Map it to a legal party and an open site; StockSync does not assume the label represents both." />}
+          description="This source label is preserved. Map it to a legal party and an open site; SteelFab does not assume the label represents both." />}
         <Form form={locationForm} layout="vertical" onFinish={(values) => mapLocation.mutate(values)}
           initialValues={{ partyMode: 'existing', siteMode: 'existing' }}>
           <Form.Item name="partyMode" label="Party decision"><Radio.Group>
