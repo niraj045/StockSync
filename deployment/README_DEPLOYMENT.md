@@ -6,7 +6,7 @@ This package deploys StockSync independently at `/opt/stocksync`. It does not co
 
 - `frontend`: Nginx publishes ports `80` and `443`, redirects HTTP to HTTPS, and serves React plus `/api` proxying.
 - `backend`: Spring Boot listens only inside Docker on `8081`.
-- `mysql`: MySQL 8.4 listens only inside Docker on `3306` and owns database `shuttering_inventory`.
+- `mysql`: MySQL 8.4 owns database `shuttering_inventory`; `127.0.0.1:3307` is available only through an encrypted SSH tunnel for Workbench.
 - `stocksync_private`: one internal Docker bridge network shared by all three services.
 - `mysql_data`: named Docker volume for database files.
 - `deployment/storage`: bind-mounted as `/data` for uploads, generated PDFs, agreements, invoices, reports, and exports.
