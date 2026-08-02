@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Form, Input, Button, Alert } from 'antd';
-import { BuildOutlined, LockOutlined, SafetyCertificateOutlined, UserOutlined } from '@ant-design/icons';
+import { BuildOutlined, LockOutlined, UserOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../context/AuthContext';
-import { COMPANY_NAME, COMPANY_WORKSPACE_LABEL } from '../../../app/branding';
+import { COMPANY_NAME } from '../../../app/branding';
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -43,7 +43,6 @@ export function LoginPage() {
           StockSync
         </div>
         <div className="login-message">
-          <span className="dashboard-kicker"><SafetyCertificateOutlined /> {COMPANY_WORKSPACE_LABEL}</span>
           <h1>{COMPANY_NAME}</h1>
           <p>
             Secure shuttering inventory, movement, accountability, quotation, challan,

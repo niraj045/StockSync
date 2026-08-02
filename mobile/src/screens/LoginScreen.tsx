@@ -52,7 +52,6 @@ export function LoginScreen() {
         </View>
 
         <View style={styles.hero}>
-          <Text style={styles.kicker}>SteelFab operations</Text>
           <Text style={styles.companyName}>SteelFab Scaffoldings &amp; Engineering Pvt. Ltd.</Text>
         </View>
 
@@ -100,8 +99,7 @@ const styles = StyleSheet.create({
   brandName: { color: colors.ink, fontSize: 23, fontFamily: fonts.extraBold },
   brandTag: { color: colors.primary, fontSize: 10, fontFamily: fonts.bold },
   hero: { marginTop: 44, marginBottom: 26 },
-  kicker: { color: colors.primary, fontSize: 11, fontFamily: fonts.bold, textTransform: 'uppercase' },
-  companyName: { color: colors.ink, fontSize: 30, lineHeight: 37, fontFamily: fonts.black, marginTop: 8, maxWidth: 350 },
+  companyName: { color: colors.ink, fontSize: 30, lineHeight: 37, fontFamily: fonts.black, maxWidth: 350 },
   form: { backgroundColor: colors.surface, borderRadius: 8, borderWidth: 1, borderColor: colors.line, padding: 20, gap: 16, ...shadow },
   formTitle: { color: colors.ink, fontSize: 22, fontFamily: fonts.bold },
   eye: { position: 'absolute', right: 13, bottom: 14, padding: 3 },
