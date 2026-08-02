@@ -116,8 +116,9 @@ export function ReportsPage() {
         </div>
       </div>
 
-      <Card className="premium-card">
+      <Card className="premium-card reports-filter-card">
         <Tabs
+          className="reports-tabs"
           activeKey={category}
           items={categories.map((name) => ({ key: name, label: name, disabled: !reports.some((report) => report.category === name) }))}
           onChange={(key) => {
@@ -126,9 +127,9 @@ export function ReportsPage() {
             if (next) chooseReport(next.reportType);
           }}
         />
-        <Space className="filters-bar" wrap>
+        <div className="reports-filter-grid">
           <Select
-            style={{ width: 320 }}
+            className="reports-report-select"
             value={selectedReport?.reportType}
             options={filteredReports.map((report) => ({ value: report.reportType, label: report.name }))}
             onChange={chooseReport}
@@ -145,12 +146,12 @@ export function ReportsPage() {
           <InputNumber placeholder="Site id" min={1} onChange={(value) => updateFilter({ siteId: typeof value === 'number' ? value : undefined })} />
           <InputNumber placeholder="Agreement id" min={1} onChange={(value) => updateFilter({ agreementId: typeof value === 'number' ? value : undefined })} />
           <InputNumber placeholder="Item id" min={1} onChange={(value) => updateFilter({ itemId: typeof value === 'number' ? value : undefined })} />
-          <Input placeholder="Status" style={{ width: 140 }} onChange={(event) => updateFilter({ status: event.target.value || undefined })} />
-          <Input placeholder="Document number" style={{ width: 180 }} onChange={(event) => updateFilter({ documentNumber: event.target.value || undefined })} />
-        </Space>
+          <Input placeholder="Status" onChange={(event) => updateFilter({ status: event.target.value || undefined })} />
+          <Input className="reports-document-filter" placeholder="Document number" onChange={(event) => updateFilter({ documentNumber: event.target.value || undefined })} />
+        </div>
       </Card>
 
-      <Card className="premium-card">
+      <Card className="premium-card reports-results-card">
         <div className="section-header-row">
           <div>
             <Typography.Title level={4}>{selectedReport?.name ?? 'Reports'}</Typography.Title>
@@ -174,11 +175,15 @@ export function ReportsPage() {
           </Space>
         </div>
         {preview?.warning && <Typography.Paragraph type="warning">{preview.warning}</Typography.Paragraph>}
-        <Space wrap className="totals-strip">
-          {Object.entries(preview?.totals ?? {}).slice(0, 8).map(([key, value]) => (
-            <Statistic key={key} title={key.replaceAll('_', ' ')} value={value} precision={2} />
-          ))}
-        </Space>
+        {Object.keys(preview?.totals ?? {}).length > 0 && (
+          <div className="reports-total-grid">
+            {Object.entries(preview?.totals ?? {}).slice(0, 8).map(([key, value]) => (
+              <div className="reports-total-tile" key={key}>
+                <Statistic title={key.replaceAll('_', ' ')} value={value} precision={2} />
+              </div>
+            ))}
+          </div>
+        )}
         {preview && preview.rows.length === 0 ? (
           <Empty description="No report rows match the selected filters" />
         ) : (

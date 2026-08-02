@@ -54,6 +54,23 @@ public class FileStorageService {
         Path path=root.resolve(a.getStoragePath()).normalize();if(!path.startsWith(root)||!Files.isRegularFile(path))throw new BusinessRuleException("FILE_NOT_FOUND","Stored file not found");
         return new Download(new FileSystemResource(path),a.getOriginalFilename(),a.getContentType());
     }
+    @Transactional
+    public FileAttachment storeGenerated(String entityType,Long entityId,String documentType,String filename,byte[] content,String description){
+        String type=entityType.toUpperCase(Locale.ROOT);String safe=Paths.get(filename).getFileName().toString();
+        String stored=UUID.randomUUID()+".pdf";Path directory=root.resolve(type.toLowerCase(Locale.ROOT)).resolve(entityId.toString()).normalize();
+        Path destination=directory.resolve(stored).normalize();
+        if(!destination.startsWith(root))throw new BusinessRuleException("INVALID_FILE_PATH","Invalid file path");
+        try{Files.createDirectories(directory);Files.write(destination,content,StandardOpenOption.CREATE_NEW);}catch(IOException e){throw new BusinessRuleException("FILE_STORAGE_FAILED","Unable to store generated PDF");}
+        FileAttachment a=new FileAttachment();a.setEntityType(type);a.setEntityId(entityId);a.setDocumentType(documentType);
+        a.setOriginalFilename(safe);a.setStoredFilename(stored);a.setContentType("application/pdf");a.setFileSize(content.length);
+        a.setStoragePath(root.relativize(destination).toString());a.setDescription(blank(description));a.setUploadedBy(auditor());
+        return files.save(a);
+    }
+    @Transactional(readOnly=true)
+    public byte[] read(Long id){
+        Download download=download(id);
+        try{return download.resource().getInputStream().readAllBytes();}catch(IOException e){throw new BusinessRuleException("FILE_READ_FAILED","Unable to read stored file");}
+    }
     private void validateEntity(String type,Long id){boolean exists=switch(type){
         case "PARTY"->parties.existsById(id);case "VENDOR"->vendors.existsById(id);case "SITE"->sites.existsById(id);case "ITEM"->items.existsById(id);
         default->throw new BusinessRuleException("INVALID_ENTITY_TYPE","Unsupported attachment entity type");};

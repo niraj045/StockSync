@@ -1,0 +1,129 @@
+name: stocksync-production
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+05:30
+      - --innodb-buffer-pool-size=512M
+      - --innodb-log-buffer-size=32M
+      - --max-connections=50
+      - --table-open-cache=1000
+      - --performance-schema=OFF
+      - --skip-name-resolve
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      TZ: ${TZ:-Asia/Kolkata}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=$${MYSQL_ROOT_PASSWORD} mysqladmin ping --host=127.0.0.1 --user=root --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    mem_limit: 1g
+    cpus: 0.75
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
+    networks:
+      - stocksync_private
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    user: "${APP_UID:-1000}:${APP_GID:-1000}"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      SERVER_PORT: ${SERVER_PORT:-8081}
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${MYSQL_DATABASE}
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-10}
+      DB_POOL_MIN_IDLE: ${DB_POOL_MIN_IDLE:-2}
+      DB_TIME_ZONE: ${TZ:-Asia/Kolkata}
+      APP_TIME_ZONE: ${TZ:-Asia/Kolkata}
+      APP_ORIGIN: ${APP_ORIGIN}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
+      SESSION_COOKIE_HTTP_ONLY: ${SESSION_COOKIE_HTTP_ONLY:-true}
+      SESSION_COOKIE_SAME_SITE: ${SESSION_COOKIE_SAME_SITE:-Lax}
+      SESSION_TIMEOUT: ${SESSION_TIMEOUT:-30m}
+      FILE_STORAGE_PATH: /data
+      UPLOAD_STORAGE_PATH: ${UPLOAD_STORAGE_PATH:-/data/uploads}
+      DOCUMENT_STORAGE_PATH: ${DOCUMENT_STORAGE_PATH:-/data/documents}
+      REPORT_STORAGE_PATH: ${REPORT_STORAGE_PATH:-/data/reports}
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--Xms256m -Xmx1024m}
+      TZ: ${TZ:-Asia/Kolkata}
+    volumes:
+      - ./storage:/data
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8081/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    stop_grace_period: 40s
+    mem_limit: 1536m
+    cpus: 1.0
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
+    networks:
+      - stocksync_private
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${APP_HTTP_PORT:-80}:80"
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+      NGINX_ENVSUBST_FILTER: ^APP_DOMAIN$
+      TZ: ${TZ:-Asia/Kolkata}
+    volumes:
+      - ./nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    mem_limit: 192m
+    cpus: 0.25
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
+    networks:
+      - stocksync_private
+
+volumes:
+  mysql_data:
+
+networks:
+  stocksync_private:
+    driver: bridge

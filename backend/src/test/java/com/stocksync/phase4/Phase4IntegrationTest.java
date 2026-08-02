@@ -55,8 +55,8 @@ class Phase4IntegrationTest extends BaseIntegrationTest {
     @Test void quotationCalculatesTotalsAndEnforcesLifecycle() throws Exception {
         long id=createQuotation();
         mvc.perform(get("/api/v1/quotations/{id}",id)).andExpect(status().isOk())
-            .andExpect(jsonPath("$.subtotal").value(2000.0)).andExpect(jsonPath("$.totalTax").value(387.0))
-            .andExpect(jsonPath("$.grandTotal").value(2537.0)).andExpect(jsonPath("$.status").value("DRAFT"));
+            .andExpect(jsonPath("$.subtotal").value(2020.0)).andExpect(jsonPath("$.totalTax").value(390.6))
+            .andExpect(jsonPath("$.grandTotal").value(2560.6)).andExpect(jsonPath("$.status").value("DRAFT"));
         mvc.perform(put("/api/v1/quotations/{id}",id).with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(quotationBody().replace("\"items\"", "\"version\":0,\"items\"")))
             .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(2));
@@ -185,6 +185,6 @@ class Phase4IntegrationTest extends BaseIntegrationTest {
         {"quotationTemplateId":%d,"partyId":%d,"siteId":%d,"quotationDate":"2030-01-01","validUntil":"2030-02-01","rentalType":"PER_PIECE_PER_DAY",
         "discountType":"NONE","discountValue":0,"transportCharge":100,"loadingCharge":25,"unloadingCharge":25,"otherCharge":0,
         "cgstRate":9,"sgstRate":9,"igstRate":0,"roundOff":0,"securityDeposit":0,"terms":"Net 30","notes":"Phase 4 test",
-        "items":[{"itemId":%d,"quantity":100,"rate":20,"rentalType":"PER_PIECE_PER_DAY"},{"itemId":%d,"quantity":20,"rate":0,"rentalType":"PER_PIECE_PER_DAY"}]}
+        "items":[{"itemId":%d,"quantity":100,"rate":20,"rentalType":"PER_PIECE_PER_DAY"},{"itemId":%d,"quantity":20,"rate":1,"rentalType":"PER_PIECE_PER_DAY"}]}
         """.formatted(quotationTemplateId,party.getId(),site.getId(),plate.getId(),prop.getId());}
 }

@@ -1,4 +1,3 @@
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -14,11 +13,8 @@ import { apiErrorMessage } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { AppButton, Field } from '../components/ui';
 import { colors, fonts, shadow } from '../theme';
-import type { RootStackParams } from '../navigation/types';
 
-type Props = NativeStackScreenProps<RootStackParams, 'Login'>;
-
-export function LoginScreen({ navigation }: Props) {
+export function LoginScreen() {
   const { login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -43,8 +39,8 @@ export function LoginScreen({ navigation }: Props) {
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.root}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.root}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'} automaticallyAdjustKeyboardInsets>
         <View style={styles.brand}>
           <View style={styles.mark}>
             <Ionicons name="layers-outline" size={30} color="#fff" />
@@ -56,9 +52,8 @@ export function LoginScreen({ navigation }: Props) {
         </View>
 
         <View style={styles.hero}>
-          <Text style={styles.kicker}>Operations workspace</Text>
-          <Text style={styles.title}>Inventory control in your pocket.</Text>
-          <Text style={styles.subtitle}>Review stock and manage site dispatches from the field.</Text>
+          <Text style={styles.kicker}>SteelFab operations</Text>
+          <Text style={styles.companyName}>SteelFab Scaffoldings &amp; Engineering Pvt. Ltd.</Text>
         </View>
 
         <View style={styles.form}>
@@ -91,10 +86,6 @@ export function LoginScreen({ navigation }: Props) {
           </View>
           {error ? <Text style={styles.error}>{error}</Text> : null}
           <AppButton title="Sign in securely" onPress={submit} loading={submitting} />
-          <Pressable style={styles.serverLink} onPress={() => navigation.navigate('Settings')}>
-            <Ionicons name="server-outline" size={18} color={colors.primary} />
-            <Text style={styles.serverLinkText}>Configure server address</Text>
-          </Pressable>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -110,12 +101,9 @@ const styles = StyleSheet.create({
   brandTag: { color: colors.primary, fontSize: 10, fontFamily: fonts.bold },
   hero: { marginTop: 44, marginBottom: 26 },
   kicker: { color: colors.primary, fontSize: 11, fontFamily: fonts.bold, textTransform: 'uppercase' },
-  title: { color: colors.ink, fontSize: 34, lineHeight: 40, fontFamily: fonts.black, marginTop: 8 },
-  subtitle: { color: colors.muted, fontSize: 15, lineHeight: 23, marginTop: 12, maxWidth: 330 },
-  form: { backgroundColor: '#FFFFFF', borderRadius: 8, borderWidth: 1, borderColor: '#E8EBEE', padding: 20, gap: 16, ...shadow },
+  companyName: { color: colors.ink, fontSize: 30, lineHeight: 37, fontFamily: fonts.black, marginTop: 8, maxWidth: 350 },
+  form: { backgroundColor: colors.surface, borderRadius: 8, borderWidth: 1, borderColor: colors.line, padding: 20, gap: 16, ...shadow },
   formTitle: { color: colors.ink, fontSize: 22, fontFamily: fonts.bold },
   eye: { position: 'absolute', right: 13, bottom: 14, padding: 3 },
   error: { color: colors.red, lineHeight: 20, fontWeight: '600' },
-  serverLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 4 },
-  serverLinkText: { color: colors.primary, fontFamily: fonts.bold },
 });

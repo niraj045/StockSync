@@ -16,7 +16,8 @@ import java.time.LocalDate;
 @RestController @RequestMapping("/api/v1/quotations")
 public class QuotationController {
     private final QuotationService service; private final QuotationPdfService pdf;
-    public QuotationController(QuotationService service,QuotationPdfService pdf){this.service=service;this.pdf=pdf;}
+    private final com.stocksync.quotation.service.SteelFabExactHireDocumentService exactDocuments;
+    public QuotationController(QuotationService service,QuotationPdfService pdf,com.stocksync.quotation.service.SteelFabExactHireDocumentService exactDocuments){this.service=service;this.pdf=pdf;this.exactDocuments=exactDocuments;}
     @GetMapping public Page<QuotationResponse> list(@RequestParam(required=false)String search,@RequestParam(required=false)QuotationStatus status,
             @RequestParam(required=false)Long partyId,@RequestParam(required=false)Long siteId,
             @RequestParam(required=false)@DateTimeFormat(iso=DateTimeFormat.ISO.DATE)LocalDate quotationDateFrom,
@@ -42,6 +43,19 @@ public class QuotationController {
     @GetMapping("/{id}/pdf") @PreAuthorize("hasAnyRole('ADMIN','OPERATIONS','ACCOUNTS','VIEWER')")
     public ResponseEntity<byte[]> pdf(@PathVariable Long id,HttpServletRequest request){
         var document=pdf.generate(id);service.pdfGenerated(id,request);
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=\""+document.filename()+"\"").body(document.content());
+    }
+    @GetMapping("/{id}/pdf/preview") @PreAuthorize("hasAnyRole('ADMIN','OPERATIONS','ACCOUNTS','VIEWER')")
+    public ResponseEntity<byte[]> exactPreview(@PathVariable Long id,@RequestParam(defaultValue="STEELFAB_EXACT_HIRE_V1")String template){
+        if(!com.stocksync.quotation.service.SteelFabExactHirePdfService.TEMPLATE_CODE.equals(template))return ResponseEntity.badRequest().build();
+        var document=exactDocuments.preview(id);
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION,"inline; filename=\""+document.filename()+"\"").body(document.content());
+    }
+    @PostMapping("/{id}/pdf/finalize") @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<byte[]> finalizeExactPdf(@PathVariable Long id,HttpServletRequest request){
+        var document=exactDocuments.finalizeDocument(id,request);
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=\""+document.filename()+"\"").body(document.content());
     }

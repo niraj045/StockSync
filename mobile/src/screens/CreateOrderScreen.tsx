@@ -14,7 +14,7 @@ import {
   View,
 } from 'react-native';
 import { apiClient, apiErrorMessage } from '../api/client';
-import { AppButton, Card, EmptyBlock, Field } from '../components/ui';
+import { AppButton, Card, DateField, EmptyBlock, Field } from '../components/ui';
 import type { RootStackParams } from '../navigation/types';
 import { colors } from '../theme';
 import type { Agreement, AgreementItem, Page, SiteOrder } from '../types/api';
@@ -131,8 +131,8 @@ export function CreateOrderScreen({ navigation, route }: Props) {
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.root}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.root}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'} automaticallyAdjustKeyboardInsets>
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <Text style={styles.label}>Active agreement</Text>
         <Pressable style={styles.selector} disabled={loading} onPress={() => setPickerOpen(true)}>
@@ -144,7 +144,7 @@ export function CreateOrderScreen({ navigation, route }: Props) {
           </View>
           <Ionicons name="chevron-down" size={20} color={colors.muted} />
         </Pressable>
-        <Field label="Order date" value={orderDate} onChangeText={setOrderDate} placeholder="YYYY-MM-DD" />
+        <DateField label="Order date" value={orderDate} onChange={setOrderDate} />
         <Field label="Dispatch instructions" value={notes} onChangeText={setNotes} multiline />
 
         <Text style={styles.heading}>Required material</Text>

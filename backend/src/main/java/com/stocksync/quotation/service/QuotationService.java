@@ -1,5 +1,7 @@
 package com.stocksync.quotation.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stocksync.audit.service.UserActivityLogService;
 import com.stocksync.auth.repository.UserRepository;
 import com.stocksync.common.exception.BusinessRuleException;
@@ -29,11 +31,12 @@ public class QuotationService implements QuotationAccess {
     private final QuotationRepository quotations; private final PartyRepository parties; private final SiteRepository sites;
     private final ItemRepository items; private final QuotationTemplateService templates; private final DocumentNumberService numbers;
     private final QuotationCalculationService calculations; private final UserRepository users; private final UserActivityLogService audit;
+    private final ObjectMapper objectMapper;
     public QuotationService(QuotationRepository quotations,PartyRepository parties,SiteRepository sites,ItemRepository items,
             QuotationTemplateService templates,DocumentNumberService numbers,QuotationCalculationService calculations,
-            UserRepository users,UserActivityLogService audit){
+            UserRepository users,UserActivityLogService audit,ObjectMapper objectMapper){
         this.quotations=quotations;this.parties=parties;this.sites=sites;this.items=items;this.templates=templates;
-        this.numbers=numbers;this.calculations=calculations;this.users=users;this.audit=audit;
+        this.numbers=numbers;this.calculations=calculations;this.users=users;this.audit=audit;this.objectMapper=objectMapper;
     }
 
     @Transactional(readOnly=true)
@@ -67,7 +70,7 @@ public class QuotationService implements QuotationAccess {
         Quotation s=detailed(id),q=new Quotation();q.setQuotationNumber(numbers.next(DocumentType.QUOTATION,LocalDate.now()));
         q.setStatus(QuotationStatus.DRAFT);q.setQuotationTemplate(s.getQuotationTemplate());q.setParty(s.getParty());q.setPartyNameSnapshot(s.getPartyNameSnapshot());q.setSite(s.getSite());q.setSiteNameSnapshot(s.getSiteNameSnapshot());
         q.setQuotationDate(LocalDate.now());q.setValidUntil(LocalDate.now().plusDays(Math.max(1,java.time.temporal.ChronoUnit.DAYS.between(s.getQuotationDate(),s.getValidUntil()))));
-        q.setRentalType(s.getRentalType());copyCommercial(s,q);q.replaceItems(s.getItems().stream().map(this::copyItem).toList());
+        q.setRentalType(s.getRentalType());copyCommercial(s,q);q.setExactHireFieldsJson(s.getExactHireFieldsJson());q.replaceItems(s.getItems().stream().map(this::copyItem).toList());
         calculations.calculate(q);q.setCreatedBy(actor());q.setUpdatedBy(actor());q=quotations.save(q);
         log("QUOTATION_CLONED",q,"Cloned from "+s.getQuotationNumber(),req);return response(q);
     }
@@ -107,7 +110,14 @@ public class QuotationService implements QuotationAccess {
         if(r.validUntil().isBefore(r.quotationDate()))throw new BusinessRuleException("INVALID_QUOTATION_DATES","Valid-until cannot precede quotation date");
         q.setQuotationTemplate(creating?templates.requireActive(r.quotationTemplateId()):templateForUpdate(q,r.quotationTemplateId()));
         q.setParty(party);q.setPartyNameSnapshot(party.getLegalName());q.setSite(site);q.setSiteNameSnapshot(site.getSiteName());q.setQuotationDate(r.quotationDate());q.setValidUntil(r.validUntil());q.setRentalType(r.rentalType());
-        q.setDiscountType(r.discountType());q.setDiscountValue(r.discountValue());q.setCgstRate(r.cgstRate());q.setSgstRate(r.sgstRate());q.setIgstRate(r.igstRate());
+        boolean exact=SteelFabExactHirePdfService.TEMPLATE_CODE.equals(q.getQuotationTemplate().getTemplateCode());
+        if(exact&&r.exactHire()==null)throw new BusinessRuleException("EXACT_HIRE_FIELDS_REQUIRED","Exact SteelFab PDF details are required");
+        q.setDiscountType(r.discountType());q.setDiscountValue(r.discountValue());
+        if(exact){
+            var gst=QuotationGstAllocation.exact(r.exactHire().gstPercentage(),q.getQuotationTemplate().getCompanyGstin(),
+                    q.getQuotationTemplate().getCompanyAddress(),party.getGstin(),party.getState());
+            q.setCgstRate(gst.cgst());q.setSgstRate(gst.sgst());q.setIgstRate(gst.igst());
+        }else{q.setCgstRate(r.cgstRate());q.setSgstRate(r.sgstRate());q.setIgstRate(r.igstRate());}
         q.setTransportCharge(r.transportCharge());q.setLoadingCharge(r.loadingCharge());q.setUnloadingCharge(r.unloadingCharge());q.setOtherCharge(r.otherCharge());
         q.setRoundOff(r.roundOff());q.setSecurityDeposit(r.securityDeposit());
         q.setTerms(creating&&isBlank(r.terms())?trim(q.getQuotationTemplate().getDefaultTerms()):trim(r.terms()));
@@ -118,16 +128,20 @@ public class QuotationService implements QuotationAccess {
             QuotationItem qi=new QuotationItem();qi.setItem(item);qi.setItemCodeSnapshot(item.getItemCode());qi.setItemNameSnapshot(item.getItemName());
             qi.setDescriptionSnapshot(trim(line.description()));qi.setSizeSnapshot(item.getSize());qi.setUnitSnapshot(item.getUnit());
             qi.setQuantity(line.quantity());qi.setUnitRate(line.rate());qi.setRentalRate(line.rate());qi.setRentalType(line.rentalType());
-            qi.setArea(line.area());qi.setWeight(line.weight());qi.setLineAmount(line.quantity().multiply(line.rate()).setScale(2,RoundingMode.HALF_UP));qi.setSequence(sequence++);lines.add(qi);}
+            qi.setRequiredQuantity(line.requiredQuantity());qi.setHireMonths(line.hireMonths()==null?BigDecimal.ONE:line.hireMonths());qi.setReplacementRate(line.replacementRate());
+            qi.setArea(line.area());qi.setWeight(line.weight());qi.setLineAmount(line.quantity().multiply(line.rate()).multiply(exact?qi.getHireMonths():BigDecimal.ONE).setScale(2,RoundingMode.HALF_UP));qi.setSequence(sequence++);lines.add(qi);}
+        q.setExactHireFieldsJson(exact?json(r.exactHire()):null);
         q.replaceItems(lines);calculations.calculate(q);
     }
     private QuotationTemplate templateForUpdate(Quotation q,Long id){if(q.getQuotationTemplate()!=null&&q.getQuotationTemplate().getId().equals(id))return q.getQuotationTemplate();return templates.requireActive(id);}
     private void copyCommercial(Quotation s,Quotation q){q.setDiscountType(s.getDiscountType());q.setDiscountValue(s.getDiscountValue());q.setCgstRate(s.getCgstRate());q.setSgstRate(s.getSgstRate());q.setIgstRate(s.getIgstRate());q.setTransportCharge(s.getTransportCharge());q.setLoadingCharge(s.getLoadingCharge());q.setUnloadingCharge(s.getUnloadingCharge());q.setOtherCharge(s.getOtherCharge());q.setRoundOff(s.getRoundOff());q.setSecurityDeposit(s.getSecurityDeposit());q.setTerms(s.getTerms());q.setNotes(s.getNotes());}
-    private QuotationItem copyItem(QuotationItem s){QuotationItem i=new QuotationItem();i.setItem(s.getItem());i.setItemCodeSnapshot(s.getItemCodeSnapshot());i.setItemNameSnapshot(s.getItemNameSnapshot());i.setDescriptionSnapshot(s.getDescriptionSnapshot());i.setSizeSnapshot(s.getSizeSnapshot());i.setUnitSnapshot(s.getUnitSnapshot());i.setQuantity(s.getQuantity());i.setUnitRate(s.getUnitRate());i.setRentalRate(s.getRentalRate());i.setRentalType(s.getRentalType());i.setArea(s.getArea());i.setWeight(s.getWeight());i.setLineAmount(s.getLineAmount());i.setSequence(s.getSequence());return i;}
+    private QuotationItem copyItem(QuotationItem s){QuotationItem i=new QuotationItem();i.setItem(s.getItem());i.setItemCodeSnapshot(s.getItemCodeSnapshot());i.setItemNameSnapshot(s.getItemNameSnapshot());i.setDescriptionSnapshot(s.getDescriptionSnapshot());i.setSizeSnapshot(s.getSizeSnapshot());i.setUnitSnapshot(s.getUnitSnapshot());i.setQuantity(s.getQuantity());i.setRequiredQuantity(s.getRequiredQuantity());i.setUnitRate(s.getUnitRate());i.setRentalRate(s.getRentalRate());i.setHireMonths(s.getHireMonths());i.setReplacementRate(s.getReplacementRate());i.setRentalType(s.getRentalType());i.setArea(s.getArea());i.setWeight(s.getWeight());i.setLineAmount(s.getLineAmount());i.setSequence(s.getSequence());return i;}
     private void requireDraft(Quotation q){if(q.getStatus()!=QuotationStatus.DRAFT)throw new BusinessRuleException("QUOTATION_IMMUTABLE","Only draft quotations can be edited");}
     private void checkVersion(Quotation q,Long version){if(version==null||q.getVersion()!=version)throw new ObjectOptimisticLockingFailureException(Quotation.class,q.getId());}
     private Quotation detailed(Long id){return quotations.findDetailedById(id).orElseThrow(()->new BusinessRuleException("QUOTATION_NOT_FOUND","Quotation not found"));}
-    private QuotationResponse response(Quotation q){QuotationTemplate t=q.getQuotationTemplate();return new QuotationResponse(q.getId(),q.getQuotationNumber(),t==null?null:t.getId(),t==null?null:t.getName(),t==null?null:t.getCompanyName(),t==null?null:t.getCompanyAddress(),t==null?null:t.getCompanyGstin(),t==null?null:t.getHeaderText(),t==null?null:t.getFooterText(),q.getParty().getId(),q.getPartyNameSnapshot(),q.getSite().getId(),q.getSiteNameSnapshot(),q.getQuotationDate(),q.getValidUntil(),q.getRentalType(),q.getStatus(),q.getSubtotal(),q.getDiscountType(),q.getDiscountValue(),q.getDiscountAmount(),q.getTaxableAmount(),q.getCgstRate(),q.getCgstAmount(),q.getSgstRate(),q.getSgstAmount(),q.getIgstRate(),q.getIgstAmount(),q.getTotalTax(),q.getTransportCharge(),q.getLoadingCharge(),q.getUnloadingCharge(),q.getOtherCharge(),q.getRoundOff(),q.getGrandTotal(),q.getSecurityDeposit(),q.getTerms(),q.getNotes(),q.getRejectionReason(),q.getSentAt(),q.getSentBy(),q.getApprovedAt(),q.getApprovedBy(),q.getRejectedAt(),q.getRejectedBy(),q.getCancelledAt(),q.getCancelledBy(),q.getCancellationReason(),q.getItems().stream().map(i->new QuotationItemResponse(i.getId(),i.getItem().getId(),i.getItemCodeSnapshot(),i.getItemNameSnapshot(),i.getDescriptionSnapshot(),i.getSizeSnapshot(),i.getUnitSnapshot(),i.getQuantity(),i.getRentalRate(),i.getRentalType(),i.getArea(),i.getWeight(),i.getLineAmount(),i.getSequence(),i.getVersion())).toList(),q.getVersion(),q.getCreatedAt(),q.getCreatedBy(),q.getUpdatedAt(),q.getUpdatedBy());}
+    private QuotationResponse response(Quotation q){QuotationTemplate t=q.getQuotationTemplate();return new QuotationResponse(q.getId(),q.getQuotationNumber(),t==null?null:t.getId(),t==null?null:t.getTemplateCode(),t==null?null:t.getName(),t==null?null:t.getCompanyName(),t==null?null:t.getCompanyAddress(),t==null?null:t.getCompanyGstin(),t==null?null:t.getHeaderText(),t==null?null:t.getFooterText(),q.getParty().getId(),q.getPartyNameSnapshot(),q.getSite().getId(),q.getSiteNameSnapshot(),q.getQuotationDate(),q.getValidUntil(),q.getRentalType(),q.getStatus(),q.getSubtotal(),q.getDiscountType(),q.getDiscountValue(),q.getDiscountAmount(),q.getTaxableAmount(),q.getCgstRate(),q.getCgstAmount(),q.getSgstRate(),q.getSgstAmount(),q.getIgstRate(),q.getIgstAmount(),q.getTotalTax(),q.getTransportCharge(),q.getLoadingCharge(),q.getUnloadingCharge(),q.getOtherCharge(),q.getRoundOff(),q.getGrandTotal(),q.getSecurityDeposit(),q.getTerms(),q.getNotes(),exact(q),q.getExactPdfAttachment()==null?null:q.getExactPdfAttachment().getId(),q.getExactPdfTemplateCode(),q.getExactPdfTemplateVersion(),q.getExactPdfCoordinatesVersion(),q.getExactPdfChecksumSha256(),q.getExactPdfFinalizedAt(),q.getExactPdfFinalizedBy(),q.getRejectionReason(),q.getSentAt(),q.getSentBy(),q.getApprovedAt(),q.getApprovedBy(),q.getRejectedAt(),q.getRejectedBy(),q.getCancelledAt(),q.getCancelledBy(),q.getCancellationReason(),q.getItems().stream().map(i->new QuotationItemResponse(i.getId(),i.getItem().getId(),i.getItemCodeSnapshot(),i.getItemNameSnapshot(),i.getDescriptionSnapshot(),i.getSizeSnapshot(),i.getUnitSnapshot(),i.getQuantity(),i.getRentalRate(),i.getRequiredQuantity(),i.getHireMonths(),i.getReplacementRate(),i.getRentalType(),i.getArea(),i.getWeight(),i.getLineAmount(),i.getSequence(),i.getVersion())).toList(),q.getVersion(),q.getCreatedAt(),q.getCreatedBy(),q.getUpdatedAt(),q.getUpdatedBy());}
+    private String json(SteelFabExactHireRequest value){try{return objectMapper.writeValueAsString(value);}catch(JsonProcessingException e){throw new IllegalStateException("Unable to store exact PDF fields",e);}}
+    private SteelFabExactHireRequest exact(Quotation q){if(q.getExactHireFieldsJson()==null)return null;try{return objectMapper.readValue(q.getExactHireFieldsJson(),SteelFabExactHireRequest.class);}catch(JsonProcessingException e){throw new IllegalStateException("Unable to read exact PDF fields",e);}}
     private String actor(){var a=SecurityContextHolder.getContext().getAuthentication();return a==null?"system":a.getName();}
     private String trim(String v){return v==null||v.isBlank()?null:v.trim();}
     private boolean isBlank(String v){return v==null||v.isBlank();}

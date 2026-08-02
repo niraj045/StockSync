@@ -50,6 +50,7 @@ class Phase6BIntegrationTest extends BaseIntegrationTest {
         jdbc.update("DELETE FROM site_transfers");
         jdbc.update("DELETE FROM receiving_challan_items");
         jdbc.update("DELETE FROM receiving_challans");
+        jdbc.update("DELETE FROM document_number_sequences WHERE document_type='RECEIVING_CHALLAN'");
         jdbc.update("DELETE FROM issued_challan_items");
         jdbc.update("DELETE FROM issued_challans");
         jdbc.update("DELETE FROM site_order_items");

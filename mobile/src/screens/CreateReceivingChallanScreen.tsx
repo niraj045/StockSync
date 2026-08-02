@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { apiClient, apiErrorMessage } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
-import { AppButton, Card, EmptyBlock, Field } from '../components/ui';
+import { AppButton, Card, DateField, EmptyBlock, Field } from '../components/ui';
 import type { RootStackParams } from '../navigation/types';
 import { colors, fonts } from '../theme';
 import type { Page, Party, ReceivingChallan, Site, SiteOrder, SitePendingBalance } from '../types/api';
@@ -197,8 +197,8 @@ export function CreateReceivingChallanScreen({ navigation, route }: Props) {
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.root}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.root}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'} automaticallyAdjustKeyboardInsets>
         {issued ? (
           <Card style={styles.sourceCard}>
             <Text style={styles.sourceLabel}>RETURN AGAINST ISSUED CHALLAN</Text>
@@ -211,7 +211,7 @@ export function CreateReceivingChallanScreen({ navigation, route }: Props) {
         <Selector label="Customer *" value={selectedParty?.legalName ?? ''} disabled={!!issued || loading} onPress={() => setPicker('party')} />
         <Selector label="Site *" value={selectedSite ? `${selectedSite.siteCode} | ${selectedSite.siteName}` : ''} disabled={!!issued || !partyId || loading} onPress={() => setPicker('site')} />
         <View style={styles.twoColumns}>
-          <View style={styles.column}><Field label="Receive date *" value={receiveDate} onChangeText={setReceiveDate} /></View>
+          <View style={styles.column}><DateField label="Receive date *" value={receiveDate} onChange={setReceiveDate} /></View>
           <View style={styles.column}><Field label="Vehicle number" value={vehicleNumber} onChangeText={setVehicleNumber} autoCapitalize="characters" /></View>
         </View>
         <View style={styles.twoColumns}>
@@ -323,7 +323,7 @@ function SummaryValue({ label, value }: { label: string; value: number }) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.canvas },
   content: { padding: 18, paddingBottom: 36, gap: 14 },
-  sourceCard: { backgroundColor: colors.primarySoft, borderColor: '#FFD7CC' },
+  sourceCard: { backgroundColor: colors.primarySoft, borderColor: '#CBD5E1' },
   sourceLabel: { color: colors.primaryDark, fontSize: 10, fontFamily: fonts.bold },
   sourceNumber: { color: colors.ink, fontSize: 19, fontFamily: fonts.extraBold, marginTop: 5 },
   sourceMeta: { color: colors.muted, fontSize: 12, marginTop: 4 },

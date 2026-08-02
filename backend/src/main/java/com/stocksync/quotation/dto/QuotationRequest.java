@@ -28,4 +28,5 @@ public record QuotationRequest(
         @Size(max=4000) String terms,
         @Size(max=2000) String notes,
         @NotNull List<@Valid QuotationItemRequest> items,
+        @Valid SteelFabExactHireRequest exactHire,
         Long version) {}

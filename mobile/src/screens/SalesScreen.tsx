@@ -12,6 +12,7 @@ import type { MainTabParams, RootStackParams } from '../navigation/types';
 import { colors, fonts } from '../theme';
 import type { Agreement, Page, Party, Quotation, Site } from '../types/api';
 import { dateLabel, quantity } from '../utils/format';
+import { shareServerPdf } from '../utils/sharePdf';
 
 type Props = CompositeScreenProps<BottomTabScreenProps<MainTabParams, 'Sales'>, NativeStackScreenProps<RootStackParams>>;
 type Mode = 'customers' | 'quotations' | 'agreements';
@@ -77,6 +78,21 @@ export function SalesScreen({ navigation }: Props) {
         },
       ],
     );
+  };
+
+  const shareQuotation = async (quotation: Quotation) => {
+    setWorkingId(quotation.id);
+    try {
+      await shareServerPdf(
+        `/quotations/${quotation.id}/pdf`,
+        `quotation-${quotation.quotationNumber.replaceAll('/', '-')}.pdf`,
+        quotation.quotationTemplateCode === 'STEELFAB_EXACT_HIRE_V1' ? 'Share SteelFab exact PDF' : 'Share quotation PDF',
+      );
+    } catch (cause) {
+      Alert.alert('PDF unavailable', apiErrorMessage(cause, 'Unable to generate and share this quotation.'));
+    } finally {
+      setWorkingId(null);
+    }
   };
 
   return (
@@ -148,6 +164,12 @@ export function SalesScreen({ navigation }: Props) {
               <Text style={styles.meta}>{quotation.items.length} material line{quotation.items.length === 1 ? '' : 's'}</Text>
               <Text style={styles.amount}>INR {quantity(quotation.grandTotal)}</Text>
             </View>
+            <AppButton
+              title={quotation.quotationTemplateCode === 'STEELFAB_EXACT_HIRE_V1' ? 'Generate SteelFab PDF' : 'Share quotation PDF'}
+              variant="secondary"
+              loading={workingId === quotation.id}
+              onPress={() => void shareQuotation(quotation)}
+            />
             {canWrite && quotation.status === 'DRAFT' ? <AppButton title="Send for approval" loading={workingId === quotation.id} onPress={() => transitionQuotation(quotation, 'send')} /> : null}
             {isAdmin && quotation.status === 'SENT' ? <AppButton title="Approve quotation" loading={workingId === quotation.id} onPress={() => transitionQuotation(quotation, 'approve')} /> : null}
             {canWrite && quotation.status === 'APPROVED' ? <AppButton title="Create agreement" onPress={() => navigation.navigate('AgreementFlow', { quotationId: quotation.id })} /> : null}

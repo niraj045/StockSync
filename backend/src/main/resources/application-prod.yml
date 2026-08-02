@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:mysql://${DB_HOST}:${DB_PORT:3306}/${DB_NAME}?serverTimezone=UTC
+    url: jdbc:mysql://${DB_HOST:mysql}:${DB_PORT:3306}/${DB_NAME:shuttering_inventory}?serverTimezone=${DB_TIME_ZONE:Asia/Kolkata}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
     hikari:
@@ -16,7 +16,7 @@ spring:
     properties:
       hibernate:
         jdbc:
-          time_zone: UTC
+          time_zone: ${APP_TIME_ZONE:Asia/Kolkata}
           batch_size: 25
         order_inserts: true
         order_updates: true
@@ -24,15 +24,21 @@ spring:
     timeout-per-shutdown-phase: 30s
 
 server:
+  port: ${SERVER_PORT:8081}
   forward-headers-strategy: framework
   shutdown: graceful
+  error:
+    include-message: never
+    include-binding-errors: never
+    include-stacktrace: never
+    include-exception: false
   servlet:
     session:
       timeout: ${SESSION_TIMEOUT:30m}
       cookie:
         secure: ${SESSION_COOKIE_SECURE:true}
-        http-only: true
-        same-site: lax
+        http-only: ${SESSION_COOKIE_HTTP_ONLY:true}
+        same-site: ${SESSION_COOKIE_SAME_SITE:lax}
 
 management:
   endpoints:

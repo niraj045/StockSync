@@ -12,6 +12,7 @@
     "android": {
       "package": "com.steelfab.stocksync",
       "versionCode": 1,
+      "softwareKeyboardLayoutMode": "resize",
       "permissions": [
         "INTERNET"
       ],
@@ -41,7 +42,8 @@
             "usesCleartextTraffic": true
           }
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ]
   }
 }

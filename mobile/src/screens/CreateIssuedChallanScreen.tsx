@@ -14,7 +14,7 @@ import {
   View,
 } from 'react-native';
 import { apiClient, apiErrorMessage } from '../api/client';
-import { AppButton, Card, EmptyBlock, Field } from '../components/ui';
+import { AppButton, Card, DateField, EmptyBlock, Field } from '../components/ui';
 import type { RootStackParams } from '../navigation/types';
 import { colors } from '../theme';
 import type { IssuedChallan, Page, SiteOrder, StockBalance } from '../types/api';
@@ -125,8 +125,8 @@ export function CreateIssuedChallanScreen({ navigation, route }: Props) {
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.root}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.root}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'} automaticallyAdjustKeyboardInsets>
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <Text style={styles.label}>Confirmed site order</Text>
         <Pressable style={styles.selector} onPress={() => setPickerOpen(true)} disabled={loading}>
@@ -140,7 +140,7 @@ export function CreateIssuedChallanScreen({ navigation, route }: Props) {
         </Pressable>
 
         <View style={styles.twoFields}>
-          <View style={styles.half}><Field label="Dispatch date" value={dispatchDate} onChangeText={setDispatchDate} placeholder="YYYY-MM-DD" /></View>
+          <View style={styles.half}><DateField label="Dispatch date" value={dispatchDate} onChange={setDispatchDate} /></View>
           <View style={styles.half}><Field label="Vehicle number" value={vehicleNumber} onChangeText={setVehicleNumber} autoCapitalize="characters" /></View>
         </View>
         <Field label="Driver name" value={driverName} onChangeText={setDriverName} />

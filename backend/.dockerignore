@@ -1,2 +1,8 @@
-target
+target/
+.git/
+.idea/
+.vscode/
 *.log
+*.pid
+src/test/
+src/test/resources/

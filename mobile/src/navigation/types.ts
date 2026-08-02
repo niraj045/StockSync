@@ -5,6 +5,7 @@ export type RootStackParams = {
   Login: undefined;
   Settings: undefined;
   Stock: undefined;
+  GstExport: undefined;
   CreateParty: undefined;
   CreateSite: { partyId?: number } | undefined;
   CreateQuotation: { partyId?: number; siteId?: number } | undefined;

@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.vite/
+coverage/
+test-results/
+.git/
+.idea/
+.vscode/
+*.log
+*.tsbuildinfo
+src/**/*.test.ts
+src/**/*.test.tsx
+src/test/

@@ -15,8 +15,11 @@ public class QuotationItem {
     @Column(name="size_snapshot",length=100) private String sizeSnapshot;
     @Column(name="unit_snapshot",nullable=false,length=30) private String unitSnapshot;
     @Column(nullable = false, precision = 19, scale = 4) private BigDecimal quantity;
+    @Column(name = "required_quantity", precision = 19, scale = 4) private BigDecimal requiredQuantity;
     @Column(name = "unit_rate", nullable = false, precision = 19, scale = 2) private BigDecimal unitRate;
     @Column(name = "rental_rate", nullable = false, precision = 19, scale = 4) private BigDecimal rentalRate;
+    @Column(name = "hire_months", nullable = false, precision = 9, scale = 2) private BigDecimal hireMonths = BigDecimal.ONE;
+    @Column(name = "replacement_rate", precision = 19, scale = 2) private BigDecimal replacementRate;
     @Enumerated(EnumType.STRING) @Column(name="rental_type",nullable=false,length=40) private RentalType rentalType;
     @Column(precision=19,scale=4) private BigDecimal area;
     @Column(precision=19,scale=4) private BigDecimal weight;
@@ -32,8 +35,11 @@ public class QuotationItem {
     public String getSizeSnapshot(){return sizeSnapshot;} public void setSizeSnapshot(String v){sizeSnapshot=v;}
     public String getUnitSnapshot(){return unitSnapshot;} public void setUnitSnapshot(String v){unitSnapshot=v;}
     public BigDecimal getQuantity(){return quantity;} public void setQuantity(BigDecimal v){quantity=v;}
+    public BigDecimal getRequiredQuantity(){return requiredQuantity;} public void setRequiredQuantity(BigDecimal v){requiredQuantity=v;}
     public BigDecimal getUnitRate(){return unitRate;} public void setUnitRate(BigDecimal v){unitRate=v;}
     public BigDecimal getRentalRate(){return rentalRate;} public void setRentalRate(BigDecimal v){rentalRate=v;}
+    public BigDecimal getHireMonths(){return hireMonths;} public void setHireMonths(BigDecimal v){hireMonths=v;}
+    public BigDecimal getReplacementRate(){return replacementRate;} public void setReplacementRate(BigDecimal v){replacementRate=v;}
     public RentalType getRentalType(){return rentalType;} public void setRentalType(RentalType v){rentalType=v;}
     public BigDecimal getArea(){return area;} public void setArea(BigDecimal v){area=v;}
     public BigDecimal getWeight(){return weight;} public void setWeight(BigDecimal v){weight=v;}

@@ -17,6 +17,7 @@ type Props = CompositeScreenProps<
 export function MoreScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
+  const canExportGst = user?.roles.some((role) => role === 'ROLE_ADMIN' || role === 'ROLE_ACCOUNTS') ?? false;
   return (
     <View style={[styles.content, { paddingTop: insets.top + 18 }]}>
       <PageHeader eyebrow="StockSync mobile" title="Account" />
@@ -52,6 +53,15 @@ export function MoreScreen({ navigation }: Props) {
         </View>
         <Ionicons name="chevron-forward" size={20} color={colors.muted} />
       </Pressable>
+
+      {canExportGst ? <Pressable style={styles.menuRow} onPress={() => navigation.navigate('GstExport')}>
+        <View style={styles.menuIcon}><Ionicons name="calendar-outline" size={21} color={colors.primary} /></View>
+        <View style={styles.menuCopy}>
+          <Text style={styles.menuTitle}>Monthly GST export</Text>
+          <Text style={styles.menuText}>Export one consolidated GSTR-1 preparation file</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+      </Pressable> : null}
 
       <View style={styles.logout}>
         <AppButton title="Sign out" variant="danger" onPress={() => void logout()} />

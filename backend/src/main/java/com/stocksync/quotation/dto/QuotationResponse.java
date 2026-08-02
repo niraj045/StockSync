@@ -6,7 +6,7 @@ import java.time.*;
 import java.util.List;
 
 public record QuotationResponse(
-        Long id,String quotationNumber,Long quotationTemplateId,String quotationTemplateName,
+        Long id,String quotationNumber,Long quotationTemplateId,String quotationTemplateCode,String quotationTemplateName,
         String templateCompanyName,String templateCompanyAddress,String templateCompanyGstin,
         String templateHeaderText,String templateFooterText,
         Long partyId,String partyName,Long siteId,String siteName,LocalDate quotationDate,LocalDate validUntil,
@@ -16,6 +16,9 @@ public record QuotationResponse(
         BigDecimal igstRate,BigDecimal igstAmount,BigDecimal totalTax,
         BigDecimal transportCharge,BigDecimal loadingCharge,BigDecimal unloadingCharge,BigDecimal otherCharge,
         BigDecimal roundOff,BigDecimal grandTotal,BigDecimal securityDeposit,String terms,String notes,
+        SteelFabExactHireRequest exactHire,Long exactPdfAttachmentId,String exactPdfTemplateCode,
+        Integer exactPdfTemplateVersion,Integer exactPdfCoordinatesVersion,String exactPdfChecksumSha256,
+        Instant exactPdfFinalizedAt,String exactPdfFinalizedBy,
         String rejectionReason,Instant sentAt,String sentBy,Instant approvedAt,String approvedBy,
         Instant rejectedAt,String rejectedBy,Instant cancelledAt,String cancelledBy,String cancellationReason,
         List<QuotationItemResponse> items,long version,Instant createdAt,String createdBy,Instant updatedAt,String updatedBy) {}

@@ -14,6 +14,9 @@ import com.stocksync.file.repository.FileAttachmentRepository;
 import com.stocksync.inventory.repository.ItemRepository;
 import com.stocksync.quotation.entity.*;
 import com.stocksync.quotation.repository.QuotationRepository;
+import com.stocksync.quotation.service.QuotationService;
+import com.stocksync.quotation.service.SteelFabExactHirePdfService;
+import com.stocksync.file.service.FileStorageService;
 import com.stocksync.site.entity.SiteStatus;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,11 +38,14 @@ public class AgreementService implements AgreementAccess {
  private final AgreementTemplateRepository templates;
  private final FileAttachmentRepository attachments; private final DocumentNumberService numbers; private final AgreementPdfService pdf;
  private final UserRepository users; private final UserActivityLogService audit; private final Path storageRoot;
+ private final SteelFabExactHirePdfService exactPdf; private final QuotationService quotationService; private final FileStorageService fileStorage;
  public AgreementService(AgreementRepository agreements,QuotationRepository quotations,ItemRepository items,AgreementTemplateRepository templates,
    FileAttachmentRepository attachments,DocumentNumberService numbers,AgreementPdfService pdf,UserRepository users,
-   UserActivityLogService audit,@Value("${stocksync.file-storage-path}")String root){
+   UserActivityLogService audit,@Value("${stocksync.file-storage-path}")String root,SteelFabExactHirePdfService exactPdf,
+   QuotationService quotationService,FileStorageService fileStorage){
   this.agreements=agreements;this.quotations=quotations;this.items=items;this.templates=templates;this.attachments=attachments;this.numbers=numbers;
   this.pdf=pdf;this.users=users;this.audit=audit;this.storageRoot=Paths.get(root).toAbsolutePath().normalize();
+  this.exactPdf=exactPdf;this.quotationService=quotationService;this.fileStorage=fileStorage;
  }
 
  @Transactional(readOnly=true)
@@ -123,7 +129,9 @@ public class AgreementService implements AgreementAccess {
  @Transactional public AgreementResponse ready(Long id,HttpServletRequest h){Agreement a=require(id);expect(a,AgreementStatus.DRAFT);validateReady(a);a.setStatus(AgreementStatus.READY_FOR_REVIEW);a.setReadyForReviewAt(Instant.now());a.setReadyForReviewBy(actor());return saveLog(a,"AGREEMENT_READY_FOR_REVIEW","Ready for review",h);}
  @Transactional public AgreementResponse returnToDraft(Long id,AgreementReasonRequest r,HttpServletRequest h){Agreement a=require(id);expect(a,AgreementStatus.READY_FOR_REVIEW);a.setStatus(AgreementStatus.DRAFT);a.setNotes(join(a.getNotes(),"Returned: "+r.reason().trim()));return saveLog(a,"AGREEMENT_RETURNED_TO_DRAFT",r.reason(),h);}
  @Transactional public AgreementResponse generate(Long id,HttpServletRequest h){Agreement a=require(id);if(a.getStatus()!=AgreementStatus.DRAFT&&a.getStatus()!=AgreementStatus.READY_FOR_REVIEW)throw transition(a);
-  byte[] bytes=pdf.generate(response(a));String safe="agreement-"+a.getAgreementNumber().replaceAll("[^A-Za-z0-9.-]","-")+".pdf";
+  boolean exact=a.getQuotation()!=null&&a.getQuotation().getQuotationTemplate()!=null&&SteelFabExactHirePdfService.TEMPLATE_CODE.equals(a.getQuotation().getQuotationTemplate().getTemplateCode());
+  byte[] bytes=exact?(a.getQuotation().getExactPdfAttachment()!=null?fileStorage.read(a.getQuotation().getExactPdfAttachment().getId()):exactPdf.generate(quotationService.get(a.getQuotation().getId())).content()):pdf.generate(response(a));
+  String safe=(exact?"steelfab-hire-agreement-":"agreement-")+a.getAgreementNumber().replaceAll("[^A-Za-z0-9.-]","-")+".pdf";
   Path dir=storageRoot.resolve("agreements").resolve(String.valueOf(a.getId())).normalize();Path target=dir.resolve(UUID.randomUUID()+".pdf").normalize();
   if(!target.startsWith(storageRoot))throw error("INVALID_FILE_PATH","Invalid agreement document path");
   try{Files.createDirectories(dir);Files.write(target,bytes);}catch(Exception e){try{Files.deleteIfExists(target);}catch(Exception ignored){}throw error("AGREEMENT_GENERATION_FAILED","Unable to generate agreement document");}

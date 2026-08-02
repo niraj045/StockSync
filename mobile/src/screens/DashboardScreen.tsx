@@ -75,10 +75,10 @@ export function DashboardScreen() {
 
           <Text style={styles.sectionLabel}>Inventory position</Text>
           <View style={styles.metricGrid}>
-            <Metric icon="business-outline" label="Godown available" tone="orange" value={quantity(data.stockSummary.godownAvailable)} />
+            <Metric icon="business-outline" label="Godown available" tone="green" value={quantity(data.stockSummary.godownAvailable)} />
             <Metric icon="location-outline" label="At sites" tone="blue" value={quantity(data.stockSummary.materialAtSites)} />
-            <Metric icon="document-text-outline" label="Open orders" tone="orange" value={quantity(data.orderSummary.openSiteOrders)} />
-            <Metric icon="briefcase-outline" label="Active agreements" tone="green" value={quantity(data.agreementSummary.activeAgreements)} />
+            <Metric icon="document-text-outline" label="Open orders" tone="purple" value={quantity(data.orderSummary.openSiteOrders)} />
+            <Metric icon="briefcase-outline" label="Active agreements" tone="saffron" value={quantity(data.agreementSummary.activeAgreements)} />
           </View>
 
           <Card style={styles.controlCard}>
@@ -115,11 +115,13 @@ export function DashboardScreen() {
   );
 }
 
-function Metric({ icon, label, value, tone }: { icon: keyof typeof Ionicons.glyphMap; label: string; value: string; tone: 'orange' | 'blue' | 'green' }) {
+function Metric({ icon, label, value, tone }: { icon: keyof typeof Ionicons.glyphMap; label: string; value: string; tone: 'blue' | 'green' | 'purple' | 'saffron' }) {
   return (
     <Card style={styles.metric}>
-      <View style={[styles.metricIcon, tone === 'blue' && styles.metricBlue, tone === 'green' && styles.metricGreen]}>
-        <Ionicons name={icon} size={21} color={tone === 'green' ? colors.green : tone === 'blue' ? colors.blue : colors.primary} />
+      <View style={[styles.metricIcon, tone === 'blue' && styles.metricBlue, tone === 'green' && styles.metricGreen,
+        tone === 'purple' && styles.metricPurple, tone === 'saffron' && styles.metricSaffron]}>
+        <Ionicons name={icon} size={21} color={tone === 'green' ? colors.green : tone === 'blue' ? colors.blue
+          : tone === 'purple' ? colors.purple : colors.saffron} />
       </View>
       <Text style={styles.metricLabel}>{label}</Text>
       <Text numberOfLines={1} adjustsFontSizeToFit style={styles.metricValue}>{value}</Text>
@@ -136,7 +138,7 @@ const styles = StyleSheet.create({
   welcome: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 },
   hello: { color: colors.muted, fontSize: 14 },
   userName: { color: colors.ink, fontSize: 23, fontFamily: fonts.extraBold, marginTop: 2 },
-  avatar: { width: 46, height: 46, borderRadius: 23, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
+  avatar: { width: 46, height: 46, borderRadius: 23, backgroundColor: colors.primaryDark, alignItems: 'center', justifyContent: 'center' },
   avatarText: { color: '#fff', fontSize: 18, fontFamily: fonts.bold },
   overviewHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   overviewTitle: { color: colors.ink, fontSize: 18, fontFamily: fonts.bold },
@@ -145,19 +147,21 @@ const styles = StyleSheet.create({
   error: { color: colors.red, backgroundColor: colors.redSoft, borderRadius: 8, padding: 12, marginBottom: 14 },
   pulseCard: { backgroundColor: colors.primary, borderRadius: 8, padding: 18, marginBottom: 20 },
   pulseTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
-  pulseEyebrow: { color: '#FFE1D8', fontSize: 10, fontFamily: fonts.bold },
+  pulseEyebrow: { color: '#D8E2EE', fontSize: 10, fontFamily: fonts.bold },
   pulseValue: { color: '#fff', fontSize: 34, fontFamily: fonts.black, marginTop: 6 },
   pulseIcon: { width: 44, height: 44, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
   pulseFooter: { flexDirection: 'row', alignItems: 'center', marginTop: 18 },
   pulseMeta: { color: '#fff', fontSize: 11, fontFamily: fonts.semiBold },
-  pulseDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: '#FFD4C8', marginHorizontal: 8 },
-  pulsePeriod: { marginLeft: 'auto', color: '#FFE1D8', fontSize: 11, fontFamily: fonts.semiBold },
+  pulseDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: colors.saffron, marginHorizontal: 8 },
+  pulsePeriod: { marginLeft: 'auto', color: '#D8E2EE', fontSize: 11, fontFamily: fonts.semiBold },
   sectionLabel: { color: colors.ink, fontSize: 16, fontFamily: fonts.bold, marginBottom: 10 },
   metricGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   metric: { width: '48.5%', minHeight: 142, justifyContent: 'space-between' },
   metricIcon: { width: 42, height: 42, borderRadius: 8, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
   metricBlue: { backgroundColor: colors.blueSoft },
   metricGreen: { backgroundColor: colors.greenSoft },
+  metricPurple: { backgroundColor: colors.purpleSoft },
+  metricSaffron: { backgroundColor: colors.saffronSoft },
   metricLabel: { color: colors.muted, marginTop: 13 },
   metricValue: { color: colors.ink, fontSize: 27, fontFamily: fonts.black, marginTop: 4 },
   controlCard: { marginTop: 14 },

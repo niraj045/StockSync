@@ -272,6 +272,8 @@ class StockImportIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void autoMapCreatesLegacyItemsAndLocationsThenValidatesForPosting() throws Exception {
+        int partiesBefore = jdbc.queryForObject("SELECT COUNT(*) FROM parties", Integer.class);
+        int sitesBefore = jdbc.queryForObject("SELECT COUNT(*) FROM sites", Integer.class);
         JsonNode uploaded = uploadWorkbook();
         long id = uploaded.get("id").asLong();
 
@@ -286,8 +288,8 @@ class StockImportIntegrationTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.mappedGodownTotal").value(25382.0));
 
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM items", Integer.class)).isEqualTo(42);
-        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM parties", Integer.class)).isEqualTo(16);
-        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM sites", Integer.class)).isEqualTo(16);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM parties", Integer.class)).isEqualTo(partiesBefore + 16);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM sites", Integer.class)).isEqualTo(sitesBefore + 16);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM stock_import_location_mappings", Integer.class)).isEqualTo(16);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM stock_import_rows WHERE mapped_item_id IS NULL", Integer.class)).isZero();
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM stock_import_rows WHERE location_type='PARTY_OR_SITE' AND mapped_site_id IS NULL", Integer.class)).isZero();

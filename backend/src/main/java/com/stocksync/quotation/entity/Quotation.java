@@ -3,6 +3,7 @@ package com.stocksync.quotation.entity;
 import com.stocksync.common.persistence.AuditedEntity;
 import com.stocksync.party.entity.Party;
 import com.stocksync.site.entity.Site;
+import com.stocksync.file.entity.FileAttachment;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -60,6 +61,14 @@ public class Quotation extends AuditedEntity {
     @Column(name="security_deposit",nullable=false,precision=19,scale=2) private BigDecimal securityDeposit=BigDecimal.ZERO;
     @Column(length = 4000) private String terms;
     @Column(length = 1000) private String notes;
+    @Lob @Column(name="exact_hire_fields_json",columnDefinition="LONGTEXT") private String exactHireFieldsJson;
+    @ManyToOne(fetch=FetchType.LAZY) @JoinColumn(name="exact_pdf_attachment_id") private FileAttachment exactPdfAttachment;
+    @Column(name="exact_pdf_template_code",length=80) private String exactPdfTemplateCode;
+    @Column(name="exact_pdf_template_version") private Integer exactPdfTemplateVersion;
+    @Column(name="exact_pdf_coordinates_version") private Integer exactPdfCoordinatesVersion;
+    @Column(name="exact_pdf_checksum_sha256",length=64) private String exactPdfChecksumSha256;
+    @Column(name="exact_pdf_finalized_at") private java.time.Instant exactPdfFinalizedAt;
+    @Column(name="exact_pdf_finalized_by",length=50) private String exactPdfFinalizedBy;
     @Column(name="rejection_reason",length=1000) private String rejectionReason;
     @Column(name="sent_at") private java.time.Instant sentAt; @Column(name="sent_by",length=50) private String sentBy;
     @Column(name="approved_at") private java.time.Instant approvedAt; @Column(name="approved_by",length=50) private String approvedBy;
@@ -103,6 +112,14 @@ public class Quotation extends AuditedEntity {
     public BigDecimal getSecurityDeposit(){return securityDeposit;} public void setSecurityDeposit(BigDecimal v){securityDeposit=v;}
     public String getTerms(){return terms;} public void setTerms(String v){terms=v;}
     public String getNotes(){return notes;} public void setNotes(String v){notes=v;}
+    public String getExactHireFieldsJson(){return exactHireFieldsJson;} public void setExactHireFieldsJson(String v){exactHireFieldsJson=v;}
+    public FileAttachment getExactPdfAttachment(){return exactPdfAttachment;} public void setExactPdfAttachment(FileAttachment v){exactPdfAttachment=v;}
+    public String getExactPdfTemplateCode(){return exactPdfTemplateCode;} public void setExactPdfTemplateCode(String v){exactPdfTemplateCode=v;}
+    public Integer getExactPdfTemplateVersion(){return exactPdfTemplateVersion;} public void setExactPdfTemplateVersion(Integer v){exactPdfTemplateVersion=v;}
+    public Integer getExactPdfCoordinatesVersion(){return exactPdfCoordinatesVersion;} public void setExactPdfCoordinatesVersion(Integer v){exactPdfCoordinatesVersion=v;}
+    public String getExactPdfChecksumSha256(){return exactPdfChecksumSha256;} public void setExactPdfChecksumSha256(String v){exactPdfChecksumSha256=v;}
+    public java.time.Instant getExactPdfFinalizedAt(){return exactPdfFinalizedAt;} public void setExactPdfFinalizedAt(java.time.Instant v){exactPdfFinalizedAt=v;}
+    public String getExactPdfFinalizedBy(){return exactPdfFinalizedBy;} public void setExactPdfFinalizedBy(String v){exactPdfFinalizedBy=v;}
     public String getRejectionReason(){return rejectionReason;} public void setRejectionReason(String v){rejectionReason=v;}
     public java.time.Instant getSentAt(){return sentAt;} public void setSentAt(java.time.Instant v){sentAt=v;}
     public String getSentBy(){return sentBy;} public void setSentBy(String v){sentBy=v;}

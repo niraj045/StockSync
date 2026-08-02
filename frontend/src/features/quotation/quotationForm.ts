@@ -1,12 +1,12 @@
 import axios from 'axios';
 import type { NamePath } from 'antd/es/form/interface';
-import type { Option, QuotationItem } from './types';
+import type { ExactHireFields, Option, QuotationItem } from './types';
 
 export type QuotationEditor = {
   quotationTemplateId: number; partyId: number; siteId: number; quotationDate: string; validUntil: string;
   rentalType: string; discountType: string; discountValue: number; cgstRate: number; sgstRate: number; igstRate: number;
   transportCharge: number; loadingCharge: number; unloadingCharge: number; otherCharge: number; roundOff: number;
-  securityDeposit: number; terms?: string; notes?: string; items: QuotationItem[]; version?: number;
+  securityDeposit: number; terms?: string; notes?: string; items: QuotationItem[]; exactHire?: ExactHireFields; version?: number;
 };
 export type FormError = { name: NamePath; errors: string[] };
 
@@ -32,6 +32,14 @@ export function validateQuotationEditor(values: QuotationEditor, sites: Option[]
     if (!(item.quantity > 0)) errors.push({ name: ['items', index, 'quantity'], errors: ['Quantity must be greater than zero'] });
     if (item.rate < 0) errors.push({ name: ['items', index, 'rate'], errors: ['Rate cannot be negative'] });
   });
+  if (values.exactHire) {
+    if (values.items.length !== 7) errors.push({ name: 'items', errors: ['The exact SteelFab template requires all seven material rows'] });
+    values.items.forEach((item, index) => {
+      if (!(Number(item.requiredQuantity) >= 0)) errors.push({ name: ['items', index, 'requiredQuantity'], errors: ['Required quantity is required'] });
+      if (!(Number(item.hireMonths) > 0)) errors.push({ name: ['items', index, 'hireMonths'], errors: ['Hire months must be greater than zero'] });
+      if (!(Number(item.replacementRate) >= 0)) errors.push({ name: ['items', index, 'replacementRate'], errors: ['Replacement rate is required'] });
+    });
+  }
   return errors;
 }
 

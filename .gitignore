@@ -34,6 +34,8 @@ e2e/artifacts/
 .mysql-local-data/
 .mysql-runtime-data/
 .mysql-final-data/
+.mysql-friend-handoff-data/
+.gradle-user-home/
 .build-final-backend/
 .vscode/
 *.iml
@@ -45,9 +47,27 @@ storage/
 data/
 backups/
 deployment/tls/
+deployment/.env
+deployment/*.tar.gz
+!deployment/storage/
+deployment/storage/*
+!deployment/storage/uploads/
+deployment/storage/uploads/*
+!deployment/storage/uploads/.gitkeep
+!deployment/storage/documents/
+deployment/storage/documents/*
+!deployment/storage/documents/.gitkeep
+!deployment/storage/reports/
+deployment/storage/reports/*
+!deployment/storage/reports/.gitkeep
+!deployment/storage/backups/
+deployment/storage/backups/*
+!deployment/storage/backups/.gitkeep
 e2e-data/
 
 # Local source material and assistant transcripts
 /*.xlsx
+/*.pdf
+*.apk
 /~$*.xlsx
 /Implementing Phase 2 Security.md

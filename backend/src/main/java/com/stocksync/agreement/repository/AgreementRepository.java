@@ -3,7 +3,7 @@ import com.stocksync.agreement.entity.Agreement;
 import org.springframework.data.jpa.repository.*;
 import java.util.Optional;
 public interface AgreementRepository extends JpaRepository<Agreement,Long>,JpaSpecificationExecutor<Agreement>{
-    @EntityGraph(attributePaths={"party","site","template","quotation","generatedDocument","items","items.item","items.sourceQuotationItem"})
+    @EntityGraph(attributePaths={"party","site","template","quotation","quotation.quotationTemplate","quotation.exactPdfAttachment","generatedDocument","items","items.item","items.sourceQuotationItem"})
     Optional<Agreement> findDetailedById(Long id);
     boolean existsByQuotationId(Long quotationId);
     Optional<Agreement> findByQuotationId(Long quotationId);

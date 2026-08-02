@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { apiClient, apiErrorMessage } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
-import { AppButton, Card, Field, LoadingBlock, StatusPill } from '../components/ui';
+import { AppButton, Card, DateField, Field, LoadingBlock, StatusPill } from '../components/ui';
 import type { RootStackParams } from '../navigation/types';
 import { colors } from '../theme';
 import type { Agreement } from '../types/api';
@@ -101,16 +101,18 @@ export function AgreementFlowScreen({ navigation, route }: Props) {
 
   if (!agreement) {
     return (
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-        <Text style={styles.title}>Convert approved quotation</Text>
-        <Text style={styles.intro}>Set the contract period and deposit. Commercial lines and terms are copied from the approved quotation.</Text>
-        <Field label="Effective date *" value={effectiveDate} onChangeText={setEffectiveDate} placeholder="YYYY-MM-DD" />
-        <Field label="Expiry date" value={expiryDate} onChangeText={setExpiryDate} placeholder="YYYY-MM-DD (optional)" />
-        <Field label="Security deposit (INR)" value={securityDeposit} onChangeText={setSecurityDeposit} keyboardType="decimal-pad" />
-        <Field label="Agreement notes" value={notes} onChangeText={setNotes} multiline />
-        <AppButton title="Create draft agreement" onPress={convert} loading={working === 'convert'} disabled={!!error} />
-      </ScrollView>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.root}>
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'} automaticallyAdjustKeyboardInsets>
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+          <Text style={styles.title}>Convert approved quotation</Text>
+          <Text style={styles.intro}>Set the contract period and deposit. Commercial lines and terms are copied from the approved quotation.</Text>
+          <DateField label="Effective date *" value={effectiveDate} onChange={setEffectiveDate} />
+          <DateField label="Expiry date" value={expiryDate} onChange={setExpiryDate} optional minimumDate={new Date(`${effectiveDate}T12:00:00`)} />
+          <Field label="Security deposit (INR)" value={securityDeposit} onChangeText={setSecurityDeposit} keyboardType="decimal-pad" />
+          <Field label="Agreement notes" value={notes} onChangeText={setNotes} multiline />
+          <AppButton title="Create draft agreement" onPress={convert} loading={working === 'convert'} disabled={!!error} />
+        </ScrollView>
+      </KeyboardAvoidingView>
     );
   }
 
@@ -189,6 +191,7 @@ function Step({ number, title, done }: { number: string; title: string; done?: b
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.canvas },
   content: { padding: 18, paddingBottom: 36, backgroundColor: colors.canvas, gap: 14, flexGrow: 1 },
   error: { color: colors.red, backgroundColor: colors.redSoft, borderRadius: 8, padding: 12 },
   title: { color: colors.ink, fontSize: 23, fontWeight: '900' },

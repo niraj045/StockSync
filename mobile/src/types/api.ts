@@ -158,6 +158,9 @@ export type QuotationTemplate = {
   id: number;
   templateCode: string;
   name: string;
+  companyName?: string;
+  companyAddress?: string;
+  companyGstin?: string;
   defaultTerms?: string;
   defaultNotes?: string;
   active: boolean;
@@ -180,7 +183,10 @@ export type QuotationItem = {
   itemNameSnapshot: string;
   unitSnapshot: string;
   quantity: number;
+  requiredQuantity?: number;
   rate: number;
+  hireMonths?: number;
+  replacementRate?: number;
   rentalType: string;
   amount: number;
 };
@@ -189,6 +195,7 @@ export type Quotation = {
   id: number;
   quotationNumber: string;
   quotationTemplateId: number;
+  quotationTemplateCode?: string;
   quotationTemplateName: string;
   partyId: number;
   partyName: string;
@@ -199,10 +206,57 @@ export type Quotation = {
   rentalType: string;
   status: 'DRAFT' | 'SENT' | 'APPROVED' | 'REJECTED' | 'EXPIRED' | 'CANCELLED' | 'CONVERTED';
   subtotal: number;
+  taxableAmount?: number;
+  cgstRate?: number;
+  cgstAmount?: number;
+  sgstRate?: number;
+  sgstAmount?: number;
+  igstRate?: number;
+  igstAmount?: number;
+  totalTax?: number;
   grandTotal: number;
   securityDeposit: number;
+  exactHire?: ExactHireFields;
+  exactPdfAttachmentId?: number;
   items: QuotationItem[];
   version: number;
+};
+
+export type ExactHireFields = {
+  partyAddress?: string;
+  subject?: string;
+  validityDays?: number;
+  minimumHirePeriod?: string;
+  minimumHireDays?: number;
+  siteLengthRmt?: number;
+  siteHeightMtr?: number;
+  gstPercentage?: number;
+  advanceRent?: number;
+  paymentDueDays?: number;
+  authorizedPerson?: string;
+  authorizedDesignation?: string;
+  authorizedPhone?: string;
+  acceptedBy?: string;
+  acceptedDesignation?: string;
+  acceptedPhone?: string;
+  acceptedDate?: string;
+};
+
+export type ReportPreview = {
+  reportType: string;
+  columns: string[];
+  rows: Record<string, string | number | boolean | null>[];
+  totals: Record<string, number>;
+  totalElements: number;
+  warning?: string;
+};
+
+export type ReportExport = {
+  id: number;
+  reportType: string;
+  format: 'EXCEL' | 'CSV' | 'PDF';
+  filename: string;
+  status: string;
 };
 
 export type IssuedChallanItem = {

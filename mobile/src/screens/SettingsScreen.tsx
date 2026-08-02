@@ -59,7 +59,7 @@ export function SettingsScreen({ navigation }: Props) {
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.root}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.root}>
       <View style={styles.content}>
         <Card>
           <Text style={styles.title}>Backend connection</Text>

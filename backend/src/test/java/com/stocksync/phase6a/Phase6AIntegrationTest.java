@@ -272,7 +272,7 @@ class Phase6AIntegrationTest extends BaseIntegrationTest {
             {"quotationTemplateId":%d,"partyId":%d,"siteId":%d,"quotationDate":"2030-01-01","validUntil":"2030-02-01","rentalType":"PER_PIECE_PER_DAY",
             "discountType":"NONE","discountValue":0,"transportCharge":100,"loadingCharge":25,"unloadingCharge":25,"otherCharge":0,
             "cgstRate":9,"sgstRate":9,"igstRate":0,"roundOff":0,"securityDeposit":0,"terms":"Net 30","notes":"Phase 6 test",
-            "items":[{"itemId":%d,"quantity":100,"rate":20,"rentalType":"PER_PIECE_PER_DAY"},{"itemId":%d,"quantity":20,"rate":0,"rentalType":"PER_PIECE_PER_DAY"}]}
+            "items":[{"itemId":%d,"quantity":100,"rate":20,"rentalType":"PER_PIECE_PER_DAY"},{"itemId":%d,"quantity":20,"rate":1,"rentalType":"PER_PIECE_PER_DAY"}]}
             """.formatted(quotationTemplateId, party.getId(), site.getId(), plate.getId(), prop.getId());
     }
 }

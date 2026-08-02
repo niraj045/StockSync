@@ -50,8 +50,8 @@ export function CreatePartyScreen({ navigation }: Props) {
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.root}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.root}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'} automaticallyAdjustKeyboardInsets>
         <Text style={styles.intro}>Create the customer record first. The app will continue to site setup.</Text>
         <Field label="Legal name *" value={legalName} onChangeText={setLegalName} autoCapitalize="words" />
         <Field label="Trade name" value={tradeName} onChangeText={setTradeName} autoCapitalize="words" />

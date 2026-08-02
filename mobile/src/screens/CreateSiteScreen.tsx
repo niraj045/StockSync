@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { apiClient, apiErrorMessage } from '../api/client';
-import { AppButton, EmptyBlock, Field } from '../components/ui';
+import { AppButton, DateField, EmptyBlock, Field } from '../components/ui';
 import type { RootStackParams } from '../navigation/types';
 import { colors } from '../theme';
 import type { Page, Party, Site } from '../types/api';
@@ -65,8 +65,8 @@ export function CreateSiteScreen({ navigation, route }: Props) {
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.root}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.root}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'} automaticallyAdjustKeyboardInsets>
         <Text style={styles.intro}>Link the work site to its customer. The next step will prepare the quotation.</Text>
         <Text style={styles.label}>Customer *</Text>
         <Pressable style={styles.selector} disabled={loading} onPress={() => setPickerOpen(true)}>
@@ -79,7 +79,7 @@ export function CreateSiteScreen({ navigation, route }: Props) {
         <Field label="Site code *" value={siteCode} onChangeText={setSiteCode} autoCapitalize="characters" />
         <Field label="Site contact" value={contactPerson} onChangeText={setContactPerson} />
         <Field label="Address" value={address} onChangeText={setAddress} multiline />
-        <Field label="Start date" value={startDate} onChangeText={setStartDate} placeholder="YYYY-MM-DD" />
+        <DateField label="Start date" value={startDate} onChange={setStartDate} />
         <AppButton title="Save and create quotation" onPress={submit} loading={saving} />
       </ScrollView>
       <Modal animationType="slide" transparent visible={pickerOpen} onRequestClose={() => setPickerOpen(false)}>

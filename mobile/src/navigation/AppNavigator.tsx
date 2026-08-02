@@ -20,6 +20,7 @@ import { OrdersScreen } from '../screens/OrdersScreen';
 import { CreateOrderScreen } from '../screens/CreateOrderScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { StockScreen } from '../screens/StockScreen';
+import { GstExportScreen } from '../screens/GstExportScreen';
 import { colors, fonts } from '../theme';
 import type { MainTabParams, RootStackParams } from './types';
 
@@ -52,12 +53,12 @@ function MainTabs() {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: '#FFFFFF',
-        tabBarInactiveTintColor: '#858A91',
+        tabBarInactiveTintColor: colors.muted,
         tabBarActiveBackgroundColor: colors.primary,
         tabBarHideOnKeyboard: true,
         tabBarLabelStyle: { fontSize: 10, fontFamily: fonts.bold, paddingBottom: 4 },
         tabBarItemStyle: { height: 51, marginHorizontal: 3, marginVertical: 8, borderRadius: 8 },
-        tabBarStyle: { height: 72, paddingHorizontal: 7, borderTopColor: colors.line, backgroundColor: '#fff' },
+        tabBarStyle: { height: 72, paddingHorizontal: 7, borderTopColor: colors.line, backgroundColor: colors.surface },
         tabBarIcon: ({ color, size }) => <Ionicons name={tabIcons[route.name]} color={color} size={size} />,
       })}
     >
@@ -89,6 +90,7 @@ export function AppNavigator() {
           <>
             <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
             <Stack.Screen name="Stock" component={StockScreen} options={{ title: 'Current stock' }} />
+            <Stack.Screen name="GstExport" component={GstExportScreen} options={{ title: 'Monthly GST export' }} />
             <Stack.Screen name="CreateParty" component={CreatePartyScreen} options={{ title: 'New customer' }} />
             <Stack.Screen name="CreateSite" component={CreateSiteScreen} options={{ title: 'New site' }} />
             <Stack.Screen name="CreateQuotation" component={CreateQuotationScreen} options={{ title: 'New quotation' }} />

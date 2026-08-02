@@ -3,7 +3,7 @@ import { Form } from 'antd';
 import { describe, expect, it, vi } from 'vitest';
 import type { Quotation } from '../types';
 import { apiErrorCode, apiFormErrors, quotationPermissions, requiresUnsavedConfirmation, sitesForParty, validateQuotationEditor, type QuotationEditor } from '../quotationForm';
-import { QuotationActionButtons, QuotationItemRows } from './QuotationsPage';
+import { ExactHireItemRows, QuotationActionButtons, QuotationItemRows } from './QuotationsPage';
 
 const quotation = (status: string): Quotation => ({
   id: 7, quotationNumber: 'QT/2026-27/0007', quotationTemplateId: 1, quotationTemplateName: 'Standard',
@@ -66,6 +66,12 @@ describe('quotation authorization and actions', () => {
     const callback = vi.fn(); render(<Actions roles={['ROLE_ACCOUNTS']} onPdf={callback}/>);
     fireEvent.click(screen.getByRole('button', { name: /PDF/ })); expect(callback).toHaveBeenCalledOnce();
   });
+  it('offers preview and one-time finalization for an approved exact quotation', () => {
+    const preview=vi.fn(),finalize=vi.fn();const exact={...quotation('APPROVED'),quotationTemplateCode:'STEELFAB_EXACT_HIRE_V1'};
+    render(<QuotationActionButtons q={exact} isAdmin canWrite onView={vi.fn()} onEdit={vi.fn()} onAction={vi.fn()} onPdf={vi.fn()} onPreview={preview} onFinalize={finalize}/>);
+    fireEvent.click(screen.getByRole('button',{name:/Preview/}));fireEvent.click(screen.getByRole('button',{name:/Finalize/}));
+    expect(preview).toHaveBeenCalledOnce();expect(finalize).toHaveBeenCalledOnce();
+  });
 });
 
 describe('quotation editor behavior', () => {
@@ -81,6 +87,16 @@ describe('quotation editor behavior', () => {
     expect(screen.getAllByRole('button', { name: 'Remove' })).toHaveLength(2);
     fireEvent.click(screen.getAllByRole('button', { name: 'Remove' })[1]);
     expect(screen.getAllByRole('button', { name: 'Remove' })).toHaveLength(1);
+  });
+  it('renders the seven fixed SteelFab material rows', () => {
+    const rows=Array.from({length:7},(_,index)=>({itemId:index+1,quantity:1,requiredQuantity:1,rate:1,hireMonths:6,replacementRate:1,rentalType:'PER_PIECE_PER_DAY'}));
+    render(<Form initialValues={{items:rows}}><ExactHireItemRows items={[]}/></Form>);
+    ['H Frame','Bracing','20 Ft / MS Pipe','Plate Pipe','Base Jack','Platform','Coupler'].forEach(label=>expect(screen.getByText(new RegExp(label.replace('/','\\/')))).toBeVisible());
+  });
+  it('validates all seven exact rows and their commercial fields', () => {
+    const result=validateQuotationEditor(editor({exactHire:{gstPercentage:18},items:editor().items}),sites);
+    expect(result.some(error=>error.name==='items')).toBe(true);
+    expect(result.some(error=>String(error.name).includes('hireMonths'))).toBe(true);
   });
   it('validates quantity greater than zero', () => expect(validateQuotationEditor(editor({ items: [{...editor().items[0], quantity: 0}] }), sites).some((e) => String(e.name).includes('quantity'))).toBe(true));
   it('validates negative rates', () => expect(validateQuotationEditor(editor({ items: [{...editor().items[0], rate: -1}] }), sites).some((e) => String(e.name).includes('rate'))).toBe(true));

@@ -43,14 +43,16 @@ public final class PdfViewHelper {
 
     public String amount(BigDecimal value) {
         if (value == null) {
-            return "0";
+            return "0.00";
         }
-        BigDecimal scaled = value.setScale(2, RoundingMode.HALF_UP).stripTrailingZeros();
-        return scaled.toPlainString();
+        return value.setScale(2, RoundingMode.HALF_UP).toPlainString();
     }
 
     public String qty(BigDecimal value) {
-        return amount(value);
+        if (value == null) {
+            return "0";
+        }
+        return value.stripTrailingZeros().toPlainString();
     }
 
     public BigDecimal lineAmount(BigDecimal quantity, BigDecimal rate, int months) {
