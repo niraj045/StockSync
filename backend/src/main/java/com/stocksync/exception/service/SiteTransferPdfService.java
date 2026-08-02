@@ -1,6 +1,7 @@
 package com.stocksync.exception.service;
 
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import com.stocksync.common.pdf.PdfBranding;
 import com.stocksync.exception.dto.SiteTransferResponse;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
@@ -13,14 +14,19 @@ import java.util.Map;
 @Service
 public class SiteTransferPdfService {
     private final SpringTemplateEngine templates;
+    private final PdfBranding branding;
 
-    public SiteTransferPdfService(SpringTemplateEngine templates) {
+    public SiteTransferPdfService(SpringTemplateEngine templates, PdfBranding branding) {
         this.templates = templates;
+        this.branding = branding;
     }
 
     public PdfDocument generate(SiteTransferResponse transfer) {
         Context context = new Context();
-        context.setVariables(Map.of("t", transfer));
+        context.setVariables(Map.of(
+                "t", transfer,
+                "companyName", branding.companyName(),
+                "letterheadDataUri", branding.letterheadDataUri()));
         String html = templates.process("site-transfer-pdf", context);
         try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             new PdfRendererBuilder().withHtmlContent(html, null).toStream(output).run();

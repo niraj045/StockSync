@@ -4,6 +4,7 @@
     <meta charset="UTF-8"/>
     <style>
         body { font-family: sans-serif; color: #17312d; font-size: 10px; }
+        .letterhead { display: block; width: 100%; height: auto; margin: 0 0 14px; }
         h1 { color: #087f72; margin-bottom: 5px; }
         table { border-collapse: collapse; width: 100%; margin: 8px 0; }
         th, td { border: 1px solid #ccd8d5; padding: 4px; }
@@ -13,7 +14,8 @@
     </style>
 </head>
 <body>
-    <h1>StockSync — Receiving Challan</h1>
+    <img class="letterhead" th:src="${letterheadDataUri}" alt="SteelFab"/>
+    <h1 th:text="${companyName + ' - Receiving Challan'}">SteelFab Scaffoldings &amp; Engineering Pvt. Ltd. - Receiving Challan</h1>
     <p>
         <b>Challan Number:</b> <span th:text="${c.receivingChallanNumber}"></span> &#160;
         <b>Source Type:</b> <span th:text="${c.sourceType}"></span> &#160;
@@ -72,7 +74,7 @@
 
     <table class="sign">
         <tr>
-            <td>For StockSync<br/><br/><br/>Authorised signatory</td>
+            <td><span th:text="${'For ' + companyName}">For SteelFab Scaffoldings &amp; Engineering Pvt. Ltd.</span><br/><br/><br/>Authorised signatory</td>
             <td>For Party<br/><br/><br/>Returned By</td>
         </tr>
     </table>

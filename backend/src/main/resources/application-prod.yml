@@ -34,11 +34,12 @@ server:
     include-exception: false
   servlet:
     session:
-      timeout: ${SESSION_TIMEOUT:30m}
+      timeout: ${SESSION_TIMEOUT:7d}
       cookie:
         secure: ${SESSION_COOKIE_SECURE:true}
         http-only: ${SESSION_COOKIE_HTTP_ONLY:true}
         same-site: ${SESSION_COOKIE_SAME_SITE:lax}
+        max-age: ${SESSION_COOKIE_MAX_AGE:7d}
 
 management:
   endpoints:

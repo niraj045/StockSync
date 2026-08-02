@@ -1,6 +1,7 @@
 package com.stocksync.challan.service;
 
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import com.stocksync.common.pdf.PdfBranding;
 import com.stocksync.challan.dto.IssuedChallanResponse;
 import java.io.*;
 import java.util.Map;
@@ -11,14 +12,19 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 @Service
 public class IssuedChallanPdfService {
     private final SpringTemplateEngine templates;
+    private final PdfBranding branding;
 
-    public IssuedChallanPdfService(SpringTemplateEngine templates) {
+    public IssuedChallanPdfService(SpringTemplateEngine templates, PdfBranding branding) {
         this.templates = templates;
+        this.branding = branding;
     }
 
     public PdfDocument generate(IssuedChallanResponse challan) {
         Context context = new Context();
-        context.setVariables(Map.of("c", challan));
+        context.setVariables(Map.of(
+                "c", challan,
+                "companyName", branding.companyName(),
+                "letterheadDataUri", branding.letterheadDataUri()));
         String html = templates.process("issued-challan-pdf", context);
         try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             new PdfRendererBuilder().withHtmlContent(html, null).toStream(output).run();

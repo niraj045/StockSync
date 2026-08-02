@@ -4,6 +4,7 @@
     <meta charset="UTF-8"/>
     <style>
         body { font-family: sans-serif; color: #17312d; font-size: 11px; }
+        .letterhead { display: block; width: 100%; height: auto; margin: 0 0 14px; }
         h1 { color: #087f72; margin-bottom: 5px; }
         .meta-table { border-collapse: collapse; width: 100%; margin: 12px 0; }
         .meta-table td { border: 1px solid #ccd8d5; padding: 6px; width: 25%; vertical-align: top; }
@@ -16,7 +17,8 @@
     </style>
 </head>
 <body>
-    <h1>StockSync — Site to Site Material Transfer</h1>
+    <img class="letterhead" th:src="${letterheadDataUri}" alt="SteelFab"/>
+    <h1 th:text="${companyName + ' - Site to Site Material Transfer'}">SteelFab Scaffoldings &amp; Engineering Pvt. Ltd. - Site to Site Material Transfer</h1>
     <p>
         <b>Transfer Number:</b> <span th:text="${t.transferNumber}"></span> &#160;&#160;
         <b>Transfer Date:</b> <span th:text="${t.transferDate}"></span> &#160;&#160;
