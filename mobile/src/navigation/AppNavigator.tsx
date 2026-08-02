@@ -2,6 +2,7 @@ import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../auth/AuthContext';
 import { LoadingBlock } from '../components/ui';
 import { ChallansScreen } from '../screens/ChallansScreen';
@@ -47,6 +48,9 @@ const tabIcons: Record<keyof MainTabParams, keyof typeof Ionicons.glyphMap> = {
 };
 
 function MainTabs() {
+  const insets = useSafeAreaInsets();
+  const bottomInset = Math.max(0, insets.bottom);
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -57,7 +61,13 @@ function MainTabs() {
         tabBarHideOnKeyboard: true,
         tabBarLabelStyle: { fontSize: 10, fontFamily: fonts.bold, paddingBottom: 4 },
         tabBarItemStyle: { height: 51, marginHorizontal: 3, marginVertical: 8, borderRadius: 8 },
-        tabBarStyle: { height: 72, paddingHorizontal: 7, borderTopColor: colors.line, backgroundColor: colors.surface },
+        tabBarStyle: {
+          height: 72 + bottomInset,
+          paddingBottom: bottomInset,
+          paddingHorizontal: 7,
+          borderTopColor: colors.line,
+          backgroundColor: colors.surface,
+        },
         tabBarIcon: ({ color, size }) => <Ionicons name={tabIcons[route.name]} color={color} size={size} />,
       })}
     >

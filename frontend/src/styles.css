@@ -589,7 +589,7 @@ textarea {
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 700px), (hover: none) and (pointer: coarse) and (max-device-width: 700px) {
   .workflow-editor-page {
     inset: 68px 0 0;
   }

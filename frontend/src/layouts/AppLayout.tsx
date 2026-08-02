@@ -23,11 +23,18 @@ import {
 
 const { Header, Content, Sider } = Layout;
 const MOBILE_QUERY = '(max-width: 991px)';
+const COARSE_POINTER_QUERY = '(hover: none) and (pointer: coarse)';
+
+function isMobileLayout() {
+  const narrowViewport = window.matchMedia(MOBILE_QUERY).matches;
+  const phoneScreen = Math.min(window.screen.width, window.screen.height) <= 991;
+  return narrowViewport || (phoneScreen && window.matchMedia(COARSE_POINTER_QUERY).matches);
+}
 
 export function AppLayout() {
   const { user, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
-  const [mobile, setMobile] = useState(() => window.matchMedia(MOBILE_QUERY).matches);
+  const [mobile, setMobile] = useState(isMobileLayout);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -41,13 +48,21 @@ export function AppLayout() {
 
   useEffect(() => {
     const media = window.matchMedia(MOBILE_QUERY);
-    const handleChange = (event: MediaQueryListEvent) => {
-      setMobile(event.matches);
-      if (!event.matches) setDrawerOpen(false);
+    const pointer = window.matchMedia(COARSE_POINTER_QUERY);
+    const handleChange = () => {
+      const nextMobile = isMobileLayout();
+      setMobile(nextMobile);
+      if (!nextMobile) setDrawerOpen(false);
     };
-    setMobile(media.matches);
+    handleChange();
     media.addEventListener('change', handleChange);
-    return () => media.removeEventListener('change', handleChange);
+    pointer.addEventListener('change', handleChange);
+    window.addEventListener('resize', handleChange);
+    return () => {
+      media.removeEventListener('change', handleChange);
+      pointer.removeEventListener('change', handleChange);
+      window.removeEventListener('resize', handleChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -125,7 +140,7 @@ export function AppLayout() {
   const displayRole = user?.roles[0]?.replace('ROLE_', '') || 'User';
 
   return (
-    <Layout className={`app-shell ${collapsed ? 'sider-collapsed' : ''}`}>
+    <Layout className={`app-shell ${collapsed ? 'sider-collapsed' : ''} ${mobile ? 'mobile-layout' : ''}`}>
       {!mobile && <Sider
           className="app-sider"
           collapsible
