@@ -30,6 +30,7 @@ $TarArguments = @(
     "--exclude=frontend/src/**/*.test.ts",
     "--exclude=frontend/src/**/*.test.tsx",
     "--exclude=deployment/.env",
+    "--exclude=deployment/certbot/conf/*",
     "--exclude=deployment/*.tar.gz",
     "--exclude=deployment/storage/uploads/*",
     "--exclude=deployment/storage/documents/*",

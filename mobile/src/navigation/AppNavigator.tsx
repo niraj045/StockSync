@@ -18,7 +18,6 @@ import { CreateQuotationScreen } from '../screens/CreateQuotationScreen';
 import { AgreementFlowScreen } from '../screens/AgreementFlowScreen';
 import { OrdersScreen } from '../screens/OrdersScreen';
 import { CreateOrderScreen } from '../screens/CreateOrderScreen';
-import { SettingsScreen } from '../screens/SettingsScreen';
 import { StockScreen } from '../screens/StockScreen';
 import { GstExportScreen } from '../screens/GstExportScreen';
 import { colors, fonts } from '../theme';
@@ -100,12 +99,10 @@ export function AppNavigator() {
             <Stack.Screen name="CreateReceivingChallan" component={CreateReceivingChallanScreen} options={{ title: 'Record material return' }} />
             <Stack.Screen name="IssuedChallanDetail" component={IssuedChallanDetailScreen} options={{ title: 'Issued challan' }} />
             <Stack.Screen name="ReceivingChallanDetail" component={ReceivingChallanDetailScreen} options={{ title: 'Receiving challan' }} />
-            <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Server connection' }} />
           </>
         ) : (
           <>
             <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Server connection' }} />
           </>
         )}
       </Stack.Navigator>

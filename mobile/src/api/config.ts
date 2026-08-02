@@ -1,7 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const SERVER_KEY = 'stocksync.apiUrl';
-const buildDefault = process.env.EXPO_PUBLIC_API_URL ?? 'http://10.0.2.2:8081/api/v1';
+const buildDefault = process.env.EXPO_PUBLIC_API_URL ?? 'https://stocksync.caretakers.ind.in/api/v1';
 
 export function normalizeApiUrl(value: string) {
   const trimmed = value.trim().replace(/\/+$/, '');
@@ -12,12 +9,5 @@ export function normalizeApiUrl(value: string) {
 }
 
 export async function loadApiUrl() {
-  const saved = await AsyncStorage.getItem(SERVER_KEY);
-  return normalizeApiUrl(saved ?? buildDefault);
-}
-
-export async function saveApiUrl(value: string) {
-  const normalized = normalizeApiUrl(value);
-  await AsyncStorage.setItem(SERVER_KEY, normalized);
-  return normalized;
+  return normalizeApiUrl(buildDefault);
 }

@@ -36,6 +36,8 @@ e2e/artifacts/
 .mysql-final-data/
 .mysql-friend-handoff-data/
 .gradle-user-home/
+.tools/
+.apk-check-*/
 .build-final-backend/
 .vscode/
 *.iml
@@ -49,6 +51,10 @@ backups/
 deployment/tls/
 deployment/.env
 deployment/*.tar.gz
+deployment/certbot/conf/*
+!deployment/certbot/conf/.gitkeep
+deployment/certbot/www/*
+!deployment/certbot/www/.gitkeep
 !deployment/storage/
 deployment/storage/*
 !deployment/storage/uploads/

@@ -3,7 +3,6 @@ import type { IssuedChallan, ReceivingChallan } from '../types/api';
 export type RootStackParams = {
   Main: undefined;
   Login: undefined;
-  Settings: undefined;
   Stock: undefined;
   GstExport: undefined;
   CreateParty: undefined;

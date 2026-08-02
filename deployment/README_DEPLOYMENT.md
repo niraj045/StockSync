@@ -1,10 +1,10 @@
 # StockSync BigRock Deployment
 
-This package deploys StockSync independently at `/opt/stocksync`. It does not connect to or modify the existing `caretakers.ind.in` cPanel website or either cPanel database. The first deployment is HTTP-only at `http://66.116.253.40`; do not change DNS yet.
+This package deploys StockSync independently at `/opt/stocksync`. It does not connect to or modify the existing `caretakers.ind.in` cPanel website or either cPanel database. The production application is served at `https://stocksync.caretakers.ind.in`.
 
 ## Architecture
 
-- `frontend`: Nginx publishes host port `80` and serves React plus `/api` proxying.
+- `frontend`: Nginx publishes ports `80` and `443`, redirects HTTP to HTTPS, and serves React plus `/api` proxying.
 - `backend`: Spring Boot listens only inside Docker on `8081`.
 - `mysql`: MySQL 8.4 listens only inside Docker on `3306` and owns database `shuttering_inventory`.
 - `stocksync_private`: one internal Docker bridge network shared by all three services.
@@ -41,11 +41,11 @@ openssl rand -base64 36
 notepad deployment\.env
 ```
 
-Use the two generated values for `MYSQL_PASSWORD` and `MYSQL_ROOT_PASSWORD`. They must be different and at least 20 characters. Keep these initial HTTP values:
+Use the two generated values for `MYSQL_PASSWORD` and `MYSQL_ROOT_PASSWORD`. They must be different and at least 20 characters. Production uses:
 
 ```dotenv
-APP_ORIGIN=http://66.116.253.40
-SESSION_COOKIE_SECURE=false
+APP_ORIGIN=https://stocksync.caretakers.ind.in
+SESSION_COOKIE_SECURE=true
 ```
 
 ## 3. Start and Verify Locally
@@ -187,17 +187,19 @@ The restore script is locked to the independent `shuttering_inventory` database 
 
 `stop.sh` removes containers and the private network but preserves the MySQL volume and bind-mounted files.
 
-## 13. DNS Later
+## 13. DNS
 
-After IP testing succeeds, create the DNS record for `stocksync.caretakers.ind.in` pointing to `66.116.253.40`. Do not change the root `caretakers.ind.in` cPanel website.
+The `stocksync.caretakers.ind.in` A record must point to `66.116.253.40`. Do not change the root `caretakers.ind.in` cPanel website.
 
-## 14. HTTPS Later
+## 14. HTTPS
 
-HTTPS is intentionally not configured in the initial stack. After DNS resolves and a certificate is installed, update only the Nginx template/port mapping and change:
+After DNS resolves, issue the first certificate and install the renewal job:
 
-```dotenv
-APP_ORIGIN=https://stocksync.caretakers.ind.in
-SESSION_COOKIE_SECURE=true
+```bash
+cd /opt/stocksync
+./deployment/scripts/issue-certificate.sh
+(crontab -l 2>/dev/null; echo '17 3 * * * /opt/stocksync/deployment/scripts/renew-certificate.sh >> /opt/stocksync/deployment/storage/certbot-renew.log 2>&1') | crontab -
+./deployment/scripts/renew-certificate.sh
 ```
 
-The MySQL and backend containers remain private and unchanged.
+Certificate state is persisted below `deployment/certbot/conf` and excluded from deployment archives. The MySQL and backend containers remain private.
