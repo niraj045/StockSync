@@ -30,10 +30,11 @@ export function validateQuotationEditor(values: QuotationEditor, sites: Option[]
   if (values.igstRate > 0 && (values.cgstRate > 0 || values.sgstRate > 0)) errors.push({ name: 'igstRate', errors: ['IGST cannot be combined with CGST or SGST'] });
   values.items.forEach((item, index) => {
     if (!(item.quantity > 0)) errors.push({ name: ['items', index, 'quantity'], errors: ['Quantity must be greater than zero'] });
-    if (item.rate < 0) errors.push({ name: ['items', index, 'rate'], errors: ['Rate cannot be negative'] });
+    if (!(item.rate > 0)) errors.push({ name: ['items', index, 'rate'], errors: ['Rate must be greater than zero'] });
   });
   if (values.exactHire) {
-    if (values.items.length !== 7) errors.push({ name: 'items', errors: ['The exact SteelFab template requires all seven material rows'] });
+    if (!values.items.length) errors.push({ name: 'items', errors: ['Add at least one SteelFab material'] });
+    if (new Set(values.items.map(item=>item.itemId)).size!==values.items.length) errors.push({name:'items',errors:['Each SteelFab material may be selected only once']});
     values.items.forEach((item, index) => {
       if (!(Number(item.requiredQuantity) >= 0)) errors.push({ name: ['items', index, 'requiredQuantity'], errors: ['Required quantity is required'] });
       if (!(Number(item.hireMonths) > 0)) errors.push({ name: ['items', index, 'hireMonths'], errors: ['Hire months must be greater than zero'] });

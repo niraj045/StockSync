@@ -24,6 +24,7 @@ const stateCodes:Record<string,string>={
 const stateCode=(gstin?:string,location?:string)=>{const value=gstin?.trim().toUpperCase();if(value&&/^\d{2}[0-9A-Z]{13}$/.test(value))return value.slice(0,2);const normalized=normalize(location);return Object.entries(stateCodes).find(([state])=>normalized.includes(state))?.[1];};
 const addDays=(date:string,days:number)=>{const value=new Date(`${date}T00:00:00`);value.setDate(value.getDate()+days);return value.toISOString().slice(0,10);};
 const matchesSlot=(item:Option,key:string)=>{const value=normalize(`${item.itemCode} ${item.itemName}`);if(key==='hframe')return value.includes('hframe');if(key==='bracing')return value.includes('bracing')||value.includes('crossbrace');if(key==='mspipe')return value.includes('20ftpipe')||value.includes('mspipe')||value.includes('steelpipe');if(key==='platepipe')return value.includes('platepipe');if(key==='basejack')return value.includes('basejack');if(key==='platform')return value.includes('platform')||value.includes('walkway');return value.includes('coupler')||value.includes('clamp');};
+export const exactDefaultItems=(items:Option[])=>exactSlots.flatMap(slot=>{const item=items.find(candidate=>matchesSlot(candidate,slot.key));return item?[{itemId:item.id,quantity:0,requiredQuantity:0,rate:0,hireMonths:6,replacementRate:0,rentalType:'PER_PIECE_PER_DAY'}]:[];});
 const money=(v?:number)=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR'}).format(v??0);
 export function QuotationsPage(){
   const navigate=useNavigate(),location=useLocation(),{quotationId}=useParams();
@@ -55,10 +56,10 @@ export function QuotationsPage(){
   },[location.pathname,quotationId,quotations.data]);
   useEffect(()=>{
     if(!isExact||!items.data||editing?.quotationTemplateCode===exactTemplateCode)return;
-    const current=form.getFieldValue('items')??[];if(current.length===7&&current.every((line:{itemId?:number})=>line.itemId))return;
+    const current=form.getFieldValue('items')??[];if(current.length>0&&current.every((line:{itemId?:number})=>line.itemId))return;
     form.setFieldsValue({discountType:'NONE',discountValue:0,cgstRate:0,sgstRate:0,igstRate:18,transportCharge:0,loadingCharge:0,unloadingCharge:0,otherCharge:0,roundOff:0,validUntil:addDays(form.getFieldValue('quotationDate')??new Date().toISOString().slice(0,10),7),
       exactHire:{partyAddress:selectedParty?.address??'',subject:`Quotation for Supply of H frame Scaffolding Materials on Hire for ${selectedSite?.siteName??'the selected site'}.`,validityDays:7,minimumHirePeriod:'6 Months (180 days)',minimumHireDays:90,gstPercentage:18,paymentDueDays:3,authorizedPerson:'',authorizedDesignation:'',authorizedPhone:''},
-      items:exactSlots.map(slot=>({itemId:items.data?.find(item=>matchesSlot(item,slot.key))?.id,quantity:0,requiredQuantity:0,rate:0,hireMonths:6,replacementRate:0,rentalType:'PER_PIECE_PER_DAY'}))});
+      items:exactDefaultItems(items.data)});
   },[isExact,items.data,editing,form,selectedParty,selectedSite]);
   useEffect(()=>{
     if(!isExact)return;
@@ -165,15 +166,17 @@ export function QuotationItemRows({items}:{items:Option[]}){
   return <Form.List name="items">{(fields,{add,remove})=><div className="commercial-lines"><Space><strong>Items</strong><Button onClick={()=>add({quantity:1,rentalType:'PER_PIECE_PER_DAY'})}>Add line</Button></Space>{fields.map(({key,name})=><Space key={key} align="start" wrap><Form.Item name={[name,'itemId']} label="Item" rules={[{required:true}]}><Select style={{width:260}} showSearch optionFilterProp="label" options={items.map(i=>({value:i.id,label:`${i.itemCode} — ${i.itemName}`}))}/></Form.Item><Form.Item name={[name,'quantity']} label="Quantity" rules={[{required:true,type:'number',min:0.0001}]}><InputNumber min={0.0001}/></Form.Item><Form.Item name={[name,'rate']} label="Rate" rules={[{required:true,type:'number',min:0.0001,message:'Rate must be greater than 0'}]}><InputNumber min={0.0001}/></Form.Item><Form.Item name={[name,'rentalType']} label="Rental type"><Select style={{width:190}} options={rental}/></Form.Item><Form.Item name={[name,'area']} label="Area"><InputNumber min={0}/></Form.Item><Form.Item name={[name,'weight']} label="Weight"><InputNumber min={0}/></Form.Item><Button danger type="text" onClick={()=>remove(name)} disabled={fields.length===1}>Remove</Button></Space>)}</div>}</Form.List>;
 }
 export function ExactHireItemRows({items}:{items:Option[]}){
-  return <Form.List name="items">{fields=><div className="commercial-lines"><strong>SteelFab material schedule</strong>{fields.map(({key,name},index)=>{const slot=exactSlots[index];return <div key={key} style={{marginTop:16}}><Space align="start" wrap>
-    <div style={{width:130,paddingTop:30,fontWeight:600}}>{index+1}. {slot?.label}</div>
-    <Form.Item name={[name,'itemId']} label="Mapped stock item" rules={[{required:true,message:`Map ${slot?.label}`}]}><Select style={{width:250}} showSearch optionFilterProp="label" options={items.map(item=>({value:item.id,label:`${item.itemCode} - ${item.itemName}`}))}/></Form.Item>
+  const selected=Form.useWatch('items')??[];
+  return <Form.List name="items">{(fields,{add,remove})=><div className="commercial-lines"><Space wrap><strong>SteelFab material schedule</strong><Button icon={<PlusOutlined/>} onClick={()=>add({quantity:0,requiredQuantity:0,rate:0,hireMonths:6,replacementRate:0,rentalType:'PER_PIECE_PER_DAY'})}>Add item</Button></Space>{!fields.length&&<Alert style={{marginTop:16}} type="info" showIcon message="No material added" description="Add items from the inventory master and enter the agreed quantities and rates."/>}{fields.map(({key,name},index)=><div key={key} style={{marginTop:16}}><Space align="start" wrap>
+    <div style={{width:48,paddingTop:30,fontWeight:600}}>{index+1}.</div>
+    <Form.Item name={[name,'itemId']} label="Stock item" rules={[{required:true,message:'Select a stock item'}]}><Select style={{width:280}} showSearch optionFilterProp="label" options={items.filter(item=>!selected.some((line:{itemId?:number},lineIndex:number)=>line.itemId===item.id&&lineIndex!==name)).map(item=>({value:item.id,label:`${item.itemCode} - ${item.itemName}`}))}/></Form.Item>
     <Form.Item name={[name,'requiredQuantity']} label="Required qty" rules={[{required:true,type:'number',min:0}]}><InputNumber min={0}/></Form.Item>
     <Form.Item name={[name,'quantity']} label="Offered qty" rules={[{required:true,type:'number',min:0.0001}]}><InputNumber min={0.0001}/></Form.Item>
     <Form.Item name={[name,'rate']} label="Monthly rate" rules={[{required:true,type:'number',min:0.0001}]}><InputNumber min={0.0001}/></Form.Item>
     <Form.Item name={[name,'hireMonths']} label="Months" rules={[{required:true,type:'number',min:0.01}]}><InputNumber min={0.01}/></Form.Item>
     <Form.Item name={[name,'replacementRate']} label="Replacement rate" rules={[{required:true,type:'number',min:0}]}><InputNumber min={0}/></Form.Item>
     <Form.Item name={[name,'rentalType']} hidden><Input/></Form.Item>
-  </Space></div>;})}</div>}</Form.List>;
+    <Button danger type="text" onClick={()=>remove(name)}>Remove</Button>
+  </Space></div>)}</div>}</Form.List>;
 }
 function Money({name,label,signed=false}:{name:keyof Editor;label:string;signed?:boolean}){return <Form.Item name={name} label={label} rules={[{required:true}]}><InputNumber min={signed?undefined:0} style={{width:'100%'}}/></Form.Item>;}

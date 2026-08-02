@@ -3,7 +3,7 @@ import { Form } from 'antd';
 import { describe, expect, it, vi } from 'vitest';
 import type { Quotation } from '../types';
 import { apiErrorCode, apiFormErrors, quotationPermissions, requiresUnsavedConfirmation, sitesForParty, validateQuotationEditor, type QuotationEditor } from '../quotationForm';
-import { ExactHireItemRows, QuotationActionButtons, QuotationItemRows } from './QuotationsPage';
+import { ExactHireItemRows, QuotationActionButtons, QuotationItemRows, exactDefaultItems } from './QuotationsPage';
 
 const quotation = (status: string): Quotation => ({
   id: 7, quotationNumber: 'QT/2026-27/0007', quotationTemplateId: 1, quotationTemplateName: 'Standard',
@@ -88,15 +88,24 @@ describe('quotation editor behavior', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Remove' })[1]);
     expect(screen.getAllByRole('button', { name: 'Remove' })).toHaveLength(1);
   });
-  it('renders the seven fixed SteelFab material rows', () => {
-    const rows=Array.from({length:7},(_,index)=>({itemId:index+1,quantity:1,requiredQuantity:1,rate:1,hireMonths:6,replacementRate:1,rentalType:'PER_PIECE_PER_DAY'}));
-    render(<Form initialValues={{items:rows}}><ExactHireItemRows items={[]}/></Form>);
-    ['H Frame','Bracing','20 Ft / MS Pipe','Plate Pipe','Base Jack','Platform','Coupler'].forEach(label=>expect(screen.getByText(new RegExp(label.replace('/','\\/')))).toBeVisible());
+  it('adds and removes dynamic SteelFab material rows', () => {
+    render(<Form initialValues={{items:[]}}><ExactHireItemRows items={[]}/></Form>);
+    expect(screen.getByText('No material added')).toBeVisible();
+    fireEvent.click(screen.getByRole('button',{name:/Add item/}));
+    expect(screen.getByLabelText('Stock item')).toBeVisible();
+    fireEvent.click(screen.getByRole('button',{name:'Remove'}));
+    expect(screen.getByText('No material added')).toBeVisible();
   });
-  it('validates all seven exact rows and their commercial fields', () => {
+  it('suggests only SteelFab materials that exist in the item master',()=>{
+    expect(exactDefaultItems([{id:1,itemCode:'HF-1',itemName:'H Frame'},{id:2,itemCode:'OTHER',itemName:'Adjustable Prop'}])).toHaveLength(1);
+  });
+  it('validates dynamic exact rows and their commercial fields', () => {
     const result=validateQuotationEditor(editor({exactHire:{gstPercentage:18},items:editor().items}),sites);
-    expect(result.some(error=>error.name==='items')).toBe(true);
     expect(result.some(error=>String(error.name).includes('hireMonths'))).toBe(true);
+  });
+  it('allows fewer than seven complete SteelFab materials',()=>{
+    const item={...editor().items[0],quantity:1,rate:1,requiredQuantity:0,hireMonths:6,replacementRate:0};
+    expect(validateQuotationEditor(editor({exactHire:{gstPercentage:18},items:[item]}),sites).filter(error=>error.name==='items')).toEqual([]);
   });
   it('validates quantity greater than zero', () => expect(validateQuotationEditor(editor({ items: [{...editor().items[0], quantity: 0}] }), sites).some((e) => String(e.name).includes('quantity'))).toBe(true));
   it('validates negative rates', () => expect(validateQuotationEditor(editor({ items: [{...editor().items[0], rate: -1}] }), sites).some((e) => String(e.name).includes('rate'))).toBe(true));
