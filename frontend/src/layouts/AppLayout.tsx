@@ -11,6 +11,7 @@ import type { ItemType } from 'antd/es/menu/interface';
 import { useEffect, useMemo, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../features/auth/context/AuthContext';
+import { COMPANY_NAME, COMPANY_WORKSPACE_LABEL } from '../app/branding';
 import {
   activeRoute,
   activeSection,
@@ -153,9 +154,9 @@ export function AppLayout() {
           <div className="header-leading">
             {mobile && <Button className="mobile-menu-button" aria-label="Open navigation" icon={<MenuOutlined />} onClick={() => setDrawerOpen(true)} />}
             <div className="header-context">
-            <span className="header-eyebrow">Operations workspace</span>
+            <span className="header-eyebrow">{COMPANY_WORKSPACE_LABEL}</span>
             <Typography.Title level={4} className="app-title">
-              Shuttering Inventory Management
+              {COMPANY_NAME}
             </Typography.Title>
             </div>
           </div>

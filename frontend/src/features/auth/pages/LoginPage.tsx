@@ -3,6 +3,7 @@ import { Form, Input, Button, Alert } from 'antd';
 import { BuildOutlined, LockOutlined, SafetyCertificateOutlined, UserOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../context/AuthContext';
+import { COMPANY_NAME, COMPANY_WORKSPACE_LABEL } from '../../../app/branding';
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -42,14 +43,14 @@ export function LoginPage() {
           StockSync
         </div>
         <div className="login-message">
-          <span className="dashboard-kicker"><SafetyCertificateOutlined /> Secure operations</span>
-          <h1>Every asset.<br />Clearly accounted for.</h1>
+          <span className="dashboard-kicker"><SafetyCertificateOutlined /> {COMPANY_WORKSPACE_LABEL}</span>
+          <h1>{COMPANY_NAME}</h1>
           <p>
-            A focused workspace for shuttering inventory, movement, accountability,
-            and the teams that keep every site supplied.
+            Secure shuttering inventory, movement, accountability, quotation, challan,
+            and billing operations in one workspace.
           </p>
         </div>
-        <div className="login-panel-footer">StockSync · Inventory operations platform</div>
+        <div className="login-panel-footer">{COMPANY_NAME} | Powered by StockSync</div>
       </section>
 
       <section className="login-form-panel">

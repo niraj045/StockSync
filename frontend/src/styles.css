@@ -266,10 +266,14 @@ textarea {
 }
 
 .app-title {
+  max-width: min(52vw, 680px);
+  overflow: hidden;
   margin: 0 !important;
   color: var(--ink) !important;
-  font-size: 18px !important;
+  font-size: 17px !important;
   font-weight: 600 !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .user-profile-header {
@@ -1645,9 +1649,9 @@ textarea.ant-input::placeholder {
 .login-message h1 {
   margin: 0 0 20px;
   color: #fff;
-  font-size: clamp(2.2rem, 4.6vw, 4.5rem);
-  line-height: 0.99;
-  letter-spacing: -0.065em;
+  font-size: clamp(2.1rem, 4vw, 4rem);
+  line-height: 1.05;
+  letter-spacing: 0;
 }
 
 .login-message p {
