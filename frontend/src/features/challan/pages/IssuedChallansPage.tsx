@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../../api/client';
 import { useAuth } from '../../auth/context/AuthContext';
 import { FormDrawer } from '../../../components/FormDrawer';
+import { ReportExcelButton } from '../../../components/ReportExcelButton';
 import type { SiteOrder } from '../../order/types';
 import type { IssuedChallan } from '../types';
 
@@ -175,7 +176,9 @@ export function IssuedChallansPage() {
             Track dispatches and outgoing material transfers from godown to sites.
           </p>
         </div>
-        {canWrite && (
+        <Space wrap>
+          <ReportExcelButton reportType="ISSUED_CHALLANS_REGISTER" filters={{ documentNumber: search || undefined }} />
+          {canWrite && (
           <Button
             type="primary"
             icon={<PlusOutlined />}
@@ -189,7 +192,8 @@ export function IssuedChallansPage() {
           >
             Issue Challan
           </Button>
-        )}
+          )}
+        </Space>
       </div>
 
       <Card className="premium-card">
@@ -415,6 +419,7 @@ export function IssuedChallansPage() {
 }
 
 export function ChallanActions({
+  challan,
   onView,
   onPdf,
 }: {
@@ -430,6 +435,7 @@ export function ChallanActions({
       <Button size="small" icon={<DownloadOutlined />} onClick={onPdf}>
         PDF
       </Button>
+      <ReportExcelButton size="small" reportType="ISSUED_CHALLANS_REGISTER" filters={{ documentNumber: challan.challanNumber }} />
     </Space>
   );
 }

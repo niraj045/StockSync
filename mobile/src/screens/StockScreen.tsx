@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiClient, apiErrorMessage } from '../api/client';
 import { Card, EmptyBlock, PageHeader } from '../components/ui';
+import { ExcelExportButton } from '../components/ExcelExportButton';
 import { colors, fonts } from '../theme';
 import type { Page, StockBalance } from '../types/api';
 import type { RootStackParams } from '../navigation/types';
@@ -57,7 +58,11 @@ export function StockScreen({ route }: Props) {
       refreshControl={<RefreshControl refreshing={loading} onRefresh={load} colors={[colors.primary]} />}
       ListHeaderComponent={
         <>
-          <PageHeader eyebrow="Live inventory" title="Stock overview" />
+          <PageHeader
+            eyebrow="Live inventory"
+            title="Stock overview"
+            action={<ExcelExportButton reportType={focus === 'godown' ? 'GODOWN_STOCK' : focus === 'sites' ? 'SITE_PENDING_STOCK' : 'CURRENT_STOCK_SUMMARY'} />}
+          />
           <View accessibilityRole="tablist" style={styles.focusTabs}>
             <FocusTab active={focus === 'all'} label="All stock" onPress={() => setFocus('all')} />
             <FocusTab active={focus === 'godown'} label="Godown" onPress={() => setFocus('godown')} />

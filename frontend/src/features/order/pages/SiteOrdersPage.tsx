@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../../api/client';
 import { useAuth } from '../../auth/context/AuthContext';
 import { FormDrawer } from '../../../components/FormDrawer';
+import { ReportExcelButton } from '../../../components/ReportExcelButton';
 import type { Agreement } from '../../agreement/types';
 import type { SiteOrder } from '../types';
 
@@ -230,7 +231,9 @@ export function SiteOrdersPage() {
             Track material orders placed under active site rental agreements.
           </p>
         </div>
-        {canWrite && (
+        <Space wrap>
+          <ReportExcelButton reportType="SITE_ORDERS_REGISTER" filters={{ status, documentNumber: search || undefined }} />
+          {canWrite && (
           <Button
             type="primary"
             icon={<PlusOutlined />}
@@ -245,7 +248,8 @@ export function SiteOrdersPage() {
           >
             Create order
           </Button>
-        )}
+          )}
+        </Space>
       </div>
 
       <Card className="premium-card">
@@ -531,7 +535,7 @@ export function OrderActions({
       <Button size="small" icon={<DownloadOutlined />} onClick={onPdf}>
         PDF
       </Button>
+      <ReportExcelButton size="small" reportType="SITE_ORDERS_REGISTER" filters={{ documentNumber: o.orderNumber }} />
     </Space>
   );
 }
-

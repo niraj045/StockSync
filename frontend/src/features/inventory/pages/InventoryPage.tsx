@@ -5,6 +5,7 @@ import { ArrowDownOutlined, DeleteOutlined, HistoryOutlined, PlusOutlined, Retwe
 import dayjs from 'dayjs';
 import { apiClient } from '../../../api/client';
 import { FormDrawer } from '../../../components/FormDrawer';
+import { ReportExcelButton } from '../../../components/ReportExcelButton';
 import { useAuth } from '../../auth/context/AuthContext';
 
 interface PageResponse<T> { content: T[]; totalElements: number }
@@ -89,11 +90,14 @@ export function InventoryPage() {
     <div className="page-stack">
       <div className="page-header-container">
         <div><h1 className="page-heading">Inventory</h1><p className="page-description">Live stock projection backed by an immutable movement ledger.</p></div>
-        {canPost && <Space wrap>
-          <Button icon={<ArrowDownOutlined />} onClick={() => openPosting('purchase')}>Purchase</Button>
-          <Button icon={<ToolOutlined />} onClick={() => openPosting('scrap')}>Scrap</Button>
-          <Button type="primary" icon={<RetweetOutlined />} onClick={() => openPosting('adjustment')}>Adjustment</Button>
-        </Space>}
+        <Space wrap>
+          <ReportExcelButton reportType="CURRENT_STOCK_SUMMARY" />
+          {canPost && <>
+            <Button icon={<ArrowDownOutlined />} onClick={() => openPosting('purchase')}>Purchase</Button>
+            <Button icon={<ToolOutlined />} onClick={() => openPosting('scrap')}>Scrap</Button>
+            <Button type="primary" icon={<RetweetOutlined />} onClick={() => openPosting('adjustment')}>Adjustment</Button>
+          </>}
+        </Space>
       </div>
       <Card className="premium-card">
         <Tabs items={[

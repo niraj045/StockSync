@@ -5,6 +5,7 @@ export type RootStackParams = {
   Login: undefined;
   Stock: { focus?: 'all' | 'godown' | 'sites' } | undefined;
   GstExport: undefined;
+  ExcelReports: undefined;
   CreateParty: undefined;
   CreateSite: { partyId?: number } | undefined;
   CreateQuotation: { partyId?: number; siteId?: number } | undefined;

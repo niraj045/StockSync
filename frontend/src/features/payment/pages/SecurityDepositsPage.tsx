@@ -7,6 +7,7 @@ import { apiClient } from '../../../api/client';
 import { useAuth } from '../../auth/context/AuthContext';
 import { depositsApi } from '../api';
 import type { DepositSummary, Page, SecurityDepositTransaction } from '../types';
+import { ReportExcelButton } from '../../../components/ReportExcelButton';
 
 type AgreementOption = { id: number; agreementNumber: string; partyNameSnapshot: string; siteNameSnapshot: string };
 type DepositAction = 'RECEIPT' | 'REFUND' | 'ADJUSTMENT_TO_INVOICE';
@@ -100,7 +101,7 @@ export function SecurityDepositsPage() {
           <h1 className="page-heading">Security Deposits</h1>
           <p className="page-description">Record receipts, refunds and explicit invoice adjustments.</p>
         </div>
-        {canWrite(roles) && <Button type="primary" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>New transaction</Button>}
+        <Space wrap><ReportExcelButton reportType="SECURITY_DEPOSIT_REPORT" filters={{ agreementId }} />{canWrite(roles) && <Button type="primary" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>New transaction</Button>}</Space>
       </div>
 
       <Card className="premium-card">

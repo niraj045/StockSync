@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card, Empty, Form, InputNumber, Radio, Space, Statistic } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import { outstandingApi } from '../api';
+import { ReportExcelButton } from '../../../components/ReportExcelButton';
 
 type Scope = 'party' | 'site' | 'agreement' | 'invoice';
 const moneyValue = (value?: number) => value ?? 0;
@@ -31,6 +32,7 @@ export function OutstandingPage() {
           <h1 className="page-heading">Outstanding</h1>
           <p className="page-description">Review billed totals, cash, TDS, deposits, advance and balances.</p>
         </div>
+        <ReportExcelButton reportType="OUTSTANDING_AGEING" filters={scope === 'party' ? { partyId: id } : scope === 'site' ? { siteId: id } : scope === 'agreement' ? { agreementId: id } : {}} />
       </div>
 
       <Card className="premium-card">

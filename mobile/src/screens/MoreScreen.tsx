@@ -45,6 +45,15 @@ export function MoreScreen({ navigation }: Props) {
         <Ionicons name="chevron-forward" size={20} color={colors.muted} />
       </Pressable>
 
+      <Pressable style={styles.menuRow} onPress={() => navigation.navigate('ExcelReports')}>
+        <View style={styles.menuIcon}><Ionicons name="document-text-outline" size={21} color={colors.primary} /></View>
+        <View style={styles.menuCopy}>
+          <Text style={styles.menuTitle}>Excel reports</Text>
+          <Text style={styles.menuText}>Export SteelFab inventory, operations and accounts records</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+      </Pressable>
+
       {canExportGst ? <Pressable style={styles.menuRow} onPress={() => navigation.navigate('GstExport')}>
         <View style={styles.menuIcon}><Ionicons name="calendar-outline" size={21} color={colors.primary} /></View>
         <View style={styles.menuCopy}>

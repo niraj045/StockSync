@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiClient, apiErrorMessage } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { AppButton, Card, EmptyBlock, PageHeader, StatusPill } from '../components/ui';
+import { ExcelExportButton } from '../components/ExcelExportButton';
 import type { MainTabParams, RootStackParams } from '../navigation/types';
 import { colors, fonts } from '../theme';
 import type { Agreement, Page, Party, Quotation, Site } from '../types/api';
@@ -103,15 +104,18 @@ export function SalesScreen({ navigation }: Props) {
       <PageHeader
         eyebrow="Customer to contract"
         title="Sales workflow"
-        action={(mode === 'customers' ? isAdmin : canWrite) ? (
-          <Pressable
-            accessibilityLabel={mode === 'customers' ? 'Create customer' : 'Create quotation'}
-            onPress={() => navigation.navigate(mode === 'customers' ? 'CreateParty' : 'CreateQuotation')}
-            style={styles.add}
-          >
-            <Ionicons name="add" color="#fff" size={26} />
-          </Pressable>
-        ) : undefined}
+        action={<View style={styles.headerActions}>
+          <ExcelExportButton reportType={mode === 'customers' ? 'PARTY_STOCK_SUMMARY' : mode === 'quotations' ? 'QUOTATION_REGISTER' : 'AGREEMENT_REGISTER'} />
+          {(mode === 'customers' ? isAdmin : canWrite) ? (
+            <Pressable
+              accessibilityLabel={mode === 'customers' ? 'Create customer' : 'Create quotation'}
+              onPress={() => navigation.navigate(mode === 'customers' ? 'CreateParty' : 'CreateQuotation')}
+              style={styles.add}
+            >
+              <Ionicons name="add" color="#fff" size={26} />
+            </Pressable>
+          ) : null}
+        </View>}
       />
       <Text style={styles.intro}>Prepare every prerequisite for an order and challan directly from the app.</Text>
       <View style={styles.segments}>
@@ -207,6 +211,7 @@ export function SalesScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   content: { padding: 18, paddingBottom: 36, backgroundColor: colors.canvas, flexGrow: 1 },
   add: { width: 46, height: 46, borderRadius: 8, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   intro: { color: colors.muted, lineHeight: 21, marginTop: -8, marginBottom: 15 },

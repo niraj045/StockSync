@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 import { apiClient } from '../../../api/client';
 import { useAuth } from '../../auth/context/AuthContext';
 import type { BillingRun } from '../types';
+import { ReportExcelButton } from '../../../components/ReportExcelButton';
 
 type Page<T> = { content: T[]; totalElements: number };
 type EligibleAgreement = {
@@ -237,11 +238,14 @@ export function BillingRunsPage() {
           <h1 className="page-heading">Rental Billing Runs</h1>
           <p className="page-description">Manage and calculate site rental timelines and operational charges.</p>
         </div>
-        {canWrite && (
+        <Space wrap>
+          <ReportExcelButton reportType="BILLING_RUN_REGISTER" filters={{ status }} />
+          {canWrite && (
           <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
             New Billing Run
           </Button>
-        )}
+          )}
+        </Space>
       </div>
 
       <Card className="premium-card">

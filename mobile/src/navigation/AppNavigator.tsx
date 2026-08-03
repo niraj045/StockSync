@@ -21,6 +21,7 @@ import { OrdersScreen } from '../screens/OrdersScreen';
 import { CreateOrderScreen } from '../screens/CreateOrderScreen';
 import { StockScreen } from '../screens/StockScreen';
 import { GstExportScreen } from '../screens/GstExportScreen';
+import { ExcelReportsScreen } from '../screens/ExcelReportsScreen';
 import { colors, fonts } from '../theme';
 import type { MainTabParams, RootStackParams } from './types';
 
@@ -100,6 +101,7 @@ export function AppNavigator() {
             <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
             <Stack.Screen name="Stock" component={StockScreen} options={{ title: 'Current stock' }} />
             <Stack.Screen name="GstExport" component={GstExportScreen} options={{ title: 'Monthly GST export' }} />
+            <Stack.Screen name="ExcelReports" component={ExcelReportsScreen} options={{ title: 'Excel reports' }} />
             <Stack.Screen name="CreateParty" component={CreatePartyScreen} options={{ title: 'New customer' }} />
             <Stack.Screen name="CreateSite" component={CreateSiteScreen} options={{ title: 'New site' }} />
             <Stack.Screen name="CreateQuotation" component={CreateQuotationScreen} options={{ title: 'New quotation' }} />

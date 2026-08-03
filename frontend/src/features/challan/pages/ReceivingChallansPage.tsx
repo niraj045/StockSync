@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 import { apiClient } from '../../../api/client';
 import { useAuth } from '../../auth/context/AuthContext';
 import { FormDrawer } from '../../../components/FormDrawer';
+import { ReportExcelButton } from '../../../components/ReportExcelButton';
 import type { ReceivingChallan, ReceivingChallanItem, SiteStockBalance } from '../types';
 
 type Page<T> = { content: T[]; totalElements: number };
@@ -243,7 +244,9 @@ export function ReceivingChallansPage() {
           <h1 className="page-heading">Receiving Challans</h1>
           <p className="page-description">Record returns and reconcile deployed site materials.</p>
         </div>
-        {canWrite && (
+        <Space wrap>
+          <ReportExcelButton reportType="RECEIVING_CHALLANS_REGISTER" filters={{ documentNumber: search || undefined }} />
+          {canWrite && (
           <Button
             type="primary"
             icon={<PlusOutlined />}
@@ -255,7 +258,8 @@ export function ReceivingChallansPage() {
           >
             New Return
           </Button>
-        )}
+          )}
+        </Space>
       </div>
 
       <div className="master-detail-container">
@@ -297,6 +301,7 @@ export function ReceivingChallansPage() {
                   <Button icon={<DownloadOutlined />} onClick={() => handleDownloadPdf(selected)}>
                     PDF
                   </Button>
+                  <ReportExcelButton reportType="RECEIVING_CHALLANS_REGISTER" filters={{ documentNumber: selected.receivingChallanNumber }} />
                   {selected.status === 'EXTRA_APPROVAL_REQUIRED' && admin && (
                     <Button type="primary" icon={<CheckCircleOutlined />} onClick={() => approveExtra.mutate(selected.id)}>
                       Approve Extra

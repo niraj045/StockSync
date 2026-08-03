@@ -19,16 +19,28 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.ss.util.WorkbookUtil;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
@@ -64,7 +76,7 @@ public class ReportExportService {
             if (!file.startsWith(exportRoot)) throw new BusinessRuleException("INVALID_EXPORT_PATH", "Invalid export path");
             byte[] bytes = switch (format) {
                 case CSV -> csv(rows);
-                case EXCEL -> excel(type, rows);
+                case EXCEL -> excel(type, filters, rows);
                 case PDF -> pdf(type, rows);
             };
             Files.write(file, bytes);
@@ -132,24 +144,180 @@ public class ReportExportService {
         return out.toString().getBytes(StandardCharsets.UTF_8);
     }
 
-    private byte[] excel(String type, List<Map<String, Object>> rows) throws IOException {
+    private byte[] excel(String type, ReportFilterRequest filters, List<Map<String, Object>> rows) throws IOException {
         try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            var sheet = workbook.createSheet(type.length() > 31 ? type.substring(0, 31) : type);
+            String reportName = displayHeader(type);
+            var sheet = workbook.createSheet(WorkbookUtil.createSafeSheetName(reportName));
+            sheet.setDisplayGridlines(false);
+            sheet.setAutobreaks(true);
+            sheet.getPrintSetup().setLandscape(true);
+            sheet.getPrintSetup().setFitWidth((short) 1);
+            sheet.setFitToPage(true);
+
+            CellStyle companyStyle = titleStyle(workbook, 16, IndexedColors.DARK_TEAL, true);
+            CellStyle reportStyle = titleStyle(workbook, 13, IndexedColors.BLACK, true);
+            CellStyle metadataStyle = titleStyle(workbook, 9, IndexedColors.GREY_50_PERCENT, false);
+            CellStyle headerStyle = headerStyle(workbook);
+            CellStyle textStyle = bodyStyle(workbook, false);
+            CellStyle alternateStyle = bodyStyle(workbook, true);
+            CellStyle numberStyle = workbook.createCellStyle();
+            numberStyle.cloneStyleFrom(textStyle);
+            numberStyle.setDataFormat(workbook.createDataFormat().getFormat("#,##0.00##"));
+            CellStyle alternateNumberStyle = workbook.createCellStyle();
+            alternateNumberStyle.cloneStyleFrom(alternateStyle);
+            alternateNumberStyle.setDataFormat(workbook.createDataFormat().getFormat("#,##0.00##"));
+            CellStyle dateStyle = workbook.createCellStyle();
+            dateStyle.cloneStyleFrom(textStyle);
+            dateStyle.setDataFormat(workbook.createDataFormat().getFormat("dd-mmm-yyyy"));
+            CellStyle alternateDateStyle = workbook.createCellStyle();
+            alternateDateStyle.cloneStyleFrom(alternateStyle);
+            alternateDateStyle.setDataFormat(workbook.createDataFormat().getFormat("dd-mmm-yyyy"));
+
+            int columnCount = rows.isEmpty() ? 1 : rows.getFirst().size();
+            int mergeEnd = Math.max(5, columnCount - 1);
+            addLetterhead(workbook, sheet);
+            Row company = sheet.createRow(0);
+            company.setHeightInPoints(28);
+            Cell companyCell = company.createCell(1);
+            companyCell.setCellValue("SteelFab Scaffoldings & Engineering Pvt. Ltd.");
+            companyCell.setCellStyle(companyStyle);
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 1, mergeEnd));
+
+            Row report = sheet.createRow(1);
+            Cell reportCell = report.createCell(1);
+            reportCell.setCellValue(reportName);
+            reportCell.setCellStyle(reportStyle);
+            sheet.addMergedRegion(new CellRangeAddress(1, 1, 1, mergeEnd));
+
+            Row generated = sheet.createRow(2);
+            Cell generatedCell = generated.createCell(1);
+            generatedCell.setCellValue("Generated: " + LocalDateTime.now(ZoneId.of("Asia/Kolkata")).format(DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a")));
+            generatedCell.setCellStyle(metadataStyle);
+            sheet.addMergedRegion(new CellRangeAddress(2, 2, 1, mergeEnd));
+
+            Row filterRow = sheet.createRow(3);
+            Cell filterCell = filterRow.createCell(1);
+            filterCell.setCellValue(filterSummary(filters));
+            filterCell.setCellStyle(metadataStyle);
+            sheet.addMergedRegion(new CellRangeAddress(3, 3, 1, mergeEnd));
+
+            int headerIndex = 5;
             if (rows.isEmpty()) {
-                sheet.createRow(0).createCell(0).setCellValue("No data");
+                Cell empty = sheet.createRow(headerIndex).createCell(0);
+                empty.setCellValue("No records match the selected filters.");
+                empty.setCellStyle(textStyle);
             } else {
                 List<String> headers = List.copyOf(rows.getFirst().keySet());
-                Row header = sheet.createRow(0);
-                for (int i = 0; i < headers.size(); i++) header.createCell(i).setCellValue(headers.get(i));
-                for (int r = 0; r < rows.size(); r++) {
-                    Row row = sheet.createRow(r + 1);
-                    for (int c = 0; c < headers.size(); c++) setCell(row.createCell(c), rows.get(r).get(headers.get(c)));
+                Row header = sheet.createRow(headerIndex);
+                header.setHeightInPoints(28);
+                for (int i = 0; i < headers.size(); i++) {
+                    Cell cell = header.createCell(i);
+                    cell.setCellValue(displayHeader(headers.get(i)));
+                    cell.setCellStyle(headerStyle);
                 }
-                for (int i = 0; i < Math.min(headers.size(), 20); i++) sheet.autoSizeColumn(i);
+                for (int r = 0; r < rows.size(); r++) {
+                    Row row = sheet.createRow(headerIndex + r + 1);
+                    boolean alternate = r % 2 == 1;
+                    for (int c = 0; c < headers.size(); c++) {
+                        Cell cell = row.createCell(c);
+                        setCell(cell, rows.get(r).get(headers.get(c)), alternate, textStyle, alternateStyle,
+                                numberStyle, alternateNumberStyle, dateStyle, alternateDateStyle);
+                    }
+                }
+                sheet.createFreezePane(0, headerIndex + 1);
+                sheet.setAutoFilter(new CellRangeAddress(headerIndex, headerIndex + rows.size(), 0, headers.size() - 1));
+                sheet.setRepeatingRows(CellRangeAddress.valueOf("$" + (headerIndex + 1) + ":$" + (headerIndex + 1)));
+                for (int i = 0; i < Math.min(headers.size(), 30); i++) {
+                    sheet.autoSizeColumn(i);
+                    sheet.setColumnWidth(i, Math.min(Math.max(sheet.getColumnWidth(i) + 768, 3200), 12000));
+                }
             }
             workbook.write(out);
             return out.toByteArray();
         }
+    }
+
+    private void addLetterhead(XSSFWorkbook workbook, org.apache.poi.xssf.usermodel.XSSFSheet sheet) {
+        try {
+            var resource = new ClassPathResource("pdf-assets/steelfab-letterhead.jpg");
+            if (!resource.exists()) return;
+            int picture = workbook.addPicture(resource.getInputStream().readAllBytes(), XSSFWorkbook.PICTURE_TYPE_JPEG);
+            var anchor = workbook.getCreationHelper().createClientAnchor();
+            anchor.setCol1(0);
+            anchor.setRow1(0);
+            anchor.setCol2(1);
+            anchor.setRow2(4);
+            sheet.createDrawingPatriarch().createPicture(anchor, picture);
+            sheet.setColumnWidth(0, 2800);
+        } catch (IOException ignored) {
+            // Branding text remains available if the packaged artwork cannot be read.
+        }
+    }
+
+    private CellStyle titleStyle(XSSFWorkbook workbook, int size, IndexedColors color, boolean bold) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setFontName("Aptos");
+        font.setFontHeightInPoints((short) size);
+        font.setBold(bold);
+        font.setColor(color.getIndex());
+        style.setFont(font);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        return style;
+    }
+
+    private CellStyle headerStyle(XSSFWorkbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setFontName("Aptos");
+        font.setFontHeightInPoints((short) 10);
+        font.setBold(true);
+        font.setColor(IndexedColors.WHITE.getIndex());
+        style.setFont(font);
+        style.setFillForegroundColor(IndexedColors.DARK_TEAL.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        style.setAlignment(HorizontalAlignment.LEFT);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        return style;
+    }
+
+    private CellStyle bodyStyle(XSSFWorkbook workbook, boolean alternate) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setFontName("Aptos");
+        font.setFontHeightInPoints((short) 10);
+        style.setFont(font);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        if (alternate) {
+            style.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        }
+        return style;
+    }
+
+    private String filterSummary(ReportFilterRequest filters) {
+        List<String> values = new ArrayList<>();
+        if (filters.startDate() != null) values.add("From " + filters.startDate());
+        if (filters.endDate() != null) values.add("To " + filters.endDate());
+        if (filters.month() != null) values.add("Month " + filters.month());
+        if (filters.partyId() != null) values.add("Party ID " + filters.partyId());
+        if (filters.siteId() != null) values.add("Site ID " + filters.siteId());
+        if (filters.agreementId() != null) values.add("Agreement ID " + filters.agreementId());
+        if (filters.itemId() != null) values.add("Item ID " + filters.itemId());
+        if (filters.categoryId() != null) values.add("Category ID " + filters.categoryId());
+        if (filters.status() != null && !filters.status().isBlank()) values.add("Status " + filters.status());
+        if (filters.documentNumber() != null && !filters.documentNumber().isBlank()) values.add("Document " + filters.documentNumber());
+        return values.isEmpty() ? "Filters: All records" : "Filters: " + String.join(" | ", values);
+    }
+
+    private String displayHeader(String header) {
+        String[] words = header.replace('_', ' ').trim().split("\\s+");
+        List<String> display = new ArrayList<>();
+        for (String word : words) {
+            String lower = word.toLowerCase(Locale.ROOT);
+            display.add(lower.isEmpty() ? lower : Character.toUpperCase(lower.charAt(0)) + lower.substring(1));
+        }
+        return String.join(" ", display);
     }
 
     private byte[] pdf(String type, List<Map<String, Object>> rows) throws IOException {
@@ -179,12 +347,23 @@ public class ReportExportService {
         }
     }
 
-    private void setCell(Cell cell, Object value) {
+    private void setCell(Cell cell, Object value, boolean alternate, CellStyle textStyle, CellStyle alternateStyle,
+                         CellStyle numberStyle, CellStyle alternateNumberStyle, CellStyle dateStyle, CellStyle alternateDateStyle) {
+        cell.setCellStyle(alternate ? alternateStyle : textStyle);
         if (value == null) return;
-        if (value instanceof BigDecimal bd) cell.setCellValue(bd.doubleValue());
-        else if (value instanceof Number n) cell.setCellValue(n.doubleValue());
-        else if (value instanceof java.sql.Date d) cell.setCellValue(d.toLocalDate().format(DateTimeFormatter.ISO_DATE));
-        else if (value instanceof java.sql.Timestamp t) cell.setCellValue(t.toInstant().toString());
+        if (value instanceof BigDecimal bd) {
+            cell.setCellValue(bd.doubleValue());
+            cell.setCellStyle(alternate ? alternateNumberStyle : numberStyle);
+        } else if (value instanceof Number n) {
+            cell.setCellValue(n.doubleValue());
+            cell.setCellStyle(alternate ? alternateNumberStyle : numberStyle);
+        } else if (value instanceof java.sql.Date d) {
+            cell.setCellValue(d.toLocalDate());
+            cell.setCellStyle(alternate ? alternateDateStyle : dateStyle);
+        } else if (value instanceof LocalDate d) {
+            cell.setCellValue(d);
+            cell.setCellStyle(alternate ? alternateDateStyle : dateStyle);
+        } else if (value instanceof java.sql.Timestamp t) cell.setCellValue(t.toInstant().toString());
         else cell.setCellValue(String.valueOf(value));
     }
 

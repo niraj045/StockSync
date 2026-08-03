@@ -16,6 +16,7 @@ import {
 import { apiClient, apiErrorMessage } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { Card, EmptyBlock, PageHeader, StatusPill } from '../components/ui';
+import { ExcelExportButton } from '../components/ExcelExportButton';
 import type { MainTabParams, RootStackParams } from '../navigation/types';
 import { colors, fonts } from '../theme';
 import type { IssuedChallan, Page, ReceivingChallan } from '../types/api';
@@ -74,15 +75,21 @@ export function ChallansScreen({ navigation }: Props) {
           <PageHeader
             eyebrow="Daily operations"
             title="Challans"
-            action={canWrite ? (
-              <Pressable
-                accessibilityLabel={mode === 'issued' ? 'Issue challan' : 'Record material return'}
-                onPress={() => navigation.navigate(mode === 'issued' ? 'CreateIssuedChallan' : 'CreateReceivingChallan')}
-                style={styles.add}
-              >
-                <Ionicons name="add" color="#fff" size={26} />
-              </Pressable>
-            ) : undefined}
+            action={<View style={styles.headerActions}>
+              <ExcelExportButton
+                reportType={mode === 'issued' ? 'ISSUED_CHALLANS_REGISTER' : 'RECEIVING_CHALLANS_REGISTER'}
+                filters={{ documentNumber: search.trim() || undefined }}
+              />
+              {canWrite ? (
+                <Pressable
+                  accessibilityLabel={mode === 'issued' ? 'Issue challan' : 'Record material return'}
+                  onPress={() => navigation.navigate(mode === 'issued' ? 'CreateIssuedChallan' : 'CreateReceivingChallan')}
+                  style={styles.add}
+                >
+                  <Ionicons name="add" color="#fff" size={26} />
+                </Pressable>
+              ) : null}
+            </View>}
           />
           <View style={styles.segment}>
             <Segment label="Issued" active={mode === 'issued'} onPress={() => setMode('issued')} />
@@ -156,6 +163,7 @@ function Segment({ label, active, onPress }: { label: string; active: boolean; o
 }
 
 const styles = StyleSheet.create({
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   content: { padding: 18, paddingBottom: 34, backgroundColor: colors.canvas, flexGrow: 1 },
   add: { width: 46, height: 46, borderRadius: 8, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   segment: { flexDirection: 'row', backgroundColor: '#E3E6E9', borderRadius: 8, padding: 4, marginBottom: 12 },

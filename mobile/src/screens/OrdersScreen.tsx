@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiClient, apiErrorMessage } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { AppButton, Card, EmptyBlock, PageHeader, StatusPill } from '../components/ui';
+import { ExcelExportButton } from '../components/ExcelExportButton';
 import type { MainTabParams, RootStackParams } from '../navigation/types';
 import { colors, fonts } from '../theme';
 import type { Page, SiteOrder } from '../types/api';
@@ -79,11 +80,14 @@ export function OrdersScreen({ navigation }: Props) {
           <PageHeader
             eyebrow="Order to dispatch"
             title="Site orders"
-            action={canWrite ? (
-              <Pressable accessibilityLabel="Create site order" onPress={() => navigation.navigate('CreateOrder')} style={styles.add}>
-                <Ionicons name="add" color="#fff" size={26} />
-              </Pressable>
-            ) : undefined}
+            action={<View style={styles.headerActions}>
+              <ExcelExportButton reportType="SITE_ORDERS_REGISTER" />
+              {canWrite ? (
+                <Pressable accessibilityLabel="Create site order" onPress={() => navigation.navigate('CreateOrder')} style={styles.add}>
+                  <Ionicons name="add" color="#fff" size={26} />
+                </Pressable>
+              ) : null}
+            </View>}
           />
           <Text style={styles.intro}>Create the material request, confirm it, then issue the challan without leaving the app.</Text>
           {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -132,6 +136,7 @@ export function OrdersScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   content: { padding: 18, paddingBottom: 34, backgroundColor: colors.canvas, flexGrow: 1 },
   add: { width: 46, height: 46, borderRadius: 8, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   intro: { color: colors.muted, lineHeight: 21, marginTop: -8, marginBottom: 16 },

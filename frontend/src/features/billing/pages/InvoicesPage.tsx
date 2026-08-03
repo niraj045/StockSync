@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 import { apiClient } from '../../../api/client';
 import type { Invoice } from '../types';
+import { ReportExcelButton } from '../../../components/ReportExcelButton';
 
 type Page<T> = { content: T[]; totalElements: number };
 const money = (v?: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(v ?? 0);
@@ -45,6 +46,7 @@ export function InvoicesPage() {
           <h1 className="page-heading">Rental Invoices</h1>
           <p className="page-description">Track rent and recovery charges billed to customers.</p>
         </div>
+        <ReportExcelButton reportType="INVOICE_REGISTER" filters={{ agreementId, status }} />
       </div>
 
       <Card className="premium-card">

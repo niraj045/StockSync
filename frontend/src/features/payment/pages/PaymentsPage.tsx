@@ -7,6 +7,7 @@ import { apiClient } from '../../../api/client';
 import { useAuth } from '../../auth/context/AuthContext';
 import { paymentsApi, type AllocationInput, type PaymentInput } from '../api';
 import type { EligibleInvoice, Page, PaymentReceipt } from '../types';
+import { ReportExcelButton } from '../../../components/ReportExcelButton';
 
 type PartyOption = { id: number; legalName: string };
 type PaymentFormValues = Omit<PaymentInput, 'paymentDate' | 'chequeDate' | 'allocations'> & {
@@ -128,7 +129,7 @@ export function PaymentsPage() {
           <h1 className="page-heading">Payments</h1>
           <p className="page-description">Record receipts, TDS, invoice allocations and advances.</p>
         </div>
-        <Button icon={<PlusOutlined />} type="primary" onClick={() => setDrawerOpen(true)}>Create payment</Button>
+        <Space wrap><ReportExcelButton reportType="PAYMENT_REGISTER" filters={{ documentNumber: search || undefined }} /><Button icon={<PlusOutlined />} type="primary" onClick={() => setDrawerOpen(true)}>Create payment</Button></Space>
       </div>
 
       <Card className="premium-card">
