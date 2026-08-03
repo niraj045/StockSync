@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { CompositeScreenProps } from '@react-navigation/native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiClient, apiErrorMessage } from '../api/client';
@@ -7,9 +10,15 @@ import { useAuth } from '../auth/AuthContext';
 import { Card, EmptyBlock } from '../components/ui';
 import { colors, fonts } from '../theme';
 import type { DashboardOverview } from '../types/api';
+import type { MainTabParams, RootStackParams } from '../navigation/types';
 import { localDate, quantity } from '../utils/format';
 
-export function DashboardScreen() {
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<MainTabParams, 'Dashboard'>,
+  NativeStackScreenProps<RootStackParams>
+>;
+
+export function DashboardScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const [data, setData] = useState<DashboardOverview | null>(null);
@@ -75,8 +84,20 @@ export function DashboardScreen() {
 
           <Text style={styles.sectionLabel}>Inventory position</Text>
           <View style={styles.metricGrid}>
-            <Metric icon="business-outline" label="Godown available" tone="green" value={quantity(data.stockSummary.godownAvailable)} />
-            <Metric icon="location-outline" label="At sites" tone="blue" value={quantity(data.stockSummary.materialAtSites)} />
+            <Metric
+              icon="business-outline"
+              label="Godown available"
+              onPress={() => navigation.navigate('Stock', { focus: 'godown' })}
+              tone="green"
+              value={quantity(data.stockSummary.godownAvailable)}
+            />
+            <Metric
+              icon="location-outline"
+              label="At sites"
+              onPress={() => navigation.navigate('Stock', { focus: 'sites' })}
+              tone="blue"
+              value={quantity(data.stockSummary.materialAtSites)}
+            />
             <Metric icon="document-text-outline" label="Open orders" tone="purple" value={quantity(data.orderSummary.openSiteOrders)} />
             <Metric icon="briefcase-outline" label="Active agreements" tone="saffron" value={quantity(data.agreementSummary.activeAgreements)} />
           </View>
@@ -115,9 +136,15 @@ export function DashboardScreen() {
   );
 }
 
-function Metric({ icon, label, value, tone }: { icon: keyof typeof Ionicons.glyphMap; label: string; value: string; tone: 'blue' | 'green' | 'purple' | 'saffron' }) {
-  return (
-    <Card style={styles.metric}>
+function Metric({ icon, label, value, tone, onPress }: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string;
+  tone: 'blue' | 'green' | 'purple' | 'saffron';
+  onPress?: () => void;
+}) {
+  const content = (
+    <Card style={[styles.metric, onPress && styles.metricInteractive]}>
       <View style={[styles.metricIcon, tone === 'blue' && styles.metricBlue, tone === 'green' && styles.metricGreen,
         tone === 'purple' && styles.metricPurple, tone === 'saffron' && styles.metricSaffron]}>
         <Ionicons name={icon} size={21} color={tone === 'green' ? colors.green : tone === 'blue' ? colors.blue
@@ -126,6 +153,18 @@ function Metric({ icon, label, value, tone }: { icon: keyof typeof Ionicons.glyp
       <Text style={styles.metricLabel}>{label}</Text>
       <Text numberOfLines={1} adjustsFontSizeToFit style={styles.metricValue}>{value}</Text>
     </Card>
+  );
+  if (!onPress) return <View style={styles.metricSlot}>{content}</View>;
+  return (
+    <Pressable
+      accessibilityHint={`Opens ${label.toLowerCase()} item balances`}
+      accessibilityLabel={`View ${label}`}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.metricSlot, pressed && styles.metricPressed]}
+    >
+      {content}
+    </Pressable>
   );
 }
 
@@ -156,7 +195,10 @@ const styles = StyleSheet.create({
   pulsePeriod: { marginLeft: 'auto', color: '#D8E2EE', fontSize: 11, fontFamily: fonts.semiBold },
   sectionLabel: { color: colors.ink, fontSize: 16, fontFamily: fonts.bold, marginBottom: 10 },
   metricGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  metric: { width: '48.5%', minHeight: 142, justifyContent: 'space-between' },
+  metricSlot: { width: '48.5%' },
+  metric: { width: '100%', minHeight: 142, justifyContent: 'space-between' },
+  metricInteractive: { borderColor: '#C5D5E5' },
+  metricPressed: { opacity: 0.72, transform: [{ scale: 0.98 }] },
   metricIcon: { width: 42, height: 42, borderRadius: 8, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
   metricBlue: { backgroundColor: colors.blueSoft },
   metricGreen: { backgroundColor: colors.greenSoft },

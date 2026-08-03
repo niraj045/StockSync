@@ -1,19 +1,29 @@
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, RefreshControl, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiClient, apiErrorMessage } from '../api/client';
 import { Card, EmptyBlock, PageHeader } from '../components/ui';
 import { colors, fonts } from '../theme';
 import type { Page, StockBalance } from '../types/api';
+import type { RootStackParams } from '../navigation/types';
 import { quantity } from '../utils/format';
 
-export function StockScreen() {
+type Props = NativeStackScreenProps<RootStackParams, 'Stock'>;
+type StockFocus = 'all' | 'godown' | 'sites';
+
+export function StockScreen({ route }: Props) {
   const insets = useSafeAreaInsets();
   const [items, setItems] = useState<StockBalance[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [focus, setFocus] = useState<StockFocus>(route.params?.focus ?? 'all');
+
+  useEffect(() => {
+    setFocus(route.params?.focus ?? 'all');
+  }, [route.params?.focus]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -35,15 +45,24 @@ export function StockScreen() {
     return () => clearTimeout(timer);
   }, [load]);
 
+  const visibleItems = items.filter((item) => focus === 'godown'
+    ? Number(item.availableQuantity) > 0
+    : focus === 'sites' ? Number(item.issuedQuantity) > 0 : true);
+
   return (
     <FlatList
-      data={items}
+      data={visibleItems}
       keyExtractor={(item) => String(item.itemId)}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + 18 }]}
       refreshControl={<RefreshControl refreshing={loading} onRefresh={load} colors={[colors.primary]} />}
       ListHeaderComponent={
         <>
           <PageHeader eyebrow="Live inventory" title="Stock overview" />
+          <View accessibilityRole="tablist" style={styles.focusTabs}>
+            <FocusTab active={focus === 'all'} label="All stock" onPress={() => setFocus('all')} />
+            <FocusTab active={focus === 'godown'} label="Godown" onPress={() => setFocus('godown')} />
+            <FocusTab active={focus === 'sites'} label="At sites" onPress={() => setFocus('sites')} />
+          </View>
           <View style={styles.search}>
             <Ionicons name="search-outline" size={20} color={colors.muted} />
             <TextInput
@@ -59,7 +78,9 @@ export function StockScreen() {
           {error ? <Text style={styles.error}>{error}</Text> : null}
         </>
       }
-      ListEmptyComponent={!loading ? <Card><EmptyBlock title="No stock found" message="Try another item name or code." /></Card> : null}
+      ListEmptyComponent={!loading ? <Card><EmptyBlock title="No stock found" message={focus === 'all'
+        ? 'Try another item name or code.'
+        : `There are no materials with ${focus === 'godown' ? 'godown' : 'site'} balance.`} /></Card> : null}
       renderItem={({ item }) => (
         <Card style={styles.item}>
           <View style={styles.itemTop}>
@@ -81,6 +102,19 @@ export function StockScreen() {
   );
 }
 
+function FocusTab({ active, label, onPress }: { active: boolean; label: string; onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityRole="tab"
+      accessibilityState={{ selected: active }}
+      onPress={onPress}
+      style={({ pressed }) => [styles.focusTab, active && styles.focusTabActive, pressed && styles.focusTabPressed]}
+    >
+      <Text style={[styles.focusTabText, active && styles.focusTabTextActive]}>{label}</Text>
+    </Pressable>
+  );
+}
+
 function StockValue({ label, value, strong }: { label: string; value: number; strong?: boolean }) {
   return (
     <View style={styles.stockValue}>
@@ -92,6 +126,12 @@ function StockValue({ label, value, strong }: { label: string; value: number; st
 
 const styles = StyleSheet.create({
   content: { padding: 18, paddingBottom: 34, backgroundColor: colors.canvas, flexGrow: 1 },
+  focusTabs: { flexDirection: 'row', padding: 3, marginBottom: 12, borderRadius: 8, backgroundColor: colors.neutralSoft },
+  focusTab: { flex: 1, minHeight: 42, alignItems: 'center', justifyContent: 'center', borderRadius: 6 },
+  focusTabActive: { backgroundColor: colors.primary },
+  focusTabPressed: { opacity: 0.75 },
+  focusTabText: { color: colors.muted, fontSize: 12, fontFamily: fonts.semiBold },
+  focusTabTextActive: { color: '#fff', fontFamily: fonts.bold },
   search: { flexDirection: 'row', alignItems: 'center', gap: 9, backgroundColor: '#fff', borderWidth: 1, borderColor: colors.line, borderRadius: 8, paddingHorizontal: 14, marginBottom: 14 },
   searchInput: { flex: 1, height: 50, color: colors.ink, fontSize: 16 },
   error: { color: colors.red, backgroundColor: colors.redSoft, borderRadius: 8, padding: 12, marginBottom: 12 },
