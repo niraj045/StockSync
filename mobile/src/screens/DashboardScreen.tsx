@@ -84,22 +84,28 @@ export function DashboardScreen({ navigation }: Props) {
 
           <Text style={styles.sectionLabel}>Inventory position</Text>
           <View style={styles.metricGrid}>
-            <Metric
-              icon="business-outline"
-              label="Godown available"
-              onPress={() => navigation.navigate('Stock', { focus: 'godown' })}
-              tone="green"
-              value={quantity(data.stockSummary.godownAvailable)}
-            />
-            <Metric
-              icon="location-outline"
-              label="At sites"
-              onPress={() => navigation.navigate('Stock', { focus: 'sites' })}
-              tone="blue"
-              value={quantity(data.stockSummary.materialAtSites)}
-            />
-            <Metric icon="document-text-outline" label="Open orders" tone="purple" value={quantity(data.orderSummary.openSiteOrders)} />
-            <Metric icon="briefcase-outline" label="Active agreements" tone="saffron" value={quantity(data.agreementSummary.activeAgreements)} />
+            <View style={styles.metricRow}>
+              <Metric
+                icon="business-outline"
+                label="Godown available"
+                onPress={() => navigation.navigate('Stock', { focus: 'godown' })}
+                side="left"
+                tone="green"
+                value={quantity(data.stockSummary.godownAvailable)}
+              />
+              <Metric
+                icon="location-outline"
+                label="At sites"
+                onPress={() => navigation.navigate('Stock', { focus: 'sites' })}
+                side="right"
+                tone="blue"
+                value={quantity(data.stockSummary.materialAtSites)}
+              />
+            </View>
+            <View style={styles.metricRow}>
+              <Metric icon="document-text-outline" label="Open orders" side="left" tone="purple" value={quantity(data.orderSummary.openSiteOrders)} />
+              <Metric icon="briefcase-outline" label="Active agreements" side="right" tone="saffron" value={quantity(data.agreementSummary.activeAgreements)} />
+            </View>
           </View>
 
           <Card style={styles.controlCard}>
@@ -136,10 +142,11 @@ export function DashboardScreen({ navigation }: Props) {
   );
 }
 
-function Metric({ icon, label, value, tone, onPress }: {
+function Metric({ icon, label, value, side, tone, onPress }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   value: string;
+  side: 'left' | 'right';
   tone: 'blue' | 'green' | 'purple' | 'saffron';
   onPress?: () => void;
 }) {
@@ -154,14 +161,15 @@ function Metric({ icon, label, value, tone, onPress }: {
       <Text numberOfLines={1} adjustsFontSizeToFit style={styles.metricValue}>{value}</Text>
     </Card>
   );
-  if (!onPress) return <View style={styles.metricSlot}>{content}</View>;
+  const slotStyle = [styles.metricSlot, side === 'left' ? styles.metricSlotLeft : styles.metricSlotRight];
+  if (!onPress) return <View style={slotStyle}>{content}</View>;
   return (
     <Pressable
       accessibilityHint={`Opens ${label.toLowerCase()} item balances`}
       accessibilityLabel={`View ${label}`}
       accessibilityRole="button"
       onPress={onPress}
-      style={({ pressed }) => [styles.metricSlot, pressed && styles.metricPressed]}
+      style={({ pressed }) => [slotStyle, pressed && styles.metricPressed]}
     >
       {content}
     </Pressable>
@@ -194,8 +202,11 @@ const styles = StyleSheet.create({
   pulseDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: colors.saffron, marginHorizontal: 8 },
   pulsePeriod: { marginLeft: 'auto', color: '#D8E2EE', fontSize: 11, fontFamily: fonts.semiBold },
   sectionLabel: { color: colors.ink, fontSize: 16, fontFamily: fonts.bold, marginBottom: 10 },
-  metricGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  metricSlot: { width: '48.5%' },
+  metricGrid: { width: '100%' },
+  metricRow: { flexDirection: 'row', width: '100%', marginBottom: 10 },
+  metricSlot: { flex: 1, minWidth: 0 },
+  metricSlotLeft: { marginRight: 5 },
+  metricSlotRight: { marginLeft: 5 },
   metric: { width: '100%', minHeight: 142, justifyContent: 'space-between' },
   metricInteractive: { borderColor: '#C5D5E5' },
   metricPressed: { opacity: 0.72, transform: [{ scale: 0.98 }] },
