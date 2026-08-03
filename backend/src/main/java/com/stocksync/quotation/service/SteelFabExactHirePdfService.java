@@ -39,6 +39,8 @@ public class SteelFabExactHirePdfService {
         }
     }
 
+    public int coordinatesVersion() { return config.coordinatesVersion(); }
+
     public PdfDocument generate(QuotationResponse quotation) {
         requireExactTemplate(quotation);
         SteelFabExactHireRequest exact = quotation.exactHire();
@@ -64,50 +66,188 @@ public class SteelFabExactHirePdfService {
 
     private void stamp(PDDocument document, QuotationResponse q, SteelFabExactHireRequest e,
             List<QuotationItemResponse> items) throws IOException {
-        draw(document, "referenceNumber", " "+q.quotationNumber());
-        draw(document, "quotationDate", " "+format.dated(q.quotationDate()));
-        draw(document, "partyName", q.partyName());
-        draw(document, "partyAddress", e.partyAddress());
-        draw(document, "subject", " "+value(e.subject(), "Quotation for Supply of H frame Scaffolding Materials on Hire for " + q.siteName() + "."));
         int validity = e.validityDays() == null ? 7 : e.validityDays();
-        draw(document, "validity", validity + " (" + format.integerWords(validity) + ")");
         String minimumPeriod=value(e.minimumHirePeriod(), "6 Months (180 days)");
-        draw(document, "minimumHirePeriod", " "+minimumPeriod);
-        draw(document, "minimumHireCommitment", " "+minimumPeriod.replaceFirst("\\s*\\(.*$", "").replaceFirst("\\.*$", "")+".");
-        draw(document, "siteMeasurement", "As per the " + q.siteName() + " measurement of " + format.quantity(e.siteLengthRmt())
-                + " RMT Length and " + format.quantity(e.siteHeightMtr()) + " MTR Height, the approximate quantity of H-Frame type scaffolding material required for the complete site are as follows:");
-        drawRequiredMaterials(document, items);
-        drawPrimaryMaterialTable(document, items.subList(0, Math.min(PRIMARY_TABLE_ROWS, items.size())));
-        draw(document, "subtotal", format.money(q.subtotal()));
+        drawPageOne(document, q, e, items, validity, minimumPeriod);
         BigDecimal gst = e.gstPercentage() == null ? q.cgstRate().add(q.sgstRate()).add(q.igstRate()) : e.gstPercentage();
-        draw(document, "gstLabel", "GST " + format.quantity(gst) + "%");
-        draw(document, "gstAmount", format.money(q.totalTax()));
-        draw(document, "grandTotal", format.money(q.grandTotal()));
-        draw(document, "amountInWords", " "+format.amountInWords(q.grandTotal()));
-        draw(document, "authorizedPerson", value(e.authorizedPerson(), "Hussain Golwala"));
-
-        draw(document, "hirerDefinition", "\"Hirer/You/Your\": Refers to the person, firm, or company i.e. (M/s. "
-                + q.partyName() + ") to whom the scaffolding material is being hired.");
         int minimumDays = e.minimumHireDays() == null ? 90 : e.minimumHireDays();
-        draw(document, "minimumHireSentence", "The minimum hire period is " + minimumDays + " days. If the materials is returned before "
-                + minimumDays + " days, you will still be charged for the full " + minimumDays + " days of rent.");
-        drawReplacementMaterials(document, items);
-        draw(document, "securityDepositSentence", "A refundable security deposit of Rs. " + format.quantity(q.securityDeposit())
-                + "/- (Rupees " + format.amountInWords(q.securityDeposit()).replace("INR ", "").replace(" Only", "") + " Only). This amount will be");
-        draw(document, "advanceRent", format.quantity(e.advanceRent()) + "/-");
         int dueDays = e.paymentDueDays() == null ? 3 : e.paymentDueDays();
-        draw(document, "paymentTerms", "We will raise an invoice on a monthly basis. Payment is due within " + dueDays
-                + " days from the date of the invoice. If there is any delay in making the payment beyond " + dueDays
-                + " (" + format.integerWords(dueDays) + ") days, this matter shall be discussed mutually.");
+        drawPageTwo(document, q, e, items, gst);
+        drawPageThree(document, q);
+        drawPageFour(document, q, e, items, minimumDays, dueDays);
+        drawPageFive(document, q, e);
+    }
 
-        draw(document, "signatoryName", value(e.authorizedPerson(), "Hussain Golwala"));
-        draw(document, "signatoryDesignation", "(" + value(e.authorizedDesignation(), "Sales Executive") + ")");
-        draw(document, "signatoryPhone", " "+value(e.authorizedPhone(), "8451044007"));
-        draw(document, "acceptedCustomer", q.partyName());
-        draw(document, "acceptedBy", e.acceptedBy());
-        draw(document, "acceptedDesignation", e.acceptedDesignation());
-        draw(document, "acceptedPhone", e.acceptedPhone());
-        draw(document, "acceptedDate", format.date(e.acceptedDate()));
+    private void drawPageOne(PDDocument document, QuotationResponse q, SteelFabExactHireRequest e,
+            List<QuotationItemResponse> items, int validity, String minimumPeriod) throws IOException {
+        fillWhite(document, 0, 42, 96, 512, 690);
+        float x = 56;
+        drawFittedText(document, 0, x, 110, 54, 16, 10.5f, "LEFT", true, "Ref. No.:");
+        drawFittedText(document, 0, 112, 110, 260, 16, 10.5f, "LEFT", false, q.quotationNumber());
+        drawFittedText(document, 0, x, 127, 54, 16, 10.5f, "LEFT", true, "Date:");
+        drawFittedText(document, 0, 112, 127, 220, 16, 10.5f, "LEFT", false, format.dated(q.quotationDate()));
+
+        drawFittedText(document, 0, x, 164, 50, 15, 10.5f, "LEFT", false, "To,");
+        drawFittedText(document, 0, x, 181, 483, 17, 11f, "LEFT", true, q.partyName());
+        float addressEnd = drawWrappedBlock(document, 0, x, 200, 483, 10.5f, false, e.partyAddress());
+
+        float subjectTop = Math.max(232, addressEnd + 10);
+        drawFittedText(document, 0, x, subjectTop, 35, 16, 10.5f, "LEFT", true, "Sub:");
+        float subjectEnd = drawWrappedBlock(document, 0, 91, subjectTop, 448, 10.5f, false,
+                value(e.subject(), "Quotation for supply of scaffolding materials on hire for " + q.siteName() + "."));
+
+        float cursor = subjectEnd + 18;
+        drawFittedText(document, 0, x, cursor, 100, 16, 10.5f, "LEFT", false, "Dear Sir,");
+        cursor += 29;
+        String introduction = "With reference to our recent discussion and your enquiry, we are pleased to submit this quotation for hiring scaffolding materials for your project. "
+                + "This quotation is valid for " + validity + " (" + format.integerWords(validity) + ") days from the date of issue. "
+                + "If the order is confirmed after the validity period, hire charges will be subject to revision based on the rates prevailing on the confirmation date.";
+        cursor = drawWrappedBlock(document, 0, x, cursor, 483, 10.5f, false, introduction) + 20;
+
+        drawFittedText(document, 0, x, cursor, 300, 17, 11f, "LEFT", true, "PART A: HIRE CHARGES & COSTS");
+        cursor += 28;
+        cursor = drawWrappedBlock(document, 0, x, cursor, 483, 10.5f, false,
+                "The hire charges for the scaffolding materials are detailed below. These rates are based on a minimum hire period of " + minimumPeriod + ".") + 20;
+        drawFittedText(document, 0, x, cursor, 300, 17, 11f, "LEFT", true, "Important Notes on Costs");
+        cursor += 27;
+        cursor = drawWrappedBlock(document, 0, x + 12, cursor, 471, 10.5f, false,
+                "- The charges stated below are for material hire only.") + 7;
+        cursor = drawWrappedBlock(document, 0, x + 12, cursor, 471, 10.5f, false,
+                "- The rates are based on your commitment to the stated minimum hire period.") + 18;
+        cursor = drawWrappedBlock(document, 0, x, cursor, 483, 10.5f, false,
+                "Based on the " + q.siteName() + " measurement of " + format.quantity(e.siteLengthRmt())
+                        + " RMT length and " + format.quantity(e.siteHeightMtr())
+                        + " MTR height, the approximate required quantities are:") + 13;
+        int visible = Math.min(items.size(), 7);
+        for (int index = 0; index < visible; index++) {
+            QuotationItemResponse item = items.get(index);
+            cursor = drawWrappedBlock(document, 0, x + 8, cursor, 475, 9.5f, false,
+                    item.itemNameSnapshot() + " - " + format.quantity(item.requiredQuantity()) + " " + unit(item.unitSnapshot())) + 3;
+        }
+        if (items.size() > visible) {
+            drawWrappedBlock(document, 0, x + 8, cursor, 475, 9f, true,
+                    "+ " + (items.size() - visible) + " additional materials are listed in the attached schedule.");
+        }
+    }
+
+    private float drawWrappedBlock(PDDocument document, int pageIndex, float x, float top, float width,
+            float fontSize, boolean bold, String value) throws IOException {
+        if (value == null || value.isBlank()) return top;
+        PDFont font = bold ? PDType1Font.HELVETICA_BOLD : PDType1Font.HELVETICA;
+        List<String> lines = wrap(font, fontSize, width, value);
+        float lineHeight = fontSize * 1.32f;
+        PDPage page = document.getPage(pageIndex);
+        try (PDPageContentStream stream = new PDPageContentStream(document, page,
+                PDPageContentStream.AppendMode.APPEND, true, true)) {
+            stream.setNonStrokingColor(0, 0, 0);
+            stream.setFont(font, fontSize);
+            for (int index = 0; index < lines.size(); index++) {
+                stream.beginText();
+                stream.newLineAtOffset(x, page.getMediaBox().getHeight() - top - fontSize - index * lineHeight);
+                stream.showText(lines.get(index));
+                stream.endText();
+            }
+        }
+        return top + lines.size() * lineHeight;
+    }
+
+    private void drawPageTwo(PDDocument document, QuotationResponse q, SteelFabExactHireRequest e,
+            List<QuotationItemResponse> items, BigDecimal gst) throws IOException {
+        clearBody(document, 1);
+        float x=56, cursor=112;
+        cursor=drawWrappedBlock(document,1,x,cursor,483,10.5f,true,
+                "Currently available material and monthly hire charges")+16;
+        cursor=drawWrappedBlock(document,1,x,cursor,483,10.5f,false,
+                "The following quantities can presently be supplied against this quotation.")+14;
+        cursor=drawMaterialSchedule(document,1,cursor,items.subList(0,Math.min(PRIMARY_TABLE_ROWS,items.size())))+14;
+        drawFittedText(document,1,315,cursor,128,16,10f,"RIGHT",true,"Subtotal");
+        drawFittedText(document,1,450,cursor,89,16,10f,"RIGHT",true,format.money(q.subtotal()));cursor+=19;
+        drawFittedText(document,1,315,cursor,128,16,10f,"RIGHT",false,"GST "+format.quantity(gst)+"%");
+        drawFittedText(document,1,450,cursor,89,16,10f,"RIGHT",false,format.money(q.totalTax()));cursor+=19;
+        drawLine(document,1,315,cursor,539);cursor+=5;
+        drawFittedText(document,1,315,cursor,128,17,11f,"RIGHT",true,"Grand Total");
+        drawFittedText(document,1,450,cursor,89,17,11f,"RIGHT",true,format.money(q.grandTotal()));cursor+=28;
+        cursor=drawWrappedBlock(document,1,x,cursor,483,10f,true,"Amount in words: "+format.amountInWords(q.grandTotal()))+22;
+        cursor=drawWrappedBlock(document,1,x,cursor,483,10.5f,false,
+                "The above rates are exclusive of to-and-fro transport and Mathadi Union payments, which shall fall within your scope. We are liable only for loading and unloading of materials at our godown. During delivery, please depute your representative at our godown for proper counting and signing of the delivery challans. After your representative signs the challans, we shall not be responsible for claims of short or incorrect delivery.")+24;
+        drawFittedText(document,1,x,cursor,420,17,10.5f,"LEFT",true,
+                "For SteelFab Scaffoldings & Engineering Private Limited");cursor+=26;
+        drawFittedText(document,1,x,cursor,260,17,10.5f,"LEFT",true,value(e.authorizedPerson(),"Hussain Golwala"));
+    }
+
+    private void drawPageThree(PDDocument document, QuotationResponse q) throws IOException {
+        clearBody(document,2);float x=56,cursor=112;
+        drawFittedText(document,2,x,cursor,483,18,12f,"LEFT",true,"PART B: TERMS AND CONDITIONS");cursor+=29;
+        cursor=drawWrappedBlock(document,2,x,cursor,483,10.5f,false,
+                "Please read these terms carefully. They form the basis of the material hire agreement.")+24;
+        cursor=section(document,2,1,"Definitions",cursor);
+        cursor=bullet(document,2,cursor,"Owner / We / Us refers to SteelFab Scaffoldings & Engineering Private Limited, the company providing the scaffolding materials on hire.");
+        cursor=bullet(document,2,cursor,"Hirer / You / Your refers to "+q.partyName()+", to whom the scaffolding materials are being hired.");
+        cursor=bullet(document,2,cursor,"Scaffolding Materials means all equipment listed in the material schedule above.");
+        cursor=bullet(document,2,cursor,"The hire period starts on the day the first lot of materials is delivered to your site. It continues until you give us written confirmation that all materials are ready for collection.")+13;
+        cursor=section(document,2,2,"Ownership and Responsibility",cursor);
+        cursor=bullet(document,2,cursor,"The scaffolding materials always remain the sole property of SteelFab Scaffoldings & Engineering Private Limited. This agreement is for hire only and not for sale.");
+        cursor=bullet(document,2,cursor,"You are responsible for the safety and security of all materials after delivery. Lost, stolen, or damaged material must be reimbursed at its full replacement value.")+13;
+        cursor=section(document,2,3,"Hirer's Responsibilities",cursor);
+        cursor=bullet(document,2,cursor,"You are responsible for inspecting the materials while loading for delivery. Damaged or non-working items must be reported immediately; otherwise, the materials will be deemed accepted.");
+        cursor=bullet(document,2,cursor,"You must not sub-hire, sell, or part with possession of any scaffolding material to a third party without our explicit written consent.");
+        bullet(document,2,cursor,"At the end of the hire period, materials must be returned in the condition received. Damage, different sizes, or shortages will be deducted from the deposit at the agreed clause 4 rates.");
+    }
+
+    private void drawPageFour(PDDocument document, QuotationResponse q, SteelFabExactHireRequest e,
+            List<QuotationItemResponse> items,int minimumDays,int dueDays) throws IOException {
+        clearBody(document,3);float cursor=112;
+        cursor=section(document,3,4,"Hire Period, Returns, and Loss/Damage Charges",cursor);
+        cursor=bullet(document,3,cursor,"The minimum hire period is "+minimumDays+" days. If materials are returned before "+minimumDays+" days, you will still be charged rent for the full "+minimumDays+" days.");
+        cursor=bullet(document,3,cursor,"If you need the materials for a longer period, hire charges will continue month to month at the same rates until the materials are delivered back to our warehouse.");
+        cursor=bullet(document,3,cursor,"The hire period for lost or unreturned material will cease only when we receive payment for its full replacement value.")+8;
+        drawFittedText(document,3,74,cursor,465,16,10.5f,"LEFT",true,"Replacement cost for lost or damaged items");cursor+=21;
+        for(QuotationItemResponse item:items.subList(0,Math.min(7,items.size()))){BigDecimal rate=item.replacementRate()==null?BigDecimal.ZERO:item.replacementRate();cursor=drawWrappedBlock(document,3,84,cursor,455,9.5f,false,item.itemNameSnapshot()+" - Rs. "+rate.stripTrailingZeros().toPlainString()+" per "+unit(item.unitSnapshot()).toLowerCase())+2;}
+        cursor+=12;cursor=section(document,3,5,"Security and Advance Payment",cursor);
+        cursor=drawWrappedBlock(document,3,74,cursor,465,10.5f,false,"A refundable security deposit of Rs. "+format.quantity(q.securityDeposit())+"/- ("+format.amountInWords(q.securityDeposit())+") is payable before dispatch. It will be refunded without interest after dues are deducted and material is returned in good condition.")+10;
+        cursor=drawWrappedBlock(document,3,74,cursor,465,10.5f,false,"One month's advance rent of Rs. "+format.quantity(e.advanceRent())+"/- is payable toward hire charges.")+14;
+        cursor=section(document,3,6,"Invoicing and Payment Terms",cursor);
+        cursor=drawWrappedBlock(document,3,74,cursor,465,10.5f,false,"We will raise an invoice monthly. Payment is due within "+dueDays+" days from the invoice date. If payment is delayed beyond "+dueDays+" ("+format.integerWords(dueDays)+") days, the matter shall be discussed mutually.")+14;
+        cursor=section(document,3,7,"Transportation",cursor);
+        cursor=drawWrappedBlock(document,3,74,cursor,465,10.5f,false,"All costs of transporting materials to your site and back to our yard will be borne by you.")+14;
+        cursor=section(document,3,8,"Delivery and Delays",cursor);
+        cursor=drawWrappedBlock(document,3,74,cursor,465,10.5f,false,"We will make every effort to deliver materials as per your schedule. However, we shall not be responsible for delays beyond our reasonable control, including accidents, traffic, natural disasters, government restrictions, or unavailability of transport.")+14;
+        cursor=section(document,3,9,"Cancellation",cursor);
+        drawWrappedBlock(document,3,74,cursor,465,10.5f,false,"If you cancel this order after acceptance, you will be responsible for reimbursing expenses already incurred, including arranged transport and administrative costs, up to the point of cancellation.");
+    }
+
+    private void drawPageFive(PDDocument document, QuotationResponse q, SteelFabExactHireRequest e) throws IOException {
+        clearBody(document,4);float x=56,cursor=112;
+        cursor=section(document,4,10,"Complete Contract Agreement",cursor);
+        cursor=drawWrappedBlock(document,4,x,cursor,483,10.5f,false,"This document, along with your work order and our acceptance, constitutes the entire contract agreement between us. Any changes to these terms must be agreed upon in writing by both parties.")+22;
+        cursor=drawWrappedBlock(document,4,x,cursor,483,10.5f,false,"We hope this quotation meets your requirements. If the terms are acceptable, please sign below to confirm your order. We look forward to a positive response and a successful partnership.")+24;
+        drawFittedText(document,4,x,cursor,100,16,10.5f,"LEFT",false,"Thank you,");cursor+=20;
+        drawFittedText(document,4,x,cursor,200,16,10.5f,"LEFT",true,"Yours faithfully,");cursor+=18;
+        drawFittedText(document,4,x,cursor,450,17,10.5f,"LEFT",true,"For SteelFab Scaffoldings & Engineering Private Limited");cursor+=34;
+        drawFittedText(document,4,x,cursor,280,17,10.5f,"LEFT",true,value(e.authorizedPerson(),"Hussain Golwala"));cursor+=18;
+        drawFittedText(document,4,x,cursor,280,17,10.5f,"LEFT",false,value(e.authorizedDesignation(),"Sales Executive"));cursor+=18;
+        drawFittedText(document,4,x,cursor,280,17,10.5f,"LEFT",false,"Ph. No.: "+value(e.authorizedPhone(),"8451044007"));cursor+=48;
+        drawFittedText(document,4,x,cursor,250,17,10.5f,"LEFT",false,"Accepted and confirmed by");cursor+=19;
+        drawFittedText(document,4,x,cursor,483,17,11f,"LEFT",true,q.partyName());cursor+=52;
+        drawFittedText(document,4,x,cursor,200,17,10.5f,"LEFT",true,"Signature and seal");cursor+=48;
+        drawAcceptanceLine(document,4,cursor,"Name",e.acceptedBy());cursor+=34;
+        drawAcceptanceLine(document,4,cursor,"Designation",e.acceptedDesignation());cursor+=34;
+        drawAcceptanceLine(document,4,cursor,"Ph. No.",e.acceptedPhone());cursor+=34;
+        drawAcceptanceLine(document,4,cursor,"Date",format.date(e.acceptedDate()));
+    }
+
+    private void clearBody(PDDocument document,int pageIndex)throws IOException{fillWhite(document,pageIndex,42,96,512,690);}
+    private float section(PDDocument document,int page,int number,String title,float top)throws IOException{drawFittedText(document,page,56,top,483,18,11f,"LEFT",true,number+".  "+title);return top+26;}
+    private float bullet(PDDocument document,int page,float top,String text)throws IOException{return drawWrappedBlock(document,page,74,top,465,10.5f,false,"- "+text)+9;}
+    private void drawLine(PDDocument document,int pageIndex,float x1,float top,float x2)throws IOException{PDPage page=document.getPage(pageIndex);float y=page.getMediaBox().getHeight()-top;try(PDPageContentStream stream=new PDPageContentStream(document,page,PDPageContentStream.AppendMode.APPEND,true,true)){stream.setStrokingColor(40,40,40);stream.setLineWidth(.6f);stream.moveTo(x1,y);stream.lineTo(x2,y);stream.stroke();}}
+    private void drawAcceptanceLine(PDDocument document,int page,float top,String label,String value)throws IOException{drawFittedText(document,page,56,top,75,17,10.5f,"LEFT",true,label+":");drawFittedText(document,page,135,top,300,17,10.5f,"LEFT",false,value==null||value.isBlank()?"____________________________":value);}
+
+    private float drawMaterialSchedule(PDDocument document,int pageIndex,float top,List<QuotationItemResponse> items)throws IOException{
+        float[] widths={36,137,54,48,70,50,88};float x=56,header=34,row=21;
+        String[] labels={"#","Item","Qty","Unit","Rate / month","Months","Amount"};
+        for(int i=0;i<labels.length;i++)drawFittedText(document,pageIndex,x+before(widths,i)+2,top+7,widths[i]-4,22,8.5f,"CENTER",true,labels[i]);
+        for(int i=0;i<items.size();i++)drawMaterialRow(document,pageIndex,x,top+header+i*row,widths,row,i+1,items.get(i));
+        drawGrid(document,pageIndex,x,top,widths,row,items.size(),header);return top+header+items.size()*row;
     }
 
     private void draw(PDDocument document, String key, String value) throws IOException {
@@ -184,16 +324,16 @@ public class SteelFabExactHirePdfService {
     }
 
     private void drawReplacementMaterials(PDDocument document, List<QuotationItemResponse> items) throws IOException {
-        fillWhite(document, 3, 75, 270, 360, 92);
-        int visible = Math.min(items.size(), 6);
+        fillWhite(document, 3, 75, 278, 390, 102);
+        int visible = Math.min(items.size(), 7);
         for (int index = 0; index < visible; index++) {
             QuotationItemResponse item = items.get(index);
             BigDecimal rate = item.replacementRate() == null ? BigDecimal.ZERO : item.replacementRate();
             String text = item.itemNameSnapshot() + " - Rs. " + rate.stripTrailingZeros().toPlainString() + "/- per " + unit(item.unitSnapshot()).toLowerCase();
-            drawFittedText(document, 3, 82, 273 + index * 14.5f, 345, 12, 8.5f, "LEFT", false, text);
+            drawFittedText(document, 3, 82, 282 + index * 13f, 375, 11, 8f, "LEFT", false, text);
         }
         if (items.size() > visible) {
-            drawFittedText(document, 3, 82, 273 + 5 * 14.5f, 345, 12, 8, "LEFT", true,
+            drawFittedText(document, 3, 82, 282 + 6 * 13f, 375, 11, 7.5f, "LEFT", true,
                     "Additional replacement rates are listed in the material schedule annexure.");
         }
     }
@@ -322,6 +462,7 @@ public class SteelFabExactHirePdfService {
     private void overflow(String value) { throw new BusinessRuleException("EXACT_PDF_TEXT_OVERFLOW", "Value is too long for the exact PDF: " + value); }
     private String unit(String unit) { return unit == null || unit.isBlank() ? "Nos." : unit; }
     private String value(String value, String fallback) { return value == null || value.isBlank() ? fallback : value.trim(); }
+    private String labeled(String label, String value) { return label + " " + (value == null || value.isBlank() ? "____________________________" : value.trim()); }
     private String filename(QuotationResponse q) { return "steelfab-hire-" + q.quotationNumber().replaceAll("[^A-Za-z0-9.-]", "-") + ".pdf"; }
 
     public record PdfDocument(String filename, byte[] content, int templateVersion, int coordinatesVersion) {}

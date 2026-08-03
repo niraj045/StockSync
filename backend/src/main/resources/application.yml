@@ -35,3 +35,7 @@ management:
 
 stocksync:
   file-storage-path: ${FILE_STORAGE_PATH:./storage}
+  billing:
+    auto:
+      enabled: ${AUTO_BILLING_ENABLED:true}
+      cron: ${AUTO_BILLING_CRON:0 15 2 * * *}

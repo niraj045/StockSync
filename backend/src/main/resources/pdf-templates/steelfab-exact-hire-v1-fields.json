@@ -1,15 +1,15 @@
 {
   "templateCode": "STEELFAB_EXACT_HIRE_V1",
   "templateVersion": 1,
-  "coordinatesVersion": 1,
+  "coordinatesVersion": 2,
   "pageCount": 5,
   "pageHeight": 841.89,
   "fields": {
     "referenceNumber": [{"page": 1, "x": 101, "top": 109, "width": 190, "height": 19, "fontSize": 11}],
     "quotationDate": [{"page": 1, "x": 85, "top": 124, "width": 150, "height": 19, "fontSize": 11}],
     "partyName": [{"page": 1, "x": 56, "top": 168, "width": 485, "height": 19, "fontSize": 11}],
-    "partyAddress": [{"page": 1, "x": 56, "top": 183, "width": 485, "height": 19, "fontSize": 11}],
-    "subject": [{"page": 1, "x": 80, "top": 212, "width": 461, "height": 19, "fontSize": 11}],
+    "partyAddress": [{"page": 1, "x": 56, "top": 183, "width": 485, "height": 28, "fontSize": 10.5, "wrap": true}],
+    "subject": [{"page": 1, "x": 84, "top": 212, "width": 457, "height": 28, "fontSize": 10.5, "wrap": true}],
     "validity": [{"page": 1, "x": 382, "top": 300, "width": 51, "height": 18, "fontSize": 11}],
     "minimumHirePeriod": [{"page": 1, "x": 237, "top": 402, "width": 104, "height": 19, "fontSize": 11}],
     "minimumHireCommitment": [{"page": 1, "x": 447, "top": 477, "width": 52, "height": 19, "fontSize": 11}],
@@ -43,17 +43,17 @@
     "replacementBaseJack": [{"page": 4, "x": 166, "top": 317, "width": 70, "height": 18, "fontSize": 10}],
     "replacementPlatform": [{"page": 4, "x": 160, "top": 332, "width": 78, "height": 18, "fontSize": 10}],
     "replacementCoupler": [{"page": 4, "x": 158, "top": 346, "width": 72, "height": 18, "fontSize": 10}],
-    "securityDepositSentence": [{"page": 4, "x": 75, "top": 419, "width": 464, "height": 20, "fontSize": 11}],
+    "securityDepositSentence": [{"page": 4, "x": 75, "top": 419, "width": 464, "height": 48, "fontSize": 10.5, "wrap": true}],
     "advanceRent": [{"page": 4, "x": 237, "top": 478, "width": 50, "height": 19, "fontSize": 9}],
     "paymentTerms": [{"page": 4, "x": 75, "top": 522, "width": 464, "height": 48, "fontSize": 11, "wrap": true}],
 
     "signatoryName": [{"page": 5, "x": 56, "top": 332, "width": 240, "height": 19, "fontSize": 11, "bold": true}],
     "signatoryDesignation": [{"page": 5, "x": 56, "top": 347, "width": 240, "height": 19, "fontSize": 11}],
-    "signatoryPhone": [{"page": 5, "x": 100, "top": 362, "width": 142, "height": 19, "fontSize": 11}],
+    "signatoryPhone": [{"page": 5, "x": 56, "top": 362, "width": 280, "height": 19, "fontSize": 11}],
     "acceptedCustomer": [{"page": 5, "x": 56, "top": 435, "width": 350, "height": 20, "fontSize": 11, "bold": true}],
-    "acceptedBy": [{"page": 5, "x": 92, "top": 522, "width": 300, "height": 20, "fontSize": 11}],
-    "acceptedDesignation": [{"page": 5, "x": 128, "top": 552, "width": 280, "height": 20, "fontSize": 11}],
-    "acceptedPhone": [{"page": 5, "x": 100, "top": 581, "width": 280, "height": 20, "fontSize": 11}],
-    "acceptedDate": [{"page": 5, "x": 85, "top": 610, "width": 220, "height": 20, "fontSize": 11}]
+    "acceptedBy": [{"page": 5, "x": 56, "top": 522, "width": 360, "height": 20, "fontSize": 11}],
+    "acceptedDesignation": [{"page": 5, "x": 56, "top": 552, "width": 360, "height": 20, "fontSize": 11}],
+    "acceptedPhone": [{"page": 5, "x": 56, "top": 581, "width": 360, "height": 20, "fontSize": 11}],
+    "acceptedDate": [{"page": 5, "x": 56, "top": 610, "width": 360, "height": 20, "fontSize": 11}]
   }
 }

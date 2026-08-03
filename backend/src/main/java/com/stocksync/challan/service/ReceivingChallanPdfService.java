@@ -27,7 +27,7 @@ public class ReceivingChallanPdfService {
                 "letterheadDataUri", branding.letterheadDataUri()));
         String html = templates.process("receiving-challan-pdf", context);
         try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            new PdfRendererBuilder().withHtmlContent(html, null).toStream(output).run();
+            new PdfRendererBuilder().useFastMode().withHtmlContent(html, null).toStream(output).run();
             String filename = "receiving-challan-" + challan.receivingChallanNumber().replaceAll("[^A-Za-z0-9.-]", "-") + ".pdf";
             return new PdfDocument(filename, output.toByteArray());
         } catch (IOException e) {

@@ -24,6 +24,11 @@ public class Agreement extends AuditedEntity {
  @Column(name="expiry_date") private LocalDate expiryDate;
  @Enumerated(EnumType.STRING) @Column(name="rental_type",nullable=false,length=40) private RentalType rentalType;
  @Enumerated(EnumType.STRING) @Column(name="billing_cycle",nullable=false,length=20) private BillingCycle billingCycle=BillingCycle.MONTHLY;
+ @Enumerated(EnumType.STRING) @Column(name="measurement_basis",nullable=false,length=20) private MeasurementBasis measurementBasis=MeasurementBasis.ITEM_QUANTITY;
+ @Enumerated(EnumType.STRING) @Column(name="billing_commencement_rule",nullable=false,length=30) private BillingCommencementRule billingCommencementRule=BillingCommencementRule.FIRST_DISPATCH;
+ @Column(name="fixed_billing_start_date") private LocalDate fixedBillingStartDate;
+ @Column(name="next_billing_date") private LocalDate nextBillingDate;
+ @Column(name="last_auto_period_end") private LocalDate lastAutoPeriodEnd;
  @Column(name="custom_billing_cycle_days") private Integer customBillingCycleDays;
  @Column(name="grace_period_days",nullable=false) private int gracePeriodDays;
  @Column(name="minimum_billing_days",nullable=false) private int minimumBillingDays;
@@ -76,6 +81,11 @@ public class Agreement extends AuditedEntity {
  public LocalDate getAgreementDate(){return agreementDate;} public void setAgreementDate(LocalDate v){agreementDate=v;} public LocalDate getEffectiveDate(){return effectiveDate;} public void setEffectiveDate(LocalDate v){effectiveDate=v;}
  public LocalDate getExpiryDate(){return expiryDate;} public void setExpiryDate(LocalDate v){expiryDate=v;} public RentalType getRentalType(){return rentalType;} public void setRentalType(RentalType v){rentalType=v;}
  public BillingCycle getBillingCycle(){return billingCycle;} public void setBillingCycle(BillingCycle v){billingCycle=v;} public Integer getCustomBillingCycleDays(){return customBillingCycleDays;} public void setCustomBillingCycleDays(Integer v){customBillingCycleDays=v;}
+ public MeasurementBasis getMeasurementBasis(){return measurementBasis;} public void setMeasurementBasis(MeasurementBasis v){measurementBasis=v;}
+ public BillingCommencementRule getBillingCommencementRule(){return billingCommencementRule;} public void setBillingCommencementRule(BillingCommencementRule v){billingCommencementRule=v;}
+ public LocalDate getFixedBillingStartDate(){return fixedBillingStartDate;} public void setFixedBillingStartDate(LocalDate v){fixedBillingStartDate=v;}
+ public LocalDate getNextBillingDate(){return nextBillingDate;} public void setNextBillingDate(LocalDate v){nextBillingDate=v;}
+ public LocalDate getLastAutoPeriodEnd(){return lastAutoPeriodEnd;} public void setLastAutoPeriodEnd(LocalDate v){lastAutoPeriodEnd=v;}
  public int getGracePeriodDays(){return gracePeriodDays;} public void setGracePeriodDays(int v){gracePeriodDays=v;} public int getMinimumBillingDays(){return minimumBillingDays;} public void setMinimumBillingDays(int v){minimumBillingDays=v;}
  public AgreementStatus getStatus(){return status;} public void setStatus(AgreementStatus v){status=v;}
  public String getPartyLegalNameSnapshot(){return partyLegalNameSnapshot;} public void setPartyLegalNameSnapshot(String v){partyLegalNameSnapshot=v;} public String getPartyTradeNameSnapshot(){return partyTradeNameSnapshot;} public void setPartyTradeNameSnapshot(String v){partyTradeNameSnapshot=v;}

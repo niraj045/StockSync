@@ -2,6 +2,7 @@ package com.stocksync.billing.controller;
 
 import com.stocksync.billing.dto.BillingRunDtos.*;
 import com.stocksync.billing.service.BillingRunService;
+import com.stocksync.billing.service.AutomaticBillingService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -19,9 +20,11 @@ import java.util.Map;
 public class BillingRunController {
 
     private final BillingRunService service;
+    private final AutomaticBillingService automaticBilling;
 
-    public BillingRunController(BillingRunService service) {
+    public BillingRunController(BillingRunService service, AutomaticBillingService automaticBilling) {
         this.service = service;
+        this.automaticBilling = automaticBilling;
     }
 
     @GetMapping
@@ -83,5 +86,11 @@ public class BillingRunController {
     @GetMapping("/agreement/{agreementId}/suggested-period")
     public ResponseEntity<Map<String, LocalDate>> getSuggestedPeriod(@PathVariable Long agreementId) {
         return ResponseEntity.ok(service.getSuggestedPeriod(agreementId));
+    }
+
+    @PostMapping("/generate-due-drafts")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACCOUNTS')")
+    public ResponseEntity<AutomaticBillingService.GenerationSummary> generateDueDrafts() {
+        return ResponseEntity.ok(automaticBilling.generateDueDrafts(LocalDate.now()));
     }
 }

@@ -9,7 +9,8 @@ import {useLocation,useNavigate,useParams} from 'react-router';
 import { apiErrorCode,apiFormErrors,quotationPermissions,requiresUnsavedConfirmation,sitesForParty,validateQuotationEditor,type QuotationEditor as Editor } from '../quotationForm';
 import {ReportExcelButton} from '../../../components/ReportExcelButton';
 
-const rental=[{value:'PER_PIECE_PER_DAY',label:'Per piece per day'},{value:'PLATE_AREA_PER_DAY',label:'Plate area per day'},{value:'SCAFFOLD_AREA_PER_DAY',label:'Scaffold area per day'},{value:'PLOT_AREA_PER_DAY',label:'Plot area per day'},{value:'FIXED_RATE',label:'Fixed rate'},{value:'SLAB_BASED',label:'Slab based'}];
+const rental=[{value:'PER_PIECE_PER_DAY',label:'Per piece per day'},{value:'PER_PIECE_PER_WEEK',label:'Per piece per week'},{value:'PER_PIECE_PER_MONTH',label:'Per piece per month'}];
+type StockRow={itemId:number;availableQuantity:number};
 const exactTemplateCode='STEELFAB_EXACT_HIRE_V1';
 const exactSlots=[
   {key:'hframe',label:'H Frame'},{key:'bracing',label:'Bracing'},{key:'mspipe',label:'20 Ft / MS Pipe'},
@@ -25,7 +26,7 @@ const stateCodes:Record<string,string>={
 const stateCode=(gstin?:string,location?:string)=>{const value=gstin?.trim().toUpperCase();if(value&&/^\d{2}[0-9A-Z]{13}$/.test(value))return value.slice(0,2);const normalized=normalize(location);return Object.entries(stateCodes).find(([state])=>normalized.includes(state))?.[1];};
 const addDays=(date:string,days:number)=>{const value=new Date(`${date}T00:00:00`);value.setDate(value.getDate()+days);return value.toISOString().slice(0,10);};
 const matchesSlot=(item:Option,key:string)=>{const value=normalize(`${item.itemCode} ${item.itemName}`);if(key==='hframe')return value.includes('hframe');if(key==='bracing')return value.includes('bracing')||value.includes('crossbrace');if(key==='mspipe')return value.includes('20ftpipe')||value.includes('mspipe')||value.includes('steelpipe');if(key==='platepipe')return value.includes('platepipe');if(key==='basejack')return value.includes('basejack');if(key==='platform')return value.includes('platform')||value.includes('walkway');return value.includes('coupler')||value.includes('clamp');};
-export const exactDefaultItems=(items:Option[])=>exactSlots.flatMap(slot=>{const item=items.find(candidate=>matchesSlot(candidate,slot.key));return item?[{itemId:item.id,quantity:0,requiredQuantity:0,rate:0,hireMonths:6,replacementRate:0,rentalType:'PER_PIECE_PER_DAY'}]:[];});
+export const exactDefaultItems=(items:Option[])=>exactSlots.flatMap(slot=>{const item=items.find(candidate=>matchesSlot(candidate,slot.key));return item?[{itemId:item.id,quantity:0,requiredQuantity:0,rate:0,hireMonths:6,replacementRate:0,rentalType:'PER_PIECE_PER_MONTH'}]:[];});
 const money=(v?:number)=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR'}).format(v??0);
 export function QuotationsPage(){
   const navigate=useNavigate(),location=useLocation(),{quotationId}=useParams();
@@ -38,13 +39,15 @@ export function QuotationsPage(){
   const parties=useQuery({queryKey:['parties-options'],queryFn:async()=>(await apiClient.get<Page<Option>>('/parties',{params:{active:true,size:200}})).data.content});
   const sites=useQuery({queryKey:['sites-options'],queryFn:async()=>(await apiClient.get<Page<Option>>('/sites',{params:{size:200}})).data.content});
   const items=useQuery({queryKey:['items-options'],queryFn:async()=>(await apiClient.get<Page<Option>>('/items',{params:{active:true,size:500}})).data.content});
+  const stock=useQuery({queryKey:['quotation-stock-balances'],queryFn:async()=>(await apiClient.get<Page<StockRow>>('/stock/balances',{params:{size:500}})).data.content});
+  const availability=useMemo(()=>new Map((stock.data??[]).map(row=>[row.itemId,Number(row.availableQuantity)||0])),[stock.data]);
   const selectedTemplate=(templates.data??[]).find(template=>template.id===templateId);
   const selectedParty=(parties.data??[]).find(party=>party.id===partyId);
   const selectedSite=(sites.data??[]).find(site=>site.id===siteId);
   const isExact=selectedTemplate?.templateCode===exactTemplateCode;
   const automaticGst=useMemo(()=>{const total=Number(watched?.exactHire?.gstPercentage)||0;const supplier=stateCode(selectedTemplate?.companyGstin,selectedTemplate?.companyAddress);const customer=stateCode(selectedParty?.gstin,selectedParty?.state);return supplier&&supplier===customer?{cgst:total/2,sgst:total/2,igst:0,label:'Same state'}:{cgst:0,sgst:0,igst:total,label:'Interstate / state unavailable'};},[watched?.exactHire?.gstPercentage,selectedTemplate,selectedParty]);
   const oneMonthRent=useMemo(()=>((watched?.items??[]).reduce((sum,item)=>sum+(Number(item.quantity)||0)*(Number(item.rate)||0),0)),[watched?.items]);
-  const save=useMutation({mutationFn:async(v:Editor)=>editing?(await apiClient.put(`/quotations/${editing.id}`,{...v,version:editing.version})).data:(await apiClient.post('/quotations',v)).data,
+  const save=useMutation({mutationFn:async(v:Editor)=>{const payload=isExact?{...v,rentalType:'PER_PIECE_PER_MONTH',items:v.items.map(item=>({...item,rentalType:'PER_PIECE_PER_MONTH'}))}:v;return editing?(await apiClient.put(`/quotations/${editing.id}`,{...payload,version:editing.version})).data:(await apiClient.post('/quotations',payload)).data;},
     onSuccess:(q:Quotation)=>{message.success(`Saved ${q.quotationNumber}`);navigate('/quotations');void qc.invalidateQueries({queryKey:['quotations']});},onError:(error:unknown)=>{const fields=apiFormErrors(error);if(fields.length)form.setFields(fields);message.error(apiErrorCode(error)==='OPTIMISTIC_LOCK_CONFLICT'?'This quotation was changed by another user. Reload and try again.':'Unable to save quotation.');}});
   const action=useMutation({mutationFn:async({q,name,reason}:{q:Quotation;name:string;reason?:string})=>(await apiClient.post(`/quotations/${q.id}/${name}`,reason?{reason}:undefined)).data,
     onSuccess:()=>void qc.invalidateQueries({queryKey:['quotations']})});
@@ -58,7 +61,7 @@ export function QuotationsPage(){
   useEffect(()=>{
     if(!isExact||!items.data||editing?.quotationTemplateCode===exactTemplateCode)return;
     const current=form.getFieldValue('items')??[];if(current.length>0&&current.every((line:{itemId?:number})=>line.itemId))return;
-    form.setFieldsValue({discountType:'NONE',discountValue:0,cgstRate:0,sgstRate:0,igstRate:18,transportCharge:0,loadingCharge:0,unloadingCharge:0,otherCharge:0,roundOff:0,validUntil:addDays(form.getFieldValue('quotationDate')??new Date().toISOString().slice(0,10),7),
+    form.setFieldsValue({rentalType:'PER_PIECE_PER_MONTH',discountType:'NONE',discountValue:0,cgstRate:0,sgstRate:0,igstRate:18,transportCharge:0,loadingCharge:0,unloadingCharge:0,otherCharge:0,roundOff:0,validUntil:addDays(form.getFieldValue('quotationDate')??new Date().toISOString().slice(0,10),7),
       exactHire:{partyAddress:selectedParty?.address??'',subject:`Quotation for Supply of H frame Scaffolding Materials on Hire for ${selectedSite?.siteName??'the selected site'}.`,validityDays:7,minimumHirePeriod:'6 Months (180 days)',minimumHireDays:90,gstPercentage:18,paymentDueDays:3,authorizedPerson:'',authorizedDesignation:'',authorizedPhone:''},
       items:exactDefaultItems(items.data)});
   },[isExact,items.data,editing,form,selectedParty,selectedSite]);
@@ -87,7 +90,7 @@ export function QuotationsPage(){
       <h1 className="page-heading">{editing?'Edit quotation':'New quotation'}</h1>
       <p className="page-description">Configure commercial terms, item lines, taxes and totals.</p>
     </div>
-    <Form className="quotation-editor-form" form={form} layout="vertical" onFinish={v=>{const sanitized={...v,cgstRate:isExact?automaticGst.cgst:v.cgstRate,sgstRate:isExact?automaticGst.sgst:v.sgstRate,igstRate:isExact?automaticGst.igst:v.igstRate,exactHire:isExact?{...v.exactHire,advanceRent:v.exactHire?.advanceRent??oneMonthRent}:undefined,discountValue:v.discountType==='NONE'||v.discountValue===undefined||v.discountValue===null?0:v.discountValue};const errors=validateQuotationEditor(sanitized,sites.data??[]);if(errors.length){form.setFields(errors);return;}save.mutate(sanitized);}}>
+    <Form className="quotation-editor-form" form={form} layout="vertical" onFinish={v=>{const sanitized={...v,cgstRate:isExact?automaticGst.cgst:v.cgstRate,sgstRate:isExact?automaticGst.sgst:v.sgstRate,igstRate:isExact?automaticGst.igst:v.igstRate,transportCharge:v.transportCharge??0,loadingCharge:v.loadingCharge??0,unloadingCharge:v.unloadingCharge??0,otherCharge:v.otherCharge??0,roundOff:v.roundOff??0,securityDeposit:v.securityDeposit??0,exactHire:isExact?{...v.exactHire,advanceRent:v.exactHire?.advanceRent??oneMonthRent}:undefined,discountValue:v.discountType==='NONE'||v.discountValue===undefined||v.discountValue===null?0:v.discountValue};const errors=validateQuotationEditor(sanitized,sites.data??[]);if(errors.length){form.setFields(errors);return;}save.mutate(sanitized);}}>
       <section className="quotation-form-section">
         <h2>Quotation details</h2>
         <div className="master-form-grid">
@@ -128,7 +131,7 @@ export function QuotationsPage(){
         </div>
       </section>}
       {isExact&&<section className="quotation-form-section"><h2>Commercial terms</h2><div className="master-form-grid"><Form.Item name={['exactHire','gstPercentage']} label="GST %" rules={[{required:true}]}><InputNumber min={0} max={100} style={{width:'100%'}}/></Form.Item><Form.Item label="GST allocation"><Input readOnly value={`${automaticGst.label}: CGST ${automaticGst.cgst}% / SGST ${automaticGst.sgst}% / IGST ${automaticGst.igst}%`}/></Form.Item><Money name="securityDeposit" label="Security deposit"/><Form.Item name={['exactHire','advanceRent']} label={`One month advance rent (${money(oneMonthRent)})`}><InputNumber min={0} placeholder="Auto calculated if blank" style={{width:'100%'}}/></Form.Item><Form.Item name={['exactHire','paymentDueDays']} label="Payment due (days)" rules={[{required:true}]}><InputNumber min={0} style={{width:'100%'}}/></Form.Item></div></section>}
-      <section className="quotation-form-section">{isExact?<ExactHireItemRows items={items.data??[]}/>:<QuotationItemRows items={items.data??[]}/>}</section>
+      <section className="quotation-form-section">{isExact?<ExactHireItemRows items={items.data??[]} availability={availability}/>:<QuotationItemRows items={items.data??[]} availability={availability}/>}</section>
       {!isExact&&<section className="quotation-form-section">
         <h2>Additional charges</h2>
         <div className="master-form-grid"><Money name="transportCharge" label="Transport"/><Money name="loadingCharge" label="Loading"/><Money name="unloadingCharge" label="Unloading"/><Money name="otherCharge" label="Other charge"/><Money name="roundOff" label="Round off" signed/><Money name="securityDeposit" label="Security deposit"/></div>
@@ -163,19 +166,30 @@ export function QuotationActionButtons({q,isAdmin,canWrite,onView,onEdit,onActio
   const exact=q.quotationTemplateCode===exactTemplateCode;
   return <Space wrap><Button onClick={onView}>View</Button>{canWrite&&q.status==='DRAFT'&&<Button onClick={onEdit}>Edit</Button>}{canWrite&&q.status==='DRAFT'&&<Button onClick={()=>onAction('send')}>Send</Button>}{isAdmin&&q.status==='SENT'&&<Button onClick={()=>onAction('approve')}>Approve</Button>}{isAdmin&&q.status==='SENT'&&<Button danger onClick={()=>onAction('reject',true)}>Reject</Button>}{isAdmin&&['DRAFT','SENT'].includes(q.status)&&<Button danger onClick={()=>onAction('cancel',true)}>Cancel</Button>}{canWrite&&<Button onClick={()=>onAction('clone')}>Clone</Button>}{exact&&<Button icon={<EyeOutlined/>} onClick={onPreview}>Preview</Button>}{exact&&isAdmin&&['APPROVED','CONVERTED'].includes(q.status)&&!q.exactPdfAttachmentId&&<Button icon={<FileDoneOutlined/>} onClick={onFinalize}>Finalize</Button>}<Button icon={<DownloadOutlined/>} onClick={onPdf}>PDF</Button><ReportExcelButton reportType="QUOTATION_REGISTER" filters={{documentNumber:q.quotationNumber}}/></Space>;
 }
-export function QuotationItemRows({items}:{items:Option[]}){
+function ExactStockQuantityFields({name,availability}:{name:number;availability:Map<number,number>}){
+  const line=Form.useWatch(['items',name])??{};
+  const available=availability.get(line.itemId)??0;
+  const demandShortage=Math.max(0,(Number(line.requiredQuantity)||0)-available);
+  const offeredShortage=Math.max(0,(Number(line.quantity)||0)-available);
+  return <>
+    <Form.Item name={[name,'requiredQuantity']} label="Required qty" extra={line.itemId?`Available: ${available.toLocaleString('en-IN')}`:undefined} validateStatus={demandShortage>0?'error':undefined} help={demandShortage>0?`Demand shortage: ${demandShortage.toLocaleString('en-IN')}`:undefined} rules={[{required:true,type:'number',min:0}]}><InputNumber min={0} status={demandShortage>0?'error':undefined}/></Form.Item>
+    <Form.Item name={[name,'quantity']} label="Offered qty" validateStatus={offeredShortage>0?'error':undefined} help={offeredShortage>0?`Only ${available.toLocaleString('en-IN')} available`:undefined} rules={[{required:true,type:'number',min:0.0001}]}><InputNumber min={0.0001} status={offeredShortage>0?'error':undefined}/></Form.Item>
+  </>;
+}
+export function QuotationItemRows({items,availability=new Map()}:{items:Option[];availability?:Map<number,number>}){
+  void availability;
   return <Form.List name="items">{(fields,{add,remove})=><div className="commercial-lines"><Space><strong>Items</strong><Button onClick={()=>add({quantity:1,rentalType:'PER_PIECE_PER_DAY'})}>Add line</Button></Space>{fields.map(({key,name})=><Space key={key} align="start" wrap><Form.Item name={[name,'itemId']} label="Item" rules={[{required:true}]}><Select style={{width:260}} showSearch optionFilterProp="label" options={items.map(i=>({value:i.id,label:`${i.itemCode} — ${i.itemName}`}))}/></Form.Item><Form.Item name={[name,'quantity']} label="Quantity" rules={[{required:true,type:'number',min:0.0001}]}><InputNumber min={0.0001}/></Form.Item><Form.Item name={[name,'rate']} label="Rate" rules={[{required:true,type:'number',min:0.0001,message:'Rate must be greater than 0'}]}><InputNumber min={0.0001}/></Form.Item><Form.Item name={[name,'rentalType']} label="Rental type"><Select style={{width:190}} options={rental}/></Form.Item><Form.Item name={[name,'area']} label="Area"><InputNumber min={0}/></Form.Item><Form.Item name={[name,'weight']} label="Weight"><InputNumber min={0}/></Form.Item><Button danger type="text" onClick={()=>remove(name)} disabled={fields.length===1}>Remove</Button></Space>)}</div>}</Form.List>;
 }
-export function ExactHireItemRows({items}:{items:Option[]}){
+export function ExactHireItemRows({items,availability=new Map()}:{items:Option[];availability?:Map<number,number>}){
   const selected=Form.useWatch('items')??[];
   return <Form.List name="items">{(fields,{add,remove})=><div className="commercial-lines"><Space wrap><strong>SteelFab material schedule</strong><Button icon={<PlusOutlined/>} onClick={()=>add({quantity:0,requiredQuantity:0,rate:0,hireMonths:6,replacementRate:0,rentalType:'PER_PIECE_PER_DAY'})}>Add item</Button></Space>{!fields.length&&<Alert style={{marginTop:16}} type="info" showIcon message="No material added" description="Add items from the inventory master and enter the agreed quantities and rates."/>}{fields.map(({key,name},index)=><div key={key} style={{marginTop:16}}><Space align="start" wrap>
     <div style={{width:48,paddingTop:30,fontWeight:600}}>{index+1}.</div>
     <Form.Item name={[name,'itemId']} label="Stock item" rules={[{required:true,message:'Select a stock item'}]}><Select style={{width:280}} showSearch optionFilterProp="label" options={items.filter(item=>!selected.some((line:{itemId?:number},lineIndex:number)=>line.itemId===item.id&&lineIndex!==name)).map(item=>({value:item.id,label:`${item.itemCode} - ${item.itemName}`}))}/></Form.Item>
-    <Form.Item name={[name,'requiredQuantity']} label="Required qty" rules={[{required:true,type:'number',min:0}]}><InputNumber min={0}/></Form.Item>
-    <Form.Item name={[name,'quantity']} label="Offered qty" rules={[{required:true,type:'number',min:0.0001}]}><InputNumber min={0.0001}/></Form.Item>
+    <ExactStockQuantityFields name={name} availability={availability}/>
     <Form.Item name={[name,'rate']} label="Monthly rate" rules={[{required:true,type:'number',min:0.0001}]}><InputNumber min={0.0001}/></Form.Item>
     <Form.Item name={[name,'hireMonths']} label="Months" rules={[{required:true,type:'number',min:0.01}]}><InputNumber min={0.01}/></Form.Item>
     <Form.Item name={[name,'replacementRate']} label="Replacement rate" rules={[{required:true,type:'number',min:0}]}><InputNumber min={0}/></Form.Item>
+    <Form.Item name={[name,'area']} label="Total area (SFT)"><InputNumber min={0}/></Form.Item>
     <Form.Item name={[name,'rentalType']} hidden><Input/></Form.Item>
     <Button danger type="text" onClick={()=>remove(name)}>Remove</Button>
   </Space></div>)}</div>}</Form.List>;

@@ -1,5 +1,7 @@
 package com.stocksync.billing.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stocksync.audit.service.UserActivityLogService;
 import com.stocksync.auth.entity.User;
 import com.stocksync.auth.repository.UserRepository;
@@ -9,6 +11,7 @@ import com.stocksync.billing.repository.*;
 import com.stocksync.common.exception.BusinessRuleException;
 import com.stocksync.common.numbering.DocumentNumberService;
 import com.stocksync.common.numbering.DocumentType;
+import com.stocksync.common.pdf.PdfBranding;
 import com.stocksync.file.entity.FileAttachment;
 import com.stocksync.file.repository.FileAttachmentRepository;
 import com.stocksync.quotation.entity.Quotation;
@@ -46,6 +49,7 @@ public class InvoiceService {
     private final DocumentNumberService numbers;
     private final UserRepository users;
     private final UserActivityLogService audit;
+    private final ObjectMapper objectMapper;
     private final Path storageRoot;
 
     public InvoiceService(
@@ -58,6 +62,7 @@ public class InvoiceService {
             DocumentNumberService numbers,
             UserRepository users,
             UserActivityLogService audit,
+            ObjectMapper objectMapper,
             @Value("${stocksync.file-storage-path}") String root) {
         this.invoices = invoices;
         this.invoiceItems = invoiceItems;
@@ -68,6 +73,7 @@ public class InvoiceService {
         this.numbers = numbers;
         this.users = users;
         this.audit = audit;
+        this.objectMapper = objectMapper;
         this.storageRoot = Paths.get(root).toAbsolutePath().normalize();
     }
 
@@ -112,22 +118,22 @@ public class InvoiceService {
         i.setParty(br.getParty());
         i.setSite(br.getSite());
         i.setInvoiceDate(LocalDate.now());
-        i.setDueDate(LocalDate.now().plusDays(30)); // Net-30 default
+        i.setDueDate(LocalDate.now().plusDays(paymentDueDays(br.getAgreement().getQuotation())));
         i.setPeriodStart(br.getPeriodStart());
         i.setPeriodEnd(br.getPeriodEnd());
         i.setStatus(InvoiceStatus.DRAFT);
 
         // Fetch company snapshots from template
-        String companyName = "StockSync Shuttering Solutions";
-        String companyAddress = "123 Godown Road, GIDC";
-        String companyGstin = "24AAAAA1111A1Z1";
+        String companyName = PdfBranding.COMPANY_NAME;
+        String companyAddress = "";
+        String companyGstin = "";
 
         Quotation q = br.getAgreement().getQuotation();
         if (q != null && q.getQuotationTemplate() != null) {
             QuotationTemplate t = q.getQuotationTemplate();
-            companyName = t.getCompanyName();
-            companyAddress = t.getCompanyAddress();
-            companyGstin = t.getCompanyGstin();
+            companyName = valueOr(t.getCompanyName(), companyName);
+            companyAddress = valueOr(t.getCompanyAddress(), companyAddress);
+            companyGstin = valueOr(t.getCompanyGstin(), companyGstin);
         }
 
         i.setCompanyNameSnapshot(companyName);
@@ -451,6 +457,21 @@ public class InvoiceService {
         if (outstanding == null || outstanding.signum() <= 0) return "PAID";
         if (total != null && outstanding.compareTo(total) < 0) return "PARTIALLY_PAID";
         return "UNPAID";
+    }
+
+    private int paymentDueDays(Quotation quotation) {
+        if (quotation == null || quotation.getExactHireFieldsJson() == null
+                || quotation.getExactHireFieldsJson().isBlank()) return 30;
+        try {
+            JsonNode value = objectMapper.readTree(quotation.getExactHireFieldsJson()).get("paymentDueDays");
+            return value == null || !value.canConvertToInt() ? 30 : Math.max(0, value.asInt());
+        } catch (IOException ignored) {
+            return 30;
+        }
+    }
+
+    private String valueOr(String value, String fallback) {
+        return value == null || value.isBlank() ? fallback : value.trim();
     }
 
     private void audit(String action, String entity, long id, String desc, HttpServletRequest request) {

@@ -114,22 +114,12 @@ public class BillingRunService {
         b.setPeriodEnd(r.periodEnd());
         b.setStatus(BillingRunStatus.DRAFT);
 
-        // Fetch local tax configuration from the agreement snapshot
-        b.setCgstRate(ag.getCgstAmount().multiply(new BigDecimal("100")).divide(ag.getSubtotal().add(BigDecimal.ONE), 4, RoundingMode.HALF_UP));
-        b.setSgstRate(ag.getSgstAmount().multiply(new BigDecimal("100")).divide(ag.getSubtotal().add(BigDecimal.ONE), 4, RoundingMode.HALF_UP));
-        b.setIgstRate(ag.getIgstAmount().multiply(new BigDecimal("100")).divide(ag.getSubtotal().add(BigDecimal.ONE), 4, RoundingMode.HALF_UP));
-        
-        // Better yet, just copy state comparison logic
-        if (ag.getPartyStateSnapshot() != null && ag.getPartyStateSnapshot().equalsIgnoreCase(ag.getSiteAddressSnapshot())) {
-            // Placeholder: let's determine rate based on non-zero snapshots
-            b.setCgstRate(new BigDecimal("9.00"));
-            b.setSgstRate(new BigDecimal("9.00"));
-            b.setIgstRate(BigDecimal.ZERO);
-        } else {
-            b.setCgstRate(BigDecimal.ZERO);
-            b.setSgstRate(BigDecimal.ZERO);
-            b.setIgstRate(new BigDecimal("18.00"));
-        }
+        // Tax treatment is approved on the source quotation and carried into the agreement.
+        // Reuse those exact rates instead of guessing from free-form address text.
+        var quotation = ag.getQuotation();
+        b.setCgstRate(quotation == null ? BigDecimal.ZERO : quotation.getCgstRate());
+        b.setSgstRate(quotation == null ? BigDecimal.ZERO : quotation.getSgstRate());
+        b.setIgstRate(quotation == null ? BigDecimal.ZERO : quotation.getIgstRate());
 
         b.setCreatedBy(actor());
         b.setUpdatedBy(actor());
@@ -209,6 +199,10 @@ public class BillingRunService {
         BillingRun b = require(id);
         if (b.getStatus() != BillingRunStatus.CALCULATED) {
             throw new BusinessRuleException("FINALIZATION_FAILED", "Run must be calculated before it can be finalized");
+        }
+        if (b.getGrandTotal() == null || b.getGrandTotal().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessRuleException("EMPTY_BILLING_RUN",
+                    "This period has no billable rental or selected charges. Add a valid adjustment or choose a period with deployed material before finalizing.");
         }
 
         // Allocate and protect selected operational charges/dispatches
@@ -375,6 +369,21 @@ public class BillingRunService {
                 addChargeIfValid(chargesList, transport, "SITE_TRANSFER_TRANSPORT", id, num, "TRANSPORT", "Transport Charge for Site Transfer " + num);
                 return null;
         }, ag.getId(), start, end);
+
+        // Client-chargeable transport, labour, Mathadi, TPI and site expenses.
+        jdbc.query("""
+            SELECT o.id,o.operation_number,o.operation_type,o.amount
+            FROM site_operations o
+            WHERE o.site_id=? AND o.charge_to_client=TRUE AND o.status='COMPLETED'
+              AND o.operation_date BETWEEN ? AND ?
+            """,(rs,rowNum)->{
+                long id=rs.getLong("id");String number=rs.getString("operation_number");
+                String operationType=rs.getString("operation_type");BigDecimal amount=rs.getBigDecimal("amount");
+                String chargeType="TRANSPORT".equals(operationType)?"TRANSPORT":operationType.contains("LABOUR")||"MATHADI".equals(operationType)?"LOADING":"OTHER";
+                addChargeIfValid(chargesList,amount,"SITE_OPERATION",id,number,chargeType,
+                        operationType.replace('_',' ')+" - "+number);
+                return null;
+            },ag.getSite().getId(),start,end);
 
         // 4. Manual Loss charges
         jdbc.query("""

@@ -584,8 +584,17 @@ textarea {
 }
 
 @media (max-width: 992px) {
+  .app-shell > .app-sider {
+    display: none;
+  }
+
+  .app-shell > .ant-layout {
+    min-width: 0;
+    width: 100%;
+  }
+
   .workflow-editor-page {
-    left: 72px;
+    left: 0;
   }
 }
 

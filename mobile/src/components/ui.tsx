@@ -67,9 +67,10 @@ export function AppButton({
 
 export function Field({
   label,
+  error,
   keyboardType,
   ...props
-}: TextInputProps & { label: string; keyboardType?: KeyboardTypeOptions }) {
+}: TextInputProps & { label: string; error?: string; keyboardType?: KeyboardTypeOptions }) {
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{label}</Text>
@@ -77,8 +78,9 @@ export function Field({
         {...props}
         keyboardType={keyboardType}
         placeholderTextColor="#98A2B3"
-        style={[styles.input, props.multiline && styles.inputMultiline, props.style]}
+        style={[styles.input, error && styles.inputError, props.multiline && styles.inputMultiline, props.style]}
       />
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
     </View>
   );
 }
@@ -268,6 +270,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   inputMultiline: { minHeight: 88, paddingTop: 13, textAlignVertical: 'top' },
+  inputError: { borderColor: colors.red, backgroundColor: colors.redSoft },
+  errorText: { color: colors.red, fontSize: 12, fontFamily: fonts.semiBold },
   dateRow: { flexDirection: 'row', gap: 8 },
   dateButton: {
     minHeight: 50,

@@ -6,6 +6,7 @@ export type RootStackParams = {
   Stock: { focus?: 'all' | 'godown' | 'sites' } | undefined;
   GstExport: undefined;
   ExcelReports: undefined;
+  Billing: undefined;
   CreateParty: undefined;
   CreateSite: { partyId?: number } | undefined;
   CreateQuotation: { partyId?: number; siteId?: number } | undefined;
@@ -15,6 +16,10 @@ export type RootStackParams = {
   CreateReceivingChallan: { issuedChallan?: IssuedChallan } | undefined;
   IssuedChallanDetail: { challan: IssuedChallan };
   ReceivingChallanDetail: { challan: ReceivingChallan };
+  Inquiries: undefined;
+  CreateInquiry: { inquiryId?: number } | undefined;
+  SiteOperations: undefined;
+  CreateSiteOperation: { operationId?: number } | undefined;
 };
 
 export type MainTabParams = {

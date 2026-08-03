@@ -266,11 +266,8 @@ export function CommercialPage({ kind }: { kind: Kind }) {
           {kind !== 'orders' && <Form.Item name="rentalType" label="Rental type" rules={[{ required: true }]}>
             <Select options={[
               { value: 'PER_PIECE_PER_DAY', label: 'Per piece per day' },
-              { value: 'PLATE_AREA_PER_DAY', label: 'Plate area per day' },
-              { value: 'SCAFFOLD_AREA_PER_DAY', label: 'Scaffold area per day' },
-              { value: 'PLOT_AREA_PER_DAY', label: 'Plot area per day' },
-              { value: 'SLAB_BASED', label: 'Slab based' },
-              { value: 'FIXED_RATE', label: 'Fixed rate' },
+              { value: 'PER_PIECE_PER_WEEK', label: 'Per piece per week' },
+              { value: 'PER_PIECE_PER_MONTH', label: 'Per piece per month' },
             ]} />
           </Form.Item>}
           {kind === 'agreements' && <Form.Item name="securityDeposit" label="Security deposit" rules={[{ required: true }]}><InputNumber min={0} style={{ width: '100%' }} /></Form.Item>}

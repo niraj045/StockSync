@@ -45,12 +45,12 @@ public class SiteService {
         s.setAddress(trim(r.address()));s.setContactPerson(trim(r.contactPerson()));s.setStartDate(r.startDate());
         s.setExpectedEndDate(r.expectedEndDate());s.setStatus(r.status());
         s.setDefaulter(r.defaulter()||r.status()==SiteStatus.DEFAULTER);
-        s.setClosedDate(r.status()==SiteStatus.CLOSED?r.closedDate():null);s.setNotes(trim(r.notes()));}
+        s.setClosedDate(r.status()==SiteStatus.CLOSED?r.closedDate():null);s.setNotes(trim(r.notes()));s.setExcelTemplateCode(trim(r.excelTemplateCode()));}
     private void validateCode(String code,Long id){boolean exists=id==null?sites.existsBySiteCodeIgnoreCase(code.trim()):sites.existsBySiteCodeIgnoreCaseAndIdNot(code.trim(),id);
         if(exists)throw new BusinessRuleException("SITE_CODE_ALREADY_EXISTS","Site code already exists");}
     private Site entity(Long id){return sites.findById(id).orElseThrow(()->new BusinessRuleException("SITE_NOT_FOUND","Site not found"));}
     private SiteResponse response(Site s){return new SiteResponse(s.getId(),s.getParty().getId(),s.getParty().getLegalName(),s.getSiteName(),s.getSiteCode(),
-        s.getAddress(),s.getContactPerson(),s.getStartDate(),s.getExpectedEndDate(),s.getStatus(),s.isDefaulter(),s.getClosedDate(),s.getNotes(),s.getVersion());}
+        s.getAddress(),s.getContactPerson(),s.getStartDate(),s.getExpectedEndDate(),s.getStatus(),s.isDefaulter(),s.getClosedDate(),s.getNotes(),s.getExcelTemplateCode(),s.getVersion());}
     private String auditor(){var a=SecurityContextHolder.getContext().getAuthentication();return a==null?"system":a.getName();}
     private String trim(String v){return v==null||v.isBlank()?null:v.trim();}
 }

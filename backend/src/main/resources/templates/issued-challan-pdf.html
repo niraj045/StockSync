@@ -1,29 +1,17 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8"/>
-    <style>
-        body { font-family: sans-serif; color: #17312d; font-size: 11px; }
-        .letterhead { display: block; width: 100%; height: auto; margin: 0 0 14px; }
-        h1 { color: #087f72; font-size: 20px; }
-        table { border-collapse: collapse; width: 100%; margin: 12px 0; }
-        th, td { border: 1px solid #ccd8d5; padding: 6px; }
-        th { background: #eef5f3; }
-        .right { text-align: right; }
-        .sign { margin-top: 50px; }
-    </style>
-</head>
-<body>
+<html xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"/>
+<style>
+@page{size:A4;margin:14mm}body{font-family:Arial,sans-serif;font-size:10px;color:#111}.letterhead{width:100%;max-height:88px;object-fit:contain}.title{text-align:center;font-size:20px;font-weight:bold;margin:4px 0}.subtitle{text-align:center;font-weight:bold;line-height:1.45}.meta{width:100%;border-collapse:collapse;margin-top:8px}.meta td{border:1px solid #222;padding:6px;vertical-align:top;width:50%;height:42px}.items{width:100%;border-collapse:collapse;margin-top:7px}.items th,.items td{border:1px solid #222;padding:4px;height:21px}.items th{text-align:center}.num,.qty{text-align:center}.footer-grid{width:100%;border-collapse:collapse;margin-top:7px}.footer-grid td{border:1px solid #222;padding:6px;vertical-align:top}.terms{width:42%}.sign{height:72px}.small{font-size:8px;line-height:1.35}.warehouse{text-align:center;font-weight:bold;font-size:8px;margin-top:7px;line-height:1.4}
+</style></head><body>
 <img class="letterhead" th:src="${letterheadDataUri}" alt="SteelFab"/>
-<h1 th:text="${companyName + ' - Issued Challan'}">SteelFab Scaffoldings &amp; Engineering Pvt. Ltd. - Issued Challan</h1>
-<p><b>Challan Number:</b> <span th:text="${c.challanNumber}"></span> &#160; <b>Order Number:</b> <span th:text="${c.siteOrderNumber}"></span> &#160; <b>Dispatch Date:</b> <span th:text="${c.dispatchDate}"></span></p>
-<table><tr><td><b>Party</b><br/><span th:text="${c.partyName}"></span></td>
-<td><b>Site</b><br/><span th:text="${c.siteName}"></span></td>
-<td><b>Vehicle Number</b><br/><span th:text="${c.vehicleNumber ?: '-'}"></span></td>
-<td><b>Driver Name</b><br/><span th:text="${c.driverName ?: '-'}"></span></td></tr></table>
-<table><thead><tr><th>#</th><th>Code</th><th>Item</th><th>Unit</th><th class="right">Dispatched Quantity</th></tr></thead>
-<tbody><tr th:each="i,stat:${c.items}"><td th:text="${stat.index + 1}"></td><td th:text="${i.itemCode}"></td><td th:text="${i.itemName}"></td><td th:text="${i.unit}"></td><td class="right" th:text="${i.quantity}"></td></tr></tbody></table>
-<p><b>Notes</b><br/><span th:text="${c.notes ?: '-'}"></span></p>
-<table class="sign"><tr><td><span th:text="${'For ' + companyName}">For SteelFab Scaffoldings &amp; Engineering Pvt. Ltd.</span><br/><br/><br/>Authorised signatory</td><td>For Party<br/><br/><br/>Received By</td></tr></table>
-</body>
-</html>
+<div class="title">Delivery Challan</div>
+<div class="subtitle">Supply of Scaffolding Material On Hire.<br/>On Returnable Basis from Site.</div>
+<p><b>Ref No:</b> <span th:text="${c.challanNumber}"></span> <span style="float:right"><b>Date:</b> <span th:text="${c.dispatchDate}"></span></span></p>
+<table class="meta"><tr><td><b>Client's Name &amp; Address:</b><br/><span th:text="${c.partyName}"></span><br/><span th:text="${c.partyAddress ?: '-'}"></span><br/><b>GST NO:</b> <span th:text="${c.partyGstin ?: '-'}"></span></td><td><b>Site Address:</b><br/><span th:text="${c.siteName}"></span><br/><span th:text="${c.siteAddress ?: '-'}"></span><br/><b>Client's Contact Person:</b> <span th:text="${c.siteContact ?: '-'}"></span></td></tr></table>
+<table class="items"><thead><tr><th style="width:8%">Sr. No.</th><th>Item Name</th><th style="width:16%">Qty No.</th><th style="width:24%">Remarks</th></tr></thead><tbody>
+<tr th:each="i,s:${c.items}"><td class="num" th:text="${s.index+1}"></td><td th:text="${i.itemName}"></td><td class="qty" th:text="${i.quantity+' '+i.unit}"></td><td></td></tr>
+<tr th:each="n:${#numbers.sequence(c.items.size()+1,14)}" th:if="${c.items.size() < 14}"><td class="num" th:text="${n}"></td><td></td><td></td><td></td></tr>
+</tbody></table>
+<table class="footer-grid"><tr><td class="terms"><b>Terms and Conditions</b><p>Any loss or damage of material delivered at site will be charged as per the approved quotation or agreement.</p><p th:if="${c.notes}" th:text="${c.notes}"></p></td><td><b>Vehicle No:</b> <span th:text="${c.vehicleNumber ?: '-'}"></span><br/><br/><b>Driver Name:</b> <span th:text="${c.driverName ?: '-'}"></span><br/><br/><b>Driver Number:</b> ____________________<br/><br/><b>Driver Sign:</b> ____________________</td></tr><tr><td class="sign"><b th:text="${'For '+companyName}"></b><br/><br/><br/>Signature and Name</td><td class="sign"><b>Counted, Confirmed and Received on Behalf of Client by:</b><br/>Name: ____________________ &nbsp; Mob No: ____________________<br/><br/>Receiver's Stamp &nbsp;&nbsp;&nbsp; Signature: ____________________</td></tr></table>
+<div class="warehouse">Our Warehouse timings are 9:00 am to 5:00 pm. Warehouse Closed on Sundays and National Holidays.</div>
+</body></html>

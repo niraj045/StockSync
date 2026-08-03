@@ -97,7 +97,9 @@ describe('quotation editor behavior', () => {
     expect(screen.getByText('No material added')).toBeVisible();
   });
   it('suggests only SteelFab materials that exist in the item master',()=>{
-    expect(exactDefaultItems([{id:1,itemCode:'HF-1',itemName:'H Frame'},{id:2,itemCode:'OTHER',itemName:'Adjustable Prop'}])).toHaveLength(1);
+    const suggested=exactDefaultItems([{id:1,itemCode:'HF-1',itemName:'H Frame'},{id:2,itemCode:'OTHER',itemName:'Adjustable Prop'}]);
+    expect(suggested).toHaveLength(1);
+    expect(suggested[0].rentalType).toBe('PER_PIECE_PER_MONTH');
   });
   it('validates dynamic exact rows and their commercial fields', () => {
     const result=validateQuotationEditor(editor({exactHire:{gstPercentage:18},items:editor().items}),sites);

@@ -57,10 +57,19 @@ class SteelFabExactHirePdfServiceTest {
     @Test void fitsLongRealisticSiteNamesIntoTheExactTemplate() throws Exception {
         QuotationResponse q = quotation();
         when(q.siteName()).thenReturn("Temporary Staging Site With Extended Project Name");
+        when(q.partyName()).thenReturn("Innovator Facade Engineering Private Limited");
+        when(q.exactHire()).thenReturn(new SteelFabExactHireRequest(
+                "301 Narmada Building, Harjana Vijay Society, Chembur, Mumbai, Maharashtra, India 400071",
+                "Quotation for supply of H frame scaffolding materials on hire for the complete facade works.",
+                7, "6 Months (180 days)", 90, new BigDecimal("195"), new BigDecimal("50"),
+                new BigDecimal("18"), new BigDecimal("252431"), 3, "Hussain Golwala", "Sales Executive",
+                "8451044007", "Meera Shah", "Purchase Manager", "982417080", LocalDate.of(2026, 8, 22)));
         var generated = new SteelFabExactHirePdfService(new ObjectMapper()).generate(q);
         try (PDDocument document = PDDocument.load(new ByteArrayInputStream(generated.content()))) {
             assertThat(document.getNumberOfPages()).isEqualTo(5);
         }
+        Files.createDirectories(Path.of("target"));
+        Files.write(Path.of("target", "steelfab-long-values-sample.pdf"), generated.content());
     }
 
     private QuotationResponse quotation() {

@@ -26,7 +26,13 @@ const MOBILE_QUERY = '(max-width: 991px)';
 const COARSE_POINTER_QUERY = '(hover: none) and (pointer: coarse)';
 
 function isMobileLayout() {
-  const narrowViewport = window.matchMedia(MOBILE_QUERY).matches;
+  const viewportWidths = [
+    window.innerWidth,
+    window.outerWidth,
+    window.visualViewport?.width,
+  ].filter((width): width is number => typeof width === 'number' && width > 0);
+  const narrowViewport = window.matchMedia(MOBILE_QUERY).matches
+    || Math.min(...viewportWidths) <= 991;
   const phoneScreen = Math.min(window.screen.width, window.screen.height) <= 991;
   return narrowViewport || (phoneScreen && window.matchMedia(COARSE_POINTER_QUERY).matches);
 }
@@ -58,10 +64,12 @@ export function AppLayout() {
     media.addEventListener('change', handleChange);
     pointer.addEventListener('change', handleChange);
     window.addEventListener('resize', handleChange);
+    window.visualViewport?.addEventListener('resize', handleChange);
     return () => {
       media.removeEventListener('change', handleChange);
       pointer.removeEventListener('change', handleChange);
       window.removeEventListener('resize', handleChange);
+      window.visualViewport?.removeEventListener('resize', handleChange);
     };
   }, []);
 

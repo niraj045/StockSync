@@ -170,15 +170,38 @@ public class BillingRunCalculationService {
                     } else {
                         // Standard calculation
                         BigDecimal qtyFactor = ms.quantity;
+                        String billingUnit = item.getUnit();
+                        if (agreement.getMeasurementBasis() == MeasurementBasis.SQUARE_FEET) {
+                            BigDecimal totalArea = Optional.ofNullable(agItem.getArea()).orElse(BigDecimal.ZERO);
+                            if (totalArea.signum() <= 0 || agItem.getAgreedQuantity().signum() <= 0) {
+                                throw new com.stocksync.common.exception.BusinessRuleException("SQUARE_FEET_MEASUREMENT_REQUIRED",
+                                        "Enter square-foot area for " + agItem.getItemNameSnapshot() + " before billing");
+                            }
+                            BigDecimal areaPerPiece = totalArea.divide(agItem.getAgreedQuantity(), 10, RoundingMode.HALF_UP);
+                            qtyFactor = ms.quantity.multiply(areaPerPiece);
+                            billingUnit = "SFT";
+                        }
                         BigDecimal dailyRate = rate;
 
-                        if (agItem.getRentalType() == RentalType.PLATE_AREA_PER_DAY) {
+                        if (agItem.getRentalType() == RentalType.PER_PIECE_PER_MONTH) {
+                            BigDecimal proratedMonths = monthlyProrationFactor(segStart, segEnd);
+                            amount = qtyFactor.multiply(rate).multiply(proratedMonths);
+                            explanation = String.format("Monthly rental for %s %s @ %s/month, prorated %s month(s) across %d days",
+                                    qtyFactor.setScale(4, RoundingMode.HALF_UP), billingUnit,
+                                    rate.setScale(4, RoundingMode.HALF_UP), proratedMonths.setScale(4, RoundingMode.HALF_UP), billableDays);
+                        } else if (agItem.getRentalType() == RentalType.PER_PIECE_PER_WEEK) {
+                            BigDecimal proratedWeeks = weeklyProrationFactor(billableDays);
+                            amount = qtyFactor.multiply(rate).multiply(proratedWeeks);
+                            explanation = String.format("Weekly rental for %s %s @ %s/week, prorated %s week(s) across %d days",
+                                    qtyFactor.setScale(4, RoundingMode.HALF_UP), billingUnit,
+                                    rate.setScale(4, RoundingMode.HALF_UP), proratedWeeks.setScale(4, RoundingMode.HALF_UP), billableDays);
+                        } else if (agItem.getRentalType() == RentalType.PLATE_AREA_PER_DAY) {
                             BigDecimal area = Optional.ofNullable(agItem.getArea()).orElse(BigDecimal.ONE);
                             dailyRate = agItem.getAreaRate();
                             amount = qtyFactor.multiply(area).multiply(dailyRate).multiply(BigDecimal.valueOf(billableDays));
                             explanation = String.format("Plate area rental for %s %s (Area: %s sq m/pc) @ %s/sq m/day for %d days",
                                     qtyFactor.setScale(4, RoundingMode.HALF_UP),
-                                    item.getUnit(),
+                                    billingUnit,
                                     area.setScale(4, RoundingMode.HALF_UP),
                                     dailyRate.setScale(4, RoundingMode.HALF_UP),
                                     billableDays);
@@ -208,7 +231,7 @@ public class BillingRunCalculationService {
                             amount = qtyFactor.multiply(dailyRate).multiply(BigDecimal.valueOf(billableDays));
                             explanation = String.format("Rental for %s %s @ %s/day for %d days",
                                     qtyFactor.setScale(4, RoundingMode.HALF_UP),
-                                    item.getUnit(),
+                                    billingUnit,
                                     dailyRate.setScale(4, RoundingMode.HALF_UP),
                                     billableDays);
                         }
@@ -221,13 +244,16 @@ public class BillingRunCalculationService {
                     seg.setItemCodeSnapshot(agItem.getItemCodeSnapshot());
                     seg.setItemNameSnapshot(agItem.getItemNameSnapshot());
                     seg.setSizeSnapshot(agItem.getSizeSnapshot());
-                    seg.setUnitSnapshot(agItem.getUnitSnapshot());
+                    boolean squareFeet=agreement.getMeasurementBasis()==MeasurementBasis.SQUARE_FEET;
+                    BigDecimal segmentQuantity=ms.quantity;
+                    if(squareFeet&&agItem.getArea()!=null&&agItem.getAgreedQuantity().signum()>0){segmentQuantity=ms.quantity.multiply(agItem.getArea().divide(agItem.getAgreedQuantity(),10,RoundingMode.HALF_UP));}
+                    seg.setUnitSnapshot(squareFeet?"SFT":agItem.getUnitSnapshot());
                     seg.setWeightSnapshot(agItem.getWeightSnapshot());
                     seg.setSourceIssueReference(ms.startRef);
                     seg.setSourceEndReference(ms.endRef);
                     seg.setRentalType(agItem.getRentalType());
-                    seg.setQuantity(ms.quantity);
-                    seg.setArea(agItem.getArea());
+                    seg.setQuantity(segmentQuantity);
+                    seg.setArea(squareFeet?segmentQuantity:agItem.getArea());
                     seg.setWeight(agItem.getWeightSnapshot());
                     seg.setSegmentStart(segStart);
                     seg.setSegmentEnd(segEnd);
@@ -243,6 +269,28 @@ public class BillingRunCalculationService {
         }
 
         return results;
+    }
+
+    static BigDecimal weeklyProrationFactor(int billableDays) {
+        return BigDecimal.valueOf(billableDays)
+                .divide(BigDecimal.valueOf(7), 8, RoundingMode.HALF_UP);
+    }
+
+    static BigDecimal monthlyProrationFactor(LocalDate start, LocalDate end) {
+        if (start == null || end == null || end.isBefore(start)) {
+            throw new IllegalArgumentException("A valid inclusive billing period is required");
+        }
+        BigDecimal months = BigDecimal.ZERO;
+        LocalDate cursor = start;
+        while (!cursor.isAfter(end)) {
+            LocalDate sliceEnd = cursor.withDayOfMonth(cursor.lengthOfMonth());
+            if (sliceEnd.isAfter(end)) sliceEnd = end;
+            long days = ChronoUnit.DAYS.between(cursor, sliceEnd) + 1;
+            months = months.add(BigDecimal.valueOf(days)
+                    .divide(BigDecimal.valueOf(cursor.lengthOfMonth()), 10, RoundingMode.HALF_UP));
+            cursor = sliceEnd.plusDays(1);
+        }
+        return months;
     }
 
     private List<MatchSegment> matchFIFO(List<Movement> inwards, List<Movement> outwards) {

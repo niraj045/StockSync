@@ -14,6 +14,7 @@ import com.stocksync.reporting.service.ReportCatalogService;
 import com.stocksync.reporting.service.ReportExportService;
 import com.stocksync.reporting.service.ReportQueryService;
 import com.stocksync.reporting.service.SavedReportFilterService;
+import com.stocksync.reporting.service.SbutWorkbookService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -42,14 +43,16 @@ public class ReportController {
     private final ReportExportService exports;
     private final SavedReportFilterService savedFilters;
     private final UserActivityLogService audit;
+    private final SbutWorkbookService sbut;
 
     public ReportController(ReportCatalogService catalog, ReportQueryService queries, ReportExportService exports,
-                            SavedReportFilterService savedFilters, UserActivityLogService audit) {
+                            SavedReportFilterService savedFilters, UserActivityLogService audit,SbutWorkbookService sbut) {
         this.catalog = catalog;
         this.queries = queries;
         this.exports = exports;
         this.savedFilters = savedFilters;
         this.audit = audit;
+        this.sbut = sbut;
     }
 
     @GetMapping("/catalog")
@@ -130,6 +133,13 @@ public class ReportController {
                 : filters;
         ReportFilterRequest scoped = new ReportFilterRequest(source.startDate(), source.endDate(), source.partyId(), siteId, source.agreementId(), source.itemId(), source.categoryId(), source.status(), source.documentNumber(), source.user(), source.month(), source.page(), source.size());
         return queries.preview("MONTHLY_SITE_STATEMENT", scoped);
+    }
+
+    @GetMapping("/sites/{siteId}/sbut-dr.xlsx")
+    public ResponseEntity<byte[]> sbutDeliveryReturn(@PathVariable long siteId) {
+        SbutWorkbookService.WorkbookDownload download=sbut.generate(siteId);
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .header(HttpHeaders.CONTENT_DISPOSITION,ContentDisposition.attachment().filename(download.filename()).build().toString()).body(download.bytes());
     }
 
     @GetMapping("/gst/sales-summary")

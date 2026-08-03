@@ -1,5 +1,5 @@
 package com.stocksync.agreement.dto;
-import com.stocksync.agreement.entity.BillingCycle;
+import com.stocksync.agreement.entity.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
@@ -11,4 +11,5 @@ public record AgreementRequest(
  @Positive Integer customBillingCycleDays,@PositiveOrZero Integer gracePeriodDays,@PositiveOrZero Integer minimumBillingDays,
  @NotNull @DecimalMin("0") BigDecimal securityDeposit,@Size(max=4000) String terms,@Size(max=1000) String notes,
  @NotEmpty List<@Valid AgreementItemRequest> items,@NotNull Long version,
- String billingStartRule,String billingEndRule){}
+ String billingStartRule,String billingEndRule,MeasurementBasis measurementBasis,
+ BillingCommencementRule billingCommencementRule,LocalDate fixedBillingStartDate){}

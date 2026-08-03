@@ -18,7 +18,7 @@ public class PaymentReceiptPdfService {
         context.setVariables(Map.of("payment", payment));
         String html = templates.process("payment-receipt-pdf", context);
         try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            new PdfRendererBuilder().withHtmlContent(html, null).toStream(output).run();
+            new PdfRendererBuilder().useFastMode().withHtmlContent(html, null).toStream(output).run();
             return output.toByteArray();
         } catch (IOException e) {
             throw new IllegalStateException("Unable to generate payment receipt PDF", e);

@@ -6,4 +6,4 @@ public record SiteRequest(@NotNull Long partyId, @NotBlank @Size(max=150) String
         @NotBlank @Size(max=50) String siteCode, @Size(max=500) String address,
         @Size(max=100) String contactPerson, LocalDate startDate, LocalDate expectedEndDate,
         @NotNull SiteStatus status, @NotNull Boolean defaulter, LocalDate closedDate,
-        @Size(max=1000) String notes, Long version) {}
+        @Size(max=1000) String notes, @Size(max=50) String excelTemplateCode, Long version) {}

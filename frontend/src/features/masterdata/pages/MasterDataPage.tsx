@@ -93,6 +93,7 @@ const baseConfigs: Record<Kind, Config> = {
       ] },
       { name: 'defaulter', label: 'Defaulter', type: 'boolean' },
       { name: 'closedDate', label: 'Closed date', type: 'date' }, { name: 'notes', label: 'Notes', type: 'textarea' },
+      { name: 'excelTemplateCode', label: 'Site Excel format', type: 'select', options: [{ label: 'Standard export', value: 'STANDARD' }, { label: 'SBUT D&R', value: 'SBUT_DR_V1' }] },
     ],
     columns: [
       { key: 'siteCode', title: 'Code' }, { key: 'siteName', title: 'Site' },

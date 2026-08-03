@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { App, Button, Card, Descriptions, Empty, Form, Input, InputNumber, Modal, Select, Space, Table, Tag, Checkbox, Divider, Drawer } from 'antd';
+import { Alert, App, Button, Card, Descriptions, Empty, Form, Input, InputNumber, Modal, Select, Space, Table, Tag, Checkbox, Divider, Drawer } from 'antd';
 import { PlusOutlined, CalculatorOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
@@ -29,7 +29,9 @@ export function BillingRunsPage() {
   const roles = user?.roles ?? [];
   const admin = roles.includes('ROLE_ADMIN');
   const accounts = roles.includes('ROLE_ACCOUNTS');
-  const canWrite = admin || accounts;
+  const operations = roles.includes('ROLE_OPERATIONS');
+  const canPrepare = admin || accounts || operations;
+  const canFinalize = admin || accounts;
 
   const navigate = useNavigate();
   const { modal, message } = App.useApp();
@@ -152,6 +154,15 @@ export function BillingRunsPage() {
     onError: (e) => message.error(errorMessage(e, 'Failed to generate invoice'))
   });
 
+  const generateDueMutation = useMutation({
+    mutationFn: async () => (await apiClient.post<{generated:number;skipped:number;failed:number;failures:string[]}>('/billing-runs/generate-due-drafts')).data,
+    onSuccess: (result) => {
+      result.failed ? message.warning(`Generated ${result.generated} drafts; ${result.failed} agreement(s) need attention`) : message.success(`Generated ${result.generated} due draft bill(s)`);
+      refresh();
+    },
+    onError: (e) => message.error(errorMessage(e, 'Automatic draft generation failed'))
+  });
+
   const loadDetailedRun = async (id: number) => {
     try {
       const res = (await apiClient.get<BillingRun>(`/billing-runs/${id}`)).data;
@@ -235,12 +246,13 @@ export function BillingRunsPage() {
     <div className="page-stack">
       <div className="page-header-container">
         <div>
-          <h1 className="page-heading">Rental Billing Runs</h1>
-          <p className="page-description">Manage and calculate site rental timelines and operational charges.</p>
+          <h1 className="page-heading">Monthly Rental Billing</h1>
+          <p className="page-description">Prepare rent from posted challan movements, review charges, then finalize and create the SteelFab invoice.</p>
         </div>
         <Space wrap>
           <ReportExcelButton reportType="BILLING_RUN_REGISTER" filters={{ status }} />
-          {canWrite && (
+          {canFinalize && <Button icon={<CalculatorOutlined/>} loading={generateDueMutation.isPending} onClick={()=>generateDueMutation.mutate()}>Generate due drafts</Button>}
+          {canPrepare && (
           <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
             New Billing Run
           </Button>
@@ -277,7 +289,8 @@ export function BillingRunsPage() {
               width: 120,
               render: (s: string) => {
                 const color = s === 'FINALIZED' ? 'green' : s === 'CANCELLED' ? 'red' : s === 'CALCULATED' ? 'blue' : 'orange';
-                return <Tag color={color}>{s}</Tag>;
+                const label = s === 'DRAFT' ? 'PREPARED' : s === 'CALCULATED' ? 'READY FOR REVIEW' : s;
+                return <Tag color={color}>{label}</Tag>;
               }
             },
             {
@@ -293,7 +306,7 @@ export function BillingRunsPage() {
 
       {/* Create Run Modal */}
       <Modal
-        title="Create New Billing Run"
+        title="Prepare Monthly Rental"
         open={createOpen}
         onCancel={() => setCreateOpen(false)}
         onOk={handleCreate}
@@ -333,22 +346,22 @@ export function BillingRunsPage() {
           selectedRun && (
             <div style={{ textAlign: 'right' }}>
               <Space>
-                {canWrite && (selectedRun.status === 'DRAFT' || selectedRun.status === 'CALCULATED') && (
+                {canPrepare && (selectedRun.status === 'DRAFT' || selectedRun.status === 'CALCULATED') && (
                   <>
                     <Button icon={<CalculatorOutlined />} onClick={() => calculateMutation.mutate(selectedRun.id)} loading={calculateMutation.isPending}>
                       Recalculate
                     </Button>
-                    <Button type="primary" icon={<CheckCircleOutlined />} onClick={handleFinalize} loading={finalizeMutation.isPending}>
+                    {canFinalize && <Button type="primary" icon={<CheckCircleOutlined />} onClick={handleFinalize} loading={finalizeMutation.isPending} disabled={selectedRun.grandTotal <= 0}>
                       Finalize Run
-                    </Button>
+                    </Button>}
                   </>
                 )}
-                {canWrite && selectedRun.status === 'FINALIZED' && (
+                {canFinalize && selectedRun.status === 'FINALIZED' && (
                   <Button type="primary" onClick={() => generateInvoiceMutation.mutate(selectedRun.id)} loading={generateInvoiceMutation.isPending}>
                     Generate Invoice
                   </Button>
                 )}
-                {canWrite && selectedRun.status !== 'CANCELLED' && (
+                {canFinalize && selectedRun.status !== 'CANCELLED' && (
                   <Button danger icon={<CloseCircleOutlined />} onClick={handleCancelRun} loading={cancelMutation.isPending}>
                     Cancel Run
                   </Button>
@@ -374,6 +387,7 @@ export function BillingRunsPage() {
             </Descriptions>
 
             <Divider orientation="left">Rental Timeline Segments</Divider>
+            {selectedRun.segments.length === 0 && <Alert type="warning" showIcon message="No billable material in this period" description="Rent begins from a posted issued challan. Choose a period containing deployed material; a zero-value run cannot be finalized." />}
             <Table
               rowKey="id"
               dataSource={selectedRun.segments}

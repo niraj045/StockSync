@@ -327,3 +327,66 @@ export type SitePendingBalance = {
   unit: string;
   pendingQuantity: number;
 };
+
+export type InquiryRequest = {
+  inquiryDate: string;
+  source: string;
+  contactName: string;
+  phone?: string;
+  email?: string;
+  partyId?: number;
+  siteId?: number;
+  requirement: string;
+  followUpDate?: string;
+  status: string;
+  quotationId?: number;
+  notes?: string;
+};
+
+export type InquiryResponse = InquiryRequest & {
+  id: number;
+  inquiryNumber: string;
+  partyName?: string;
+  siteName?: string;
+  quotationNumber?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedBy: string;
+  updatedAt: string;
+};
+
+export type OperationRequest = {
+  operationDate: string;
+  operationType: string;
+  direction: string;
+  partyId?: number;
+  siteId: number;
+  issuedChallanId?: number;
+  receivingChallanId?: number;
+  providerType?: string;
+  providerName?: string;
+  transporterName?: string;
+  vehicleNumber?: string;
+  driverName?: string;
+  workerCount?: number;
+  quantity?: number;
+  rate: number;
+  amount: number;
+  chargeToClient: boolean;
+  status: string;
+  referenceNumber?: string;
+  notes?: string;
+};
+
+export type OperationResponse = OperationRequest & {
+  id: number;
+  operationNumber: string;
+  partyName?: string;
+  siteName?: string;
+  issuedChallanNumber?: string;
+  receivingChallanNumber?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedBy: string;
+  updatedAt: string;
+};

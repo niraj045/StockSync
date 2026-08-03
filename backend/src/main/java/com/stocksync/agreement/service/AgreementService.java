@@ -80,7 +80,12 @@ public class AgreementService implements AgreementAccess {
   }
   LocalDate effective=request==null?today:request.effectiveDate();
   a.setQuotation(q);a.setParty(q.getParty());a.setSite(q.getSite());a.setAgreementDate(today);a.setEffectiveDate(effective);a.setExpiryDate(request==null?null:request.expiryDate());a.setRentalType(q.getRentalType());
-  a.setBillingCycle(BillingCycle.MONTHLY);a.setStatus(AgreementStatus.DRAFT);copySnapshots(a,q);copyCommercials(a,q);
+  a.setBillingCycle(BillingCycle.MONTHLY);
+  a.setMeasurementBasis(request==null||request.measurementBasis()==null?MeasurementBasis.ITEM_QUANTITY:request.measurementBasis());
+  a.setBillingCommencementRule(request==null||request.billingCommencementRule()==null?BillingCommencementRule.FIRST_DISPATCH:request.billingCommencementRule());
+  a.setFixedBillingStartDate(request==null?null:request.fixedBillingStartDate());
+  validateBillingCommencement(a.getBillingCommencementRule(),a.getFixedBillingStartDate());
+  a.setStatus(AgreementStatus.DRAFT);copySnapshots(a,q);copyCommercials(a,q);
   if(request!=null){a.setSecurityDeposit(request.securityDeposit());a.setNotes(trim(request.notes()));}
   List<AgreementItem> lines=new ArrayList<>();for(QuotationItem source:q.getItems()){AgreementItem i=new AgreementItem();
    i.setSourceQuotationItem(source);i.setItem(source.getItem());i.setItemCodeSnapshot(source.getItemCodeSnapshot());i.setItemNameSnapshot(source.getItemNameSnapshot());
@@ -100,6 +105,9 @@ public class AgreementService implements AgreementAccess {
  @Transactional public AgreementResponse update(Long id,AgreementRequest r,HttpServletRequest http){
   Agreement a=require(id);expect(a,AgreementStatus.DRAFT);if(a.getVersion()!=r.version())throw new ObjectOptimisticLockingFailureException(Agreement.class,id);
   validate(r);a.setAgreementDate(r.agreementDate());a.setEffectiveDate(r.effectiveDate());a.setExpiryDate(r.expiryDate());a.setBillingCycle(r.billingCycle());
+  a.setMeasurementBasis(r.measurementBasis()==null?MeasurementBasis.ITEM_QUANTITY:r.measurementBasis());
+  a.setBillingCommencementRule(r.billingCommencementRule()==null?BillingCommencementRule.FIRST_DISPATCH:r.billingCommencementRule());
+  a.setFixedBillingStartDate(r.fixedBillingStartDate());
   a.setCustomBillingCycleDays(r.customBillingCycleDays());a.setGracePeriodDays(zero(r.gracePeriodDays()));a.setMinimumBillingDays(zero(r.minimumBillingDays()));
   a.setSecurityDeposit(r.securityDeposit());a.setTerms(trim(r.terms()));a.setNotes(trim(r.notes()));
   if(r.billingStartRule()!=null)a.setBillingStartRule(BillingStartRule.valueOf(r.billingStartRule()));
@@ -109,7 +117,7 @@ public class AgreementService implements AgreementAccess {
   List<AgreementItem> lines=new ArrayList<>();Set<Long> unique=new HashSet<>();for(AgreementItemRequest v:r.items()){
    if(!unique.add(v.itemId()))throw error("DUPLICATE_ITEM_LINE","Each item may appear only once");
    AgreementItem i=originals.get(v.itemId());if(i==null)throw error("AGREEMENT_ITEM_NOT_FROM_QUOTATION","Agreement items must originate from the quotation");
-   i.setAgreedQuantity(v.contractedQuantity());i.setUnitRate(v.rate());i.setRentalRate(v.rate());i.setAreaRate(v.areaRate());i.setWeightRate(v.weightRate());
+   i.setAgreedQuantity(v.contractedQuantity());i.setUnitRate(v.rate());i.setRentalRate(v.rate());i.setArea(v.area());i.setAreaRate(v.areaRate());i.setWeightRate(v.weightRate());
    i.setLossRatePerPiece(v.lossRatePerPiece());i.setLossRatePerWeight(v.lossRatePerWeight());i.setDamageRate(v.damageRate());i.setSequence(zero(v.sequence()));i.setNotes(trim(v.notes()));
    List<AgreementItemSlab> slabsList = new ArrayList<>();
    if(v.slabs() != null) {
@@ -130,7 +138,8 @@ public class AgreementService implements AgreementAccess {
  @Transactional public AgreementResponse returnToDraft(Long id,AgreementReasonRequest r,HttpServletRequest h){Agreement a=require(id);expect(a,AgreementStatus.READY_FOR_REVIEW);a.setStatus(AgreementStatus.DRAFT);a.setNotes(join(a.getNotes(),"Returned: "+r.reason().trim()));return saveLog(a,"AGREEMENT_RETURNED_TO_DRAFT",r.reason(),h);}
  @Transactional public AgreementResponse generate(Long id,HttpServletRequest h){Agreement a=require(id);if(a.getStatus()!=AgreementStatus.DRAFT&&a.getStatus()!=AgreementStatus.READY_FOR_REVIEW)throw transition(a);
   boolean exact=a.getQuotation()!=null&&a.getQuotation().getQuotationTemplate()!=null&&SteelFabExactHirePdfService.TEMPLATE_CODE.equals(a.getQuotation().getQuotationTemplate().getTemplateCode());
-  byte[] bytes=exact?(a.getQuotation().getExactPdfAttachment()!=null?fileStorage.read(a.getQuotation().getExactPdfAttachment().getId()):exactPdf.generate(quotationService.get(a.getQuotation().getId())).content()):pdf.generate(response(a));
+  boolean currentExact=exact&&a.getQuotation().getExactPdfAttachment()!=null&&Objects.equals(a.getQuotation().getExactPdfCoordinatesVersion(),exactPdf.coordinatesVersion());
+  byte[] bytes=exact?(currentExact?fileStorage.read(a.getQuotation().getExactPdfAttachment().getId()):exactPdf.generate(quotationService.get(a.getQuotation().getId())).content()):pdf.generate(response(a));
   String safe=(exact?"steelfab-hire-agreement-":"agreement-")+a.getAgreementNumber().replaceAll("[^A-Za-z0-9.-]","-")+".pdf";
   Path dir=storageRoot.resolve("agreements").resolve(String.valueOf(a.getId())).normalize();Path target=dir.resolve(UUID.randomUUID()+".pdf").normalize();
   if(!target.startsWith(storageRoot))throw error("INVALID_FILE_PATH","Invalid agreement document path");
@@ -150,6 +159,10 @@ public class AgreementService implements AgreementAccess {
  @Transactional public AgreementResponse cancel(Long id,AgreementReasonRequest r,HttpServletRequest h){Agreement a=require(id);if(a.getStatus()!=AgreementStatus.DRAFT&&a.getStatus()!=AgreementStatus.READY_FOR_REVIEW)throw transition(a);a.setStatus(AgreementStatus.CANCELLED);a.setCancellationReason(r.reason().trim());a.setCancelledAt(Instant.now());a.setCancelledBy(actor());return saveLog(a,"AGREEMENT_CANCELLED",r.reason(),h);}
 
  @Transactional(readOnly=true) public Download download(Long id){Agreement a=require(id);FileAttachment f=a.getGeneratedDocument();if(f==null)throw error("AGREEMENT_DOCUMENT_REQUIRED","Agreement document has not been generated");
+  boolean staleExact=a.getQuotation()!=null&&a.getQuotation().getQuotationTemplate()!=null
+   &&SteelFabExactHirePdfService.TEMPLATE_CODE.equals(a.getQuotation().getQuotationTemplate().getTemplateCode())
+   &&!Objects.equals(a.getQuotation().getExactPdfCoordinatesVersion(),exactPdf.coordinatesVersion());
+  if(staleExact){byte[] current=exactPdf.generate(quotationService.get(a.getQuotation().getId())).content();return new Download(new ByteArrayResource(current),f.getOriginalFilename(),"application/pdf");}
   Path path=storageRoot.resolve(f.getStoragePath()).normalize();if(!path.startsWith(storageRoot)||!Files.isRegularFile(path))throw error("FILE_NOT_FOUND","Agreement document not found");
   return new Download(new FileSystemResource(path),f.getOriginalFilename(),f.getContentType());
  }
@@ -158,7 +171,11 @@ public class AgreementService implements AgreementAccess {
 
  private void validate(AgreementRequest r){if(r.expiryDate()!=null&&r.expiryDate().isBefore(r.effectiveDate()))throw error("INVALID_AGREEMENT_DATES","Expiry cannot precede effective date");
   if(r.expiryDate()!=null&&r.agreementDate().isAfter(r.expiryDate()))throw error("INVALID_AGREEMENT_DATES","Agreement date cannot be after expiry date");
-  if(r.billingCycle()==BillingCycle.CUSTOM&&(r.customBillingCycleDays()==null||r.customBillingCycleDays()<=0))throw error("INVALID_BILLING_CYCLE","Custom billing cycle requires positive days");}
+  if(r.billingCycle()==BillingCycle.CUSTOM&&(r.customBillingCycleDays()==null||r.customBillingCycleDays()<=0))throw error("INVALID_BILLING_CYCLE","Custom billing cycle requires positive days");
+  validateBillingCommencement(r.billingCommencementRule(),r.fixedBillingStartDate());}
+ private void validateBillingCommencement(BillingCommencementRule rule,LocalDate fixedDate){
+  if(rule==BillingCommencementRule.FIXED_DATE&&fixedDate==null)throw error("FIXED_BILLING_DATE_REQUIRED","Select the fixed billing start date");
+ }
  private void validateReady(Agreement a){if(a.getEffectiveDate()==null||a.getItems().isEmpty())throw error("AGREEMENT_NOT_READY","Effective date and agreement items are required");}
  private void copySnapshots(Agreement a,Quotation q){var p=q.getParty();var s=q.getSite();a.setPartyLegalNameSnapshot(q.getPartyNameSnapshot());a.setPartyTradeNameSnapshot(p.getTradeName());a.setPartyGstinSnapshot(p.getGstin());a.setPartyPanSnapshot(p.getPan());a.setPartyAddressSnapshot(p.getAddress());a.setPartyStateSnapshot(p.getState());a.setPartyContactSnapshot(String.join(" / ",nonNull(p.getContactPerson()),nonNull(p.getPhone()),nonNull(p.getEmail())));a.setSiteNameSnapshot(q.getSiteNameSnapshot());a.setSiteCodeSnapshot(s.getSiteCode());a.setSiteAddressSnapshot(s.getAddress());a.setSiteContactSnapshot(s.getContactPerson());a.setQuotationNumberSnapshot(q.getQuotationNumber());a.setQuotationDateSnapshot(q.getQuotationDate());a.setQuotationApprovedAtSnapshot(q.getApprovedAt());}
  private void copyCommercials(Agreement a,Quotation q){a.setSecurityDeposit(q.getSecurityDeposit());a.setSubtotal(q.getSubtotal());a.setDiscountAmount(q.getDiscountAmount());a.setTaxableAmount(q.getTaxableAmount());a.setCgstAmount(q.getCgstAmount());a.setSgstAmount(q.getSgstAmount());a.setIgstAmount(q.getIgstAmount());a.setTotalTax(q.getTotalTax());a.setTransportCharge(q.getTransportCharge());a.setLoadingCharge(q.getLoadingCharge());a.setUnloadingCharge(q.getUnloadingCharge());a.setOtherCharge(q.getOtherCharge());a.setRoundOff(q.getRoundOff());a.setGrandTotal(q.getGrandTotal());a.setTerms(q.getTerms());a.setNotes(q.getNotes());}
@@ -194,6 +211,7 @@ public class AgreementService implements AgreementAccess {
   template==null?null:template.getId(),template==null?null:template.getTemplateCode(),template==null?null:template.getName(),template==null?null:template.getLayoutKey(),template==null?null:template.getTemplateVersion(),
   a.getParty().getId(),a.getPartyLegalNameSnapshot(),a.getPartyTradeNameSnapshot(),a.getPartyGstinSnapshot(),a.getPartyPanSnapshot(),a.getPartyAddressSnapshot(),a.getPartyStateSnapshot(),a.getPartyContactSnapshot(),
   a.getSite().getId(),a.getSiteNameSnapshot(),a.getSiteCodeSnapshot(),a.getSiteAddressSnapshot(),a.getSiteContactSnapshot(),a.getAgreementDate(),a.getEffectiveDate(),a.getExpiryDate(),a.getRentalType(),a.getBillingCycle(),
+  a.getMeasurementBasis(),a.getBillingCommencementRule(),a.getFixedBillingStartDate(),a.getNextBillingDate(),a.getLastAutoPeriodEnd(),
   a.getCustomBillingCycleDays(),a.getGracePeriodDays(),a.getMinimumBillingDays(),a.getStatus(),a.getSecurityDeposit(),a.getSubtotal(),a.getDiscountAmount(),a.getTaxableAmount(),a.getCgstAmount(),a.getSgstAmount(),a.getIgstAmount(),a.getTotalTax(),
   a.getTransportCharge(),a.getLoadingCharge(),a.getUnloadingCharge(),a.getOtherCharge(),a.getRoundOff(),a.getGrandTotal(),a.getTerms(),a.getNotes(),
   a.getGeneratedDocument()==null?null:a.getGeneratedDocument().getId(),a.getGeneratedFilename(),a.getGeneratedAt(),a.getReadyForReviewAt(),a.getReadyForReviewBy(),a.getActivatedAt(),a.getActivatedBy(),

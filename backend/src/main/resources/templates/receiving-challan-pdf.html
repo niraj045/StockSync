@@ -1,82 +1,16 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8"/>
-    <style>
-        body { font-family: sans-serif; color: #17312d; font-size: 10px; }
-        .letterhead { display: block; width: 100%; height: auto; margin: 0 0 14px; }
-        h1 { color: #087f72; margin-bottom: 5px; }
-        table { border-collapse: collapse; width: 100%; margin: 8px 0; }
-        th, td { border: 1px solid #ccd8d5; padding: 4px; }
-        th { background: #eef5f3; text-align: left; }
-        .right { text-align: right; }
-        .sign { margin-top: 40px; }
-    </style>
-</head>
-<body>
-    <img class="letterhead" th:src="${letterheadDataUri}" alt="SteelFab"/>
-    <h1 th:text="${companyName + ' - Receiving Challan'}">SteelFab Scaffoldings &amp; Engineering Pvt. Ltd. - Receiving Challan</h1>
-    <p>
-        <b>Challan Number:</b> <span th:text="${c.receivingChallanNumber}"></span> &#160;
-        <b>Source Type:</b> <span th:text="${c.sourceType}"></span> &#160;
-        <b>Receive Date:</b> <span th:text="${c.receiveDate}"></span> &#160;
-        <b>Status:</b> <span th:text="${c.status}"></span>
-    </p>
-
-    <table>
-        <tr>
-            <td><b>Party</b><br/><span th:text="${c.partyName}"></span></td>
-            <td><b>Site</b><br/><span th:text="${c.siteName}"></span></td>
-            <td><b>Agreement</b><br/><span th:text="${c.agreementNumber ?: '-'}"></span></td>
-            <td><b>Linked Issued Challan</b><br/><span th:text="${c.linkedIssuedChallanNumber ?: '-'}"></span></td>
-        </tr>
-        <tr>
-            <td><b>Vehicle Number</b><br/><span th:text="${c.vehicleNumber ?: '-'}"></span></td>
-            <td><b>Driver Name</b><br/><span th:text="${c.driverName ?: '-'}"></span></td>
-            <td><b>Driver Phone</b><br/><span th:text="${c.driverPhone ?: '-'}"></span></td>
-            <td><b>Notes</b><br/><span th:text="${c.notes ?: '-'}"></span></td>
-        </tr>
-    </table>
-
-    <table>
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Code</th>
-                <th>Item</th>
-                <th>Unit</th>
-                <th class="right">Pending Before</th>
-                <th class="right">Good Returned</th>
-                <th class="right">Damaged</th>
-                <th class="right">Lost</th>
-                <th class="right">Extra</th>
-                <th>Exchange (From → To)</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr th:each="i,stat : ${c.items}">
-                <td th:text="${stat.index + 1}"></td>
-                <td th:text="${i.itemCode}"></td>
-                <td th:text="${i.itemName}"></td>
-                <td th:text="${i.unit}"></td>
-                <td class="right" th:text="${i.pendingQuantitySnapshot}"></td>
-                <td class="right" th:text="${i.goodReturnedQuantity}"></td>
-                <td class="right" th:text="${i.damagedReturnedQuantity}"></td>
-                <td class="right" th:text="${i.lostQuantity}"></td>
-                <td class="right" th:text="${i.extraReturnedQuantity}"></td>
-                <td>
-                    <span th:if="${i.exchangedQuantity > 0}" th:text="${i.exchangedQuantity} + ' ' + ${i.exchangedFromItemCode} + ' → ' + ${i.exchangedToItemCode}"></span>
-                    <span th:if="${i.exchangedQuantity == 0}">-</span>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-
-    <table class="sign">
-        <tr>
-            <td><span th:text="${'For ' + companyName}">For SteelFab Scaffoldings &amp; Engineering Pvt. Ltd.</span><br/><br/><br/>Authorised signatory</td>
-            <td>For Party<br/><br/><br/>Returned By</td>
-        </tr>
-    </table>
-</body>
-</html>
+<html xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"/>
+<style>
+@page{size:A4;margin:14mm}body{font-family:Arial,sans-serif;font-size:10px;color:#111}.letterhead{width:100%;max-height:88px;object-fit:contain}.title{text-align:center;font-size:20px;font-weight:bold;margin:4px 0}.subtitle{text-align:center;font-weight:bold;line-height:1.45}.meta{width:100%;border-collapse:collapse;margin-top:8px}.meta td{border:1px solid #222;padding:6px;vertical-align:top;width:50%;height:42px}.items{width:100%;border-collapse:collapse;margin-top:7px}.items th,.items td{border:1px solid #222;padding:4px;height:21px}.items th{text-align:center}.num,.qty{text-align:center}.footer-grid{width:100%;border-collapse:collapse;margin-top:7px}.footer-grid td{border:1px solid #222;padding:6px;vertical-align:top}.terms{width:42%}.sign{height:72px}.warehouse{text-align:center;font-weight:bold;font-size:8px;margin-top:7px;line-height:1.4}
+</style></head><body>
+<img class="letterhead" th:src="${letterheadDataUri}" alt="SteelFab"/>
+<div class="title">Return Challan</div><div class="subtitle">Supply of Scaffolding Material On Hire.<br/>On Returnable Basis from Site.</div>
+<p><b>Ref No:</b> <span th:text="${c.receivingChallanNumber}"></span> <span style="float:right"><b>Date:</b> <span th:text="${c.receiveDate}"></span></span></p>
+<table class="meta"><tr><td><b>Client's Name &amp; Address:</b><br/><span th:text="${c.partyName}"></span><br/><span th:text="${c.partyAddress ?: '-'}"></span><br/><b>GST NO:</b> <span th:text="${c.partyGstin ?: '-'}"></span></td><td><b>Site Address:</b><br/><span th:text="${c.siteName}"></span><br/><span th:text="${c.siteAddress ?: '-'}"></span><br/><b>Client's Contact Person:</b> <span th:text="${c.siteContact ?: '-'}"></span></td></tr></table>
+<table class="items"><thead><tr><th style="width:8%">Sr. No.</th><th>Item Name</th><th style="width:16%">Qty No.</th><th style="width:24%">Remarks</th></tr></thead><tbody>
+<tr th:each="i,s:${c.items}"><td class="num" th:text="${s.index+1}"></td><td th:text="${i.itemName}"></td><td class="qty" th:text="${(i.goodReturnedQuantity+i.damagedReturnedQuantity+i.extraReturnedQuantity)+' '+i.unit}"></td><td th:text="${i.notes ?: ''}"></td></tr>
+<tr th:each="n:${#numbers.sequence(c.items.size()+1,14)}" th:if="${c.items.size() < 14}"><td class="num" th:text="${n}"></td><td></td><td></td><td></td></tr>
+</tbody></table>
+<table class="footer-grid"><tr><td class="terms"><b>Terms and Conditions</b><p>Returned material is subject to counting, condition verification, and reconciliation against the active agreement.</p><p th:if="${c.notes}" th:text="${c.notes}"></p></td><td><b>Vehicle No:</b> <span th:text="${c.vehicleNumber ?: '-'}"></span><br/><br/><b>Driver Name:</b> <span th:text="${c.driverName ?: '-'}"></span><br/><br/><b>Driver Number:</b> <span th:text="${c.driverPhone ?: '-'}"></span><br/><br/><b>Driver Sign:</b> ____________________</td></tr><tr><td class="sign"><b th:text="${'For '+companyName}"></b><br/><br/><br/>Signature and Name</td><td class="sign"><b>Counted, Confirmed and Received on Behalf of Client by:</b><br/>Name: ____________________ &nbsp; Mob No: ____________________<br/><br/>Receiver's Stamp &nbsp;&nbsp;&nbsp; Signature: ____________________</td></tr></table>
+<div class="warehouse">Our Warehouse timings are 9:00 am to 5:00 pm. Warehouse Closed on Sundays and National Holidays.</div>
+</body></html>

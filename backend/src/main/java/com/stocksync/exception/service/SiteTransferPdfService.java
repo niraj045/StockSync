@@ -29,7 +29,7 @@ public class SiteTransferPdfService {
                 "letterheadDataUri", branding.letterheadDataUri()));
         String html = templates.process("site-transfer-pdf", context);
         try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            new PdfRendererBuilder().withHtmlContent(html, null).toStream(output).run();
+            new PdfRendererBuilder().useFastMode().withHtmlContent(html, null).toStream(output).run();
             String filename = "transfer-" + transfer.transferNumber().replaceAll("[^A-Za-z0-9.-]", "-") + ".pdf";
             return new PdfDocument(filename, output.toByteArray());
         } catch (IOException e) {

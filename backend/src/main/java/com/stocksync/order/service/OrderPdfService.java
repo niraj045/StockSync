@@ -27,7 +27,7 @@ public class OrderPdfService {
                 "letterheadDataUri", branding.letterheadDataUri()));
         String html = templates.process("order-pdf", context);
         try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            new PdfRendererBuilder().withHtmlContent(html, null).toStream(output).run();
+            new PdfRendererBuilder().useFastMode().withHtmlContent(html, null).toStream(output).run();
             String filename = "order-" + order.orderNumber().replaceAll("[^A-Za-z0-9.-]", "-") + ".pdf";
             return new PdfDocument(filename, output.toByteArray());
         } catch (IOException e) {

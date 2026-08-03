@@ -18,7 +18,7 @@ import { useAuth } from '../auth/AuthContext';
 import { AppButton, Card, DateField, EmptyBlock, Field } from '../components/ui';
 import type { RootStackParams } from '../navigation/types';
 import { colors } from '../theme';
-import type { ItemOption, Page, Party, Quotation, QuotationTemplate, Site } from '../types/api';
+import type { ItemOption, Page, Party, Quotation, QuotationTemplate, Site, StockBalance } from '../types/api';
 import { localDate, quantity } from '../utils/format';
 
 type Props = NativeStackScreenProps<RootStackParams, 'CreateQuotation'>;
@@ -30,6 +30,7 @@ type Line = {
   requiredQuantity?: string;
   hireMonths?: string;
   replacementRate?: string;
+  area?: string;
 };
 type ExactHireForm = {
   partyAddress: string; subject: string; validityDays: string; minimumHirePeriod: string;
@@ -42,11 +43,8 @@ type PickerRow = { key: number | string; title: string; meta?: string; onPress: 
 
 const rentalTypes = [
   ['PER_PIECE_PER_DAY', 'Per piece per day'],
-  ['PLATE_AREA_PER_DAY', 'Plate area per day'],
-  ['SCAFFOLD_AREA_PER_DAY', 'Scaffold area per day'],
-  ['PLOT_AREA_PER_DAY', 'Plot area per day'],
-  ['FIXED_RATE', 'Fixed rate'],
-  ['SLAB_BASED', 'Slab based'],
+  ['PER_PIECE_PER_WEEK', 'Per piece per week'],
+  ['PER_PIECE_PER_MONTH', 'Per piece per month'],
 ] as const;
 
 const exactTemplateCode = 'STEELFAB_EXACT_HIRE_V1';
@@ -77,7 +75,7 @@ const exactDefaultLines = (items: ItemOption[]): Line[] => exactSlots.flatMap((s
   const item = items.find((candidate) => matchesExactSlot(candidate, slot.key));
   return item ? [{
     itemId: item.id,
-    requiredQuantity: '', quantity: '', rate: '', hireMonths: '6', replacementRate: '',
+    requiredQuantity: '', quantity: '', rate: '', hireMonths: '6', replacementRate: '', area: '',
   }] : [];
 });
 const stateCodes: Record<string, string> = {
@@ -106,6 +104,7 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
   const [parties, setParties] = useState<Party[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
   const [items, setItems] = useState<ItemOption[]>([]);
+  const [stockBalances, setStockBalances] = useState<StockBalance[]>([]);
   const [templateId, setTemplateId] = useState<number | null>(null);
   const [partyId, setPartyId] = useState<number | null>(route.params?.partyId ?? null);
   const [siteId, setSiteId] = useState<number | null>(route.params?.siteId ?? null);
@@ -137,17 +136,20 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
       apiClient.get<Page<Party>>('/parties', { params: { active: true, size: 200 } }),
       apiClient.get<Page<Site>>('/sites', { params: { size: 300 } }),
       apiClient.get<Page<ItemOption>>('/items', { params: { active: true, size: 500 } }),
-    ]).then(([templateResponse, partyResponse, siteResponse, itemResponse]) => {
+      apiClient.get<Page<StockBalance>>('/stock/balances', { params: { size: 500 } }),
+    ]).then(([templateResponse, partyResponse, siteResponse, itemResponse, stockResponse]) => {
       const availableTemplates = templateResponse.data.content;
       setTemplates(availableTemplates);
       setParties(partyResponse.data.content);
       setSites(siteResponse.data.content);
       setItems(itemResponse.data.content);
+      setStockBalances(stockResponse.data.content);
       if (availableTemplates.length === 1) {
         setTemplateId(availableTemplates[0].id);
         setTerms(availableTemplates[0].defaultTerms ?? '');
         setNotes(availableTemplates[0].defaultNotes ?? '');
         if (availableTemplates[0].templateCode === exactTemplateCode) {
+          setRentalType('PER_PIECE_PER_MONTH');
           setValidUntil(addDays(localDate(), Number(initialExactHire.validityDays)));
           setLines(exactDefaultLines(itemResponse.data.content));
         }
@@ -186,7 +188,7 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
     setNotes(template.defaultNotes ?? '');
     if (template.templateCode === exactTemplateCode) {
       const validityDays = Number(initialExactHire.validityDays);
-      setRentalType('PER_PIECE_PER_DAY');
+      setRentalType('PER_PIECE_PER_MONTH');
       setValidUntil(addDays(quotationDate, validityDays));
       setExactHire({
         ...initialExactHire,
@@ -202,7 +204,7 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
 
   const addItem = (item: ItemOption) => {
     setLines((current) => [...current, isExact
-      ? { itemId: item.id, requiredQuantity: '', quantity: '', rate: '', hireMonths: '6', replacementRate: '' }
+      ? { itemId: item.id, requiredQuantity: '', quantity: '', rate: '', hireMonths: '6', replacementRate: '', area: '' }
       : { itemId: item.id, quantity: '1', rate: '' }]);
     setPicker(null);
   };
@@ -332,8 +334,8 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
           requiredQuantity: isExact ? Number(line.requiredQuantity) : null,
           hireMonths: isExact ? Number(line.hireMonths) : null,
           replacementRate: isExact ? Number(line.replacementRate) : null,
-          rentalType,
-          area: 0,
+          rentalType: isExact ? 'PER_PIECE_PER_MONTH' : rentalType,
+          area: Number(line.area) || 0,
           weight: 0,
           description: null,
         })),
@@ -416,6 +418,9 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
         {!lines.length ? <Card><EmptyBlock title="No material added" message="Add items from the inventory master and enter the agreed rates." /></Card> : null}
         {lines.map((line, index) => {
           const item = items.find((row) => row.id === line.itemId);
+          const available = Number(stockBalances.find((row) => row.itemId === line.itemId)?.availableQuantity ?? 0);
+          const demandShortage = Math.max(0, (Number(line.requiredQuantity) || 0) - available);
+          const offeredShortage = Math.max(0, (Number(line.quantity) || 0) - available);
           return (
             <Card key={`${line.itemId}-${index}`} style={styles.line}>
               <View style={styles.lineHeader}>
@@ -432,16 +437,18 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
               </View>
               {isExact ? <>
                 <View style={styles.twoColumns}>
-                  <View style={styles.column}><Field label="Required qty *" value={line.requiredQuantity ?? ''} onChangeText={(value) => updateLine(index, 'requiredQuantity', value)} keyboardType="decimal-pad" /></View>
-                  <View style={styles.column}><Field label={`Offered qty (${item?.unit ?? ''}) *`} value={line.quantity} onChangeText={(value) => updateLine(index, 'quantity', value)} keyboardType="decimal-pad" /></View>
+                  <View style={styles.column}><Field label="Required qty *" value={line.requiredQuantity ?? ''} error={demandShortage>0?`Short by ${quantity(demandShortage)}`:undefined} onChangeText={(value) => updateLine(index, 'requiredQuantity', value)} keyboardType="decimal-pad" /></View>
+                  <View style={styles.column}><Field label={`Offered qty (${item?.unit ?? ''}) *`} value={line.quantity} error={offeredShortage>0?`Only ${quantity(available)} available`:undefined} onChangeText={(value) => updateLine(index, 'quantity', value)} keyboardType="decimal-pad" /></View>
                 </View>
+                <Text style={[styles.availability, (demandShortage>0||offeredShortage>0)&&styles.availabilityError]}>Available stock: {quantity(available)}</Text>
                 <View style={styles.twoColumns}>
                   <View style={styles.column}><Field label="Monthly rate (INR) *" value={line.rate} onChangeText={(value) => updateLine(index, 'rate', value)} keyboardType="decimal-pad" /></View>
                   <View style={styles.column}><Field label="Hire months *" value={line.hireMonths ?? ''} onChangeText={(value) => updateLine(index, 'hireMonths', value)} keyboardType="decimal-pad" /></View>
                 </View>
                 <Field label="Replacement rate (INR) *" value={line.replacementRate ?? ''} onChangeText={(value) => updateLine(index, 'replacementRate', value)} keyboardType="decimal-pad" />
+                <Field label="Total area (SFT)" value={line.area ?? ''} onChangeText={(value) => updateLine(index, 'area', value)} keyboardType="decimal-pad" />
               </> : <View style={styles.twoColumns}>
-                <View style={styles.column}><Field label={`Quantity (${item?.unit ?? ''})`} value={line.quantity} onChangeText={(value) => updateLine(index, 'quantity', value)} keyboardType="decimal-pad" /></View>
+                <View style={styles.column}><Field label={`Quantity (${item?.unit ?? ''})`} value={line.quantity} error={offeredShortage>0?`Only ${quantity(available)} available`:undefined} onChangeText={(value) => updateLine(index, 'quantity', value)} keyboardType="decimal-pad" /></View>
                 <View style={styles.column}><Field label="Rate (INR)" value={line.rate} onChangeText={(value) => updateLine(index, 'rate', value)} keyboardType="decimal-pad" /></View>
               </View>}
             </Card>
@@ -555,6 +562,8 @@ const styles = StyleSheet.create({
   gstBreakdown: { color: colors.ink, fontSize: 12, fontWeight: '700', lineHeight: 18, marginTop: 5 },
   gstHelp: { color: colors.muted, fontSize: 11, lineHeight: 17 },
   fieldHelp: { color: colors.muted, fontSize: 11, marginTop: -9 },
+  availability: { color: colors.muted, fontSize: 12, marginTop: 2, marginBottom: 8 },
+  availabilityError: { color: colors.red, fontWeight: '700' },
   setupCard: { gap: 13, backgroundColor: colors.amberSoft, borderColor: '#E5BE73' },
   setupTitle: { color: colors.ink, fontSize: 18, fontWeight: '900' },
   setupText: { color: colors.muted, lineHeight: 20 },

@@ -22,6 +22,11 @@ import { CreateOrderScreen } from '../screens/CreateOrderScreen';
 import { StockScreen } from '../screens/StockScreen';
 import { GstExportScreen } from '../screens/GstExportScreen';
 import { ExcelReportsScreen } from '../screens/ExcelReportsScreen';
+import { BillingScreen } from '../screens/BillingScreen';
+import { InquiriesScreen } from '../screens/InquiriesScreen';
+import { CreateInquiryScreen } from '../screens/CreateInquiryScreen';
+import { SiteOperationsScreen } from '../screens/SiteOperationsScreen';
+import { CreateSiteOperationScreen } from '../screens/CreateSiteOperationScreen';
 import { colors, fonts } from '../theme';
 import type { MainTabParams, RootStackParams } from './types';
 
@@ -102,6 +107,7 @@ export function AppNavigator() {
             <Stack.Screen name="Stock" component={StockScreen} options={{ title: 'Current stock' }} />
             <Stack.Screen name="GstExport" component={GstExportScreen} options={{ title: 'Monthly GST export' }} />
             <Stack.Screen name="ExcelReports" component={ExcelReportsScreen} options={{ title: 'Excel reports' }} />
+            <Stack.Screen name="Billing" component={BillingScreen} options={{ title: 'Monthly rental billing' }} />
             <Stack.Screen name="CreateParty" component={CreatePartyScreen} options={{ title: 'New customer' }} />
             <Stack.Screen name="CreateSite" component={CreateSiteScreen} options={{ title: 'New site' }} />
             <Stack.Screen name="CreateQuotation" component={CreateQuotationScreen} options={{ title: 'New quotation' }} />
@@ -111,6 +117,10 @@ export function AppNavigator() {
             <Stack.Screen name="CreateReceivingChallan" component={CreateReceivingChallanScreen} options={{ title: 'Record material return' }} />
             <Stack.Screen name="IssuedChallanDetail" component={IssuedChallanDetailScreen} options={{ title: 'Issued challan' }} />
             <Stack.Screen name="ReceivingChallanDetail" component={ReceivingChallanDetailScreen} options={{ title: 'Receiving challan' }} />
+            <Stack.Screen name="Inquiries" component={InquiriesScreen} options={{ title: 'Inquiries' }} />
+            <Stack.Screen name="CreateInquiry" component={CreateInquiryScreen} options={{ title: 'Inquiry details' }} />
+            <Stack.Screen name="SiteOperations" component={SiteOperationsScreen} options={{ title: 'Site operations' }} />
+            <Stack.Screen name="CreateSiteOperation" component={CreateSiteOperationScreen} options={{ title: 'Operation details' }} />
           </>
         ) : (
           <>

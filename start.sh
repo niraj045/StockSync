@@ -90,9 +90,10 @@ initialize_mysql() {
     info "Initializing project-local MySQL 8.4..."
     rm -rf "$MYSQL_DATA_DIR"
     mkdir -p "$MYSQL_DATA_DIR"
-    (cd "$MYSQL_HOME/bin" && ./mysqld.exe --no-defaults --initialize-insecure --console \
+    (cd "$MYSQL_DATA_DIR" && "$MYSQL_HOME/bin/mysqld.exe" --no-defaults --initialize-insecure --console \
       "--basedir=$(windows_path "$MYSQL_HOME")" \
       "--datadir=$(windows_path "$MYSQL_DATA_DIR")" \
+      "--innodb-undo-directory=$(windows_path "$MYSQL_DATA_DIR")" \
       >"$RUNTIME_DIR/mysql-initialize.log" 2>&1) ||
       fail "MySQL initialization failed. See .stocksync-runtime/mysql-initialize.log"
     # The portable Windows MySQL package recreates these empty first-start
@@ -112,20 +113,11 @@ start_mysql() {
   fi
 
   initialize_mysql
-  info "Starting project-local MySQL..."
-  (cd "$MYSQL_HOME/bin" && ./mysqld.exe --no-defaults \
-    "--basedir=$(windows_path "$MYSQL_HOME")" \
-    "--datadir=$(windows_path "$MYSQL_DATA_DIR")" \
-    --port=3306 --bind-address=127.0.0.1 \
-    "--pid-file=$(windows_path "$MYSQL_DATA_DIR/mysql.pid")" --console \
-    >"$RUNTIME_DIR/mysql.log" 2>&1) &
-  echo "$!" > "$MYSQL_PID_FILE"
-  wait_for_tcp 3306 "MySQL" 30 ||
-    fail "MySQL failed to start. See .stocksync-runtime/mysql.log"
 
+  local extra_args=""
   if [[ -f "$RUNTIME_DIR/mysql-needs-provisioning" ]]; then
-    info "Creating database and local database user..."
-    "$MYSQL_CLIENT" -h localhost -P 3306 -u root <<SQL ||
+    info "Preparing MySQL provisioning script..."
+    cat > "$RUNTIME_DIR/init.sql" <<SQL
 CREATE DATABASE IF NOT EXISTS \`$DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASSWORD';
 CREATE USER IF NOT EXISTS '$DB_USER'@'127.0.0.1' IDENTIFIED BY '$DB_PASSWORD';
@@ -134,9 +126,29 @@ GRANT ALL PRIVILEGES ON \`$DB_NAME\`.* TO '$DB_USER'@'127.0.0.1';
 ALTER USER 'root'@'localhost' IDENTIFIED BY '$MYSQL_ROOT_PASSWORD';
 FLUSH PRIVILEGES;
 SQL
-      fail "MySQL provisioning failed."
-    rm -f "$RUNTIME_DIR/mysql-needs-provisioning"
+    # Convert path to Windows format since mysqld.exe expects it
+    local win_init_file
+    win_init_file="$(windows_path "$RUNTIME_DIR/init.sql")"
+    extra_args="--init-file=$win_init_file"
   fi
+
+  info "Starting project-local MySQL..."
+  (cd "$MYSQL_DATA_DIR" && "$MYSQL_HOME/bin/mysqld.exe" --no-defaults \
+    "--basedir=$(windows_path "$MYSQL_HOME")" \
+    "--datadir=$(windows_path "$MYSQL_DATA_DIR")" \
+    "--innodb-undo-directory=$(windows_path "$MYSQL_DATA_DIR")" \
+    --port=3306 --bind-address=127.0.0.1 \
+    "--pid-file=$(windows_path "$MYSQL_DATA_DIR/mysql.pid")" $extra_args --console \
+    >"$RUNTIME_DIR/mysql.log" 2>&1) &
+  echo "$!" > "$MYSQL_PID_FILE"
+  wait_for_tcp 3306 "MySQL" 30 ||
+    fail "MySQL failed to start. See .stocksync-runtime/mysql.log"
+
+  if [[ -f "$RUNTIME_DIR/mysql-needs-provisioning" ]]; then
+    rm -f "$RUNTIME_DIR/mysql-needs-provisioning"
+    rm -f "$RUNTIME_DIR/init.sql"
+  fi
+
   mysql_app -e "SELECT 1" >/dev/null 2>&1 || fail "The StockSync database login failed."
 }
 

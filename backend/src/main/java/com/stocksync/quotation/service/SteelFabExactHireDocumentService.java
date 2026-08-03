@@ -36,7 +36,8 @@ public class SteelFabExactHireDocumentService {
             throw new BusinessRuleException("WRONG_PDF_TEMPLATE","Quotation does not use the SteelFab exact hire template");
         if(quotation.getStatus()!=QuotationStatus.APPROVED&&quotation.getStatus()!=QuotationStatus.CONVERTED)
             throw new BusinessRuleException("QUOTATION_NOT_APPROVED","Approve the quotation before finalizing its exact PDF");
-        if(quotation.getExactPdfAttachment()!=null){
+        if(quotation.getExactPdfAttachment()!=null&&java.util.Objects.equals(
+                quotation.getExactPdfCoordinatesVersion(),renderer.coordinatesVersion())){
             return new SteelFabExactHirePdfService.PdfDocument(quotation.getExactPdfAttachment().getOriginalFilename(),
                     files.read(quotation.getExactPdfAttachment().getId()),quotation.getExactPdfTemplateVersion(),quotation.getExactPdfCoordinatesVersion());
         }

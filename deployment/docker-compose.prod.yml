@@ -72,6 +72,8 @@ services:
       UPLOAD_STORAGE_PATH: ${UPLOAD_STORAGE_PATH:-/data/uploads}
       DOCUMENT_STORAGE_PATH: ${DOCUMENT_STORAGE_PATH:-/data/documents}
       REPORT_STORAGE_PATH: ${REPORT_STORAGE_PATH:-/data/reports}
+      AUTO_BILLING_ENABLED: ${AUTO_BILLING_ENABLED:-true}
+      AUTO_BILLING_CRON: ${AUTO_BILLING_CRON:-0 15 2 * * *}
       JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--Xms256m -Xmx1024m}
       TZ: ${TZ:-Asia/Kolkata}
     volumes:

@@ -37,6 +37,7 @@ export const navigationSections: NavigationSection[] = [
     icon: <SwapOutlined />,
     roles: [ADMIN, OPERATIONS],
     children: [
+      { key: '/client-workflow', label: 'Inquiries & Site Costs' },
       { key: '/challans/issued', label: 'Issued Challans' },
       { key: '/challans/receiving', label: 'Receiving Challans' },
       { key: '/site-transfers', label: 'Site Transfers' },

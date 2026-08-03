@@ -19,6 +19,7 @@ public class Site extends AuditedEntity {
     @Column(nullable=false) private boolean defaulter;
     @Column(name="closed_date") private LocalDate closedDate;
     @Column(length=1000) private String notes;
+    @Column(name="excel_template_code",length=50) private String excelTemplateCode;
     public Long getId(){return id;} public Party getParty(){return party;} public void setParty(Party v){party=v;}
     public String getSiteName(){return siteName;} public void setSiteName(String v){siteName=v;}
     public String getSiteCode(){return siteCode;} public void setSiteCode(String v){siteCode=v;}
@@ -30,4 +31,5 @@ public class Site extends AuditedEntity {
     public boolean isDefaulter(){return defaulter;} public void setDefaulter(boolean v){defaulter=v;}
     public LocalDate getClosedDate(){return closedDate;} public void setClosedDate(LocalDate v){closedDate=v;}
     public String getNotes(){return notes;} public void setNotes(String v){notes=v;}
+    public String getExcelTemplateCode(){return excelTemplateCode;} public void setExcelTemplateCode(String v){excelTemplateCode=v;}
 }

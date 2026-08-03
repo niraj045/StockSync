@@ -11,6 +11,8 @@ public record AgreementResponse(
  Long partyId,String partyName,String partyTradeName,String partyGstin,String partyPan,String partyAddress,String partyState,String partyContact,
  Long siteId,String siteName,String siteCode,String siteAddress,String siteContact,
  LocalDate agreementDate,LocalDate effectiveDate,LocalDate expiryDate,RentalType rentalType,BillingCycle billingCycle,
+ MeasurementBasis measurementBasis,BillingCommencementRule billingCommencementRule,LocalDate fixedBillingStartDate,
+ LocalDate nextBillingDate,LocalDate lastAutoPeriodEnd,
  Integer customBillingCycleDays,int gracePeriodDays,int minimumBillingDays,AgreementStatus status,
  BigDecimal securityDeposit,BigDecimal subtotal,BigDecimal discountAmount,BigDecimal taxableAmount,
  BigDecimal cgstAmount,BigDecimal sgstAmount,BigDecimal igstAmount,BigDecimal totalTax,

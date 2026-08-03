@@ -22,6 +22,11 @@ public interface BillingRunRepository extends JpaRepository<BillingRun, Long>, J
 
     List<BillingRun> findByAgreementIdAndStatus(Long agreementId, BillingRunStatus status);
 
+    Optional<BillingRun> findTopByAgreementIdAndStatusNotOrderByPeriodEndDesc(
+        Long agreementId,
+        BillingRunStatus status
+    );
+
     @Query("""
         SELECT COUNT(b) > 0 FROM BillingRun b 
         WHERE b.agreement.id = :agreementId 

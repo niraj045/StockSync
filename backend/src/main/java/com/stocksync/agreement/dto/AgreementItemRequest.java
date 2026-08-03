@@ -10,4 +10,4 @@ public record AgreementItemRequest(
  @NotNull @DecimalMin("0") BigDecimal weightRate,@NotNull @DecimalMin("0") BigDecimal lossRatePerPiece,
  @NotNull @DecimalMin("0") BigDecimal lossRatePerWeight,@NotNull @DecimalMin("0") BigDecimal damageRate,
  @PositiveOrZero Integer sequence,@Size(max=500) String notes,
- List<@Valid AgreementItemSlabRequest> slabs){}
+ List<@Valid AgreementItemSlabRequest> slabs,@DecimalMin("0") BigDecimal area){}
