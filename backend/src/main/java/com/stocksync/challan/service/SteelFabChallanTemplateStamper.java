@@ -39,29 +39,29 @@ final class SteelFabChallanTemplateStamper {
             setCellText(t1.getRow(0).getCell(1), title, true, 14, ParagraphAlignment.CENTER);
 
             String challanNo = (fields.number() != null ? fields.number() : "");
-            setCellText(t1.getRow(0).getCell(2), challanNo, true, 9, ParagraphAlignment.RIGHT);
+            setCellLabeledText(t1.getRow(0).getCell(2), "Challan No.: ", challanNo, 9, ParagraphAlignment.RIGHT);
 
             // 2. Client / Site info in Table 2
             XWPFTable t2 = doc.getTables().get(2);
 
-            String refNo = "             " + (fields.refNo() != null ? fields.refNo() : "");
-            setCellText(t2.getRow(0).getCell(0), refNo, false, 9, ParagraphAlignment.LEFT);
+            String refNo = (fields.refNo() != null ? fields.refNo() : "");
+            setCellLabeledText(t2.getRow(0).getCell(0), "Ref No.: ", refNo, 9, ParagraphAlignment.LEFT);
 
-            String dateStr = "           " + date(fields.date());
-            setCellText(t2.getRow(0).getCell(1), dateStr, false, 9, ParagraphAlignment.LEFT);
+            String dateStr = date(fields.date());
+            setCellLabeledText(t2.getRow(0).getCell(1), "Date: ", dateStr, 9, ParagraphAlignment.LEFT);
 
-            String clientBlock = "                              " + (fields.clientName() != null ? fields.clientName() : "") + "\n" +
-                    "                     " + (fields.clientAddress() != null ? fields.clientAddress() : "");
-            setCellText(t2.getRow(1).getCell(0), clientBlock, false, 9, ParagraphAlignment.LEFT);
+            String clientBlock = (fields.clientName() != null ? fields.clientName() : "") + "\n" +
+                    (fields.clientAddress() != null ? fields.clientAddress() : "");
+            setCellLabeledText(t2.getRow(1).getCell(0), "Client's Name & Address:-\n", clientBlock, 9, ParagraphAlignment.LEFT);
 
-            String siteBlock = "                             " + (fields.siteAddress() != null ? fields.siteAddress() : "");
-            setCellText(t2.getRow(1).getCell(1), siteBlock, false, 9, ParagraphAlignment.LEFT);
+            String siteBlock = (fields.siteAddress() != null ? fields.siteAddress() : "");
+            setCellLabeledText(t2.getRow(1).getCell(1), "Site Address:-\n", siteBlock, 9, ParagraphAlignment.LEFT);
 
-            String gstNo = "                 " + (fields.clientGstin() != null ? fields.clientGstin() : "");
-            setCellText(t2.getRow(2).getCell(0), gstNo, false, 9, ParagraphAlignment.LEFT);
+            String gstNo = (fields.clientGstin() != null ? fields.clientGstin() : "");
+            setCellLabeledText(t2.getRow(2).getCell(0), "GST No.: ", gstNo, 9, ParagraphAlignment.LEFT);
 
-            String contact = "                                          " + (fields.contactPerson() != null ? fields.contactPerson() : "");
-            setCellText(t2.getRow(2).getCell(1), contact, false, 9, ParagraphAlignment.LEFT);
+            String contact = (fields.contactPerson() != null ? fields.contactPerson() : "");
+            setCellLabeledText(t2.getRow(2).getCell(1), "Client's Contact Person: ", contact, 9, ParagraphAlignment.LEFT);
 
             // 3. Fill Table Items (Rows 4 to 17)
             int count = Math.min(14, fields.items().size());
@@ -80,19 +80,20 @@ final class SteelFabChallanTemplateStamper {
             }
 
             // 4. Vehicle / Driver Info (Row 14 to 17, Col 4)
-            String vehicleNo = "                       " + (fields.vehicleNumber() != null ? fields.vehicleNumber() : "");
-            setCellText(t2.getRow(14).getCell(4), vehicleNo, false, 9, ParagraphAlignment.LEFT);
+            String vehicleNo = (fields.vehicleNumber() != null ? fields.vehicleNumber() : "");
+            setCellLabeledText(t2.getRow(14).getCell(4), "Vehicle No.:- ", vehicleNo, 9, ParagraphAlignment.LEFT);
 
-            String driverName = "                       " + (fields.driverName() != null ? fields.driverName() : "");
-            setCellText(t2.getRow(15).getCell(4), driverName, false, 9, ParagraphAlignment.LEFT);
+            String driverName = (fields.driverName() != null ? fields.driverName() : "");
+            setCellLabeledText(t2.getRow(15).getCell(4), "Driver Name:- ", driverName, 9, ParagraphAlignment.LEFT);
 
-            String driverNumber = "                           " + (fields.driverPhone() != null ? fields.driverPhone() : "");
-            setCellText(t2.getRow(16).getCell(4), driverNumber, false, 9, ParagraphAlignment.LEFT);
+            String driverNumber = (fields.driverPhone() != null ? fields.driverPhone() : "");
+            setCellLabeledText(t2.getRow(16).getCell(4), "Driver Number:- ", driverNumber, 9, ParagraphAlignment.LEFT);
 
-            setCellText(t2.getRow(17).getCell(4), "", false, 9, ParagraphAlignment.LEFT);
+            setCellLabeledText(t2.getRow(17).getCell(4), "Driver Sign:- ", "", 9, ParagraphAlignment.LEFT);
 
             // 5. Receiver Info (Row 18, Col 2)
-            setCellText(t2.getRow(18).getCell(2), "", false, 8.5f, ParagraphAlignment.LEFT);
+            String receiverBlock = "\nName: __________________\nMob No.: ________________\nSignature: ________________";
+            setCellLabeledText(t2.getRow(18).getCell(2), "Counted, Confirmed and Received on Behalf of\nabove Client by:-", receiverBlock, 8.5f, ParagraphAlignment.LEFT);
 
             // 6. Save filled DOCX to a temp file and convert to PDF
             File tempDocx = File.createTempFile("challan_", ".docx");
@@ -141,28 +142,44 @@ final class SteelFabChallanTemplateStamper {
     }
 
     private static void setCellText(XWPFTableCell cell, String text, boolean bold, float fontSizePt, ParagraphAlignment alignment) {
+        clearCell(cell, alignment);
+        XWPFParagraph p = cell.getParagraphs().get(0);
+        if (text == null) text = "";
+        String[] lines = text.split("\n");
+        for (int i = 0; i < lines.length; i++) {
+            if (i > 0) p.createRun().addBreak();
+            addRun(p, lines[i], bold, fontSizePt);
+        }
+    }
+
+    private static void setCellLabeledText(XWPFTableCell cell, String label, String value, float fontSizePt, ParagraphAlignment alignment) {
+        clearCell(cell, alignment);
+        XWPFParagraph p = cell.getParagraphs().get(0);
+        if (label != null && !label.isEmpty()) {
+            addRun(p, label, true, fontSizePt);
+        }
+        if (value != null && !value.isEmpty()) {
+            addRun(p, value, false, fontSizePt);
+        }
+    }
+
+    private static void clearCell(XWPFTableCell cell, ParagraphAlignment alignment) {
         while (cell.getParagraphs().size() > 1) {
             cell.removeParagraph(1);
         }
         XWPFParagraph p = cell.getParagraphs().isEmpty() ? cell.addParagraph() : cell.getParagraphs().get(0);
         p.setAlignment(alignment != null ? alignment : ParagraphAlignment.LEFT);
-
         while (!p.getRuns().isEmpty()) {
             p.removeRun(0);
         }
+    }
 
-        if (text == null) text = "";
-        String[] lines = text.split("\n");
-        for (int i = 0; i < lines.length; i++) {
-            if (i > 0) {
-                p.createRun().addBreak();
-            }
-            XWPFRun run = p.createRun();
-            run.setText(lines[i]);
-            run.setFontFamily("Arial");
-            run.setFontSize((int) fontSizePt);
-            run.setBold(bold);
-        }
+    private static void addRun(XWPFParagraph p, String text, boolean bold, float fontSizePt) {
+        XWPFRun run = p.createRun();
+        run.setText(text);
+        run.setFontFamily("Arial");
+        run.setFontSize((int) fontSizePt);
+        run.setBold(bold);
     }
 
     private static String date(LocalDate date) {

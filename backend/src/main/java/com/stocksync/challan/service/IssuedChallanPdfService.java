@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class IssuedChallanPdfService {
-    private static final String TEMPLATE = "pdf-templates/steelfab_delivery_challan_exact_editable.docx";
+    private static final String TEMPLATE = "pdf-templates/steelfab_challan_template.docx";
     private final SteelFabChallanTemplateStamper stamper = new SteelFabChallanTemplateStamper();
 
     public IssuedChallanPdfService() {}
