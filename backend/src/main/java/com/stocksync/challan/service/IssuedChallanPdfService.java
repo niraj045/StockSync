@@ -1,38 +1,42 @@
 package com.stocksync.challan.service;
 
-import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
-import com.stocksync.common.pdf.PdfBranding;
 import com.stocksync.challan.dto.IssuedChallanResponse;
-import java.io.*;
-import java.util.Map;
+import java.util.List;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.context.Context;
-import org.thymeleaf.spring6.SpringTemplateEngine;
 
 @Service
 public class IssuedChallanPdfService {
-    private final SpringTemplateEngine templates;
-    private final PdfBranding branding;
+    private static final String TEMPLATE = "pdf-templates/steelfab_delivery_challan_exact_editable.docx";
+    private final SteelFabChallanTemplateStamper stamper = new SteelFabChallanTemplateStamper();
 
-    public IssuedChallanPdfService(SpringTemplateEngine templates, PdfBranding branding) {
-        this.templates = templates;
-        this.branding = branding;
-    }
+    public IssuedChallanPdfService() {}
 
     public PdfDocument generate(IssuedChallanResponse challan) {
-        Context context = new Context();
-        context.setVariables(Map.of(
-                "c", challan,
-                "companyName", branding.companyName(),
-                "letterheadDataUri", branding.letterheadDataUri()));
-        String html = templates.process("issued-challan-pdf", context);
-        try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            new PdfRendererBuilder().useFastMode().withHtmlContent(html, null).toStream(output).run();
-            String filename = "challan-" + challan.challanNumber().replaceAll("[^A-Za-z0-9.-]", "-") + ".pdf";
-            return new PdfDocument(filename, output.toByteArray());
-        } catch (IOException e) {
-            throw new IllegalStateException("Unable to generate challan PDF", e);
-        }
+        List<SteelFabChallanTemplateStamper.ChallanLine> lines = challan.items().stream()
+                .map(i -> new SteelFabChallanTemplateStamper.ChallanLine(i.itemName(), i.quantity(), i.unit()))
+                .toList();
+        var fields = new SteelFabChallanTemplateStamper.ChallanFields(
+                challan.challanNumber(),
+                challan.siteOrderNumber(),
+                challan.dispatchDate(),
+                challan.partyName(),
+                challan.partyAddress(),
+                challan.partyGstin(),
+                siteBlock(challan),
+                challan.siteContact(),
+                challan.vehicleNumber(),
+                challan.driverName(),
+                "",
+                lines,
+                challan.termsAndConditions());
+        String filename = "challan-" + challan.challanNumber().replaceAll("[^A-Za-z0-9.-]", "-") + ".pdf";
+        return new PdfDocument(filename, stamper.stamp(TEMPLATE, fields));
+    }
+
+    private String siteBlock(IssuedChallanResponse challan) {
+        String address = challan.siteAddress() == null ? "" : challan.siteAddress();
+        if (challan.siteName() == null || challan.siteName().isBlank()) return address;
+        return challan.siteName() + " " + address;
     }
 
     public record PdfDocument(String filename, byte[] content) {}

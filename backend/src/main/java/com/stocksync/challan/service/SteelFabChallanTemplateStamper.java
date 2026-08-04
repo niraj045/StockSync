@@ -23,15 +23,14 @@ final class SteelFabChallanTemplateStamper {
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
     byte[] stamp(String templatePath, ChallanFields fields) {
-        return generateDocxAndConvertToPdf(fields, "Delivery Challan");
+        return generateDocxAndConvertToPdf(templatePath, fields, "Delivery Challan");
     }
 
     byte[] stampReturn(String templatePath, ChallanFields fields) {
-        return generateDocxAndConvertToPdf(fields, "Return Challan");
+        return generateDocxAndConvertToPdf(templatePath, fields, "Return Challan");
     }
 
-    private byte[] generateDocxAndConvertToPdf(ChallanFields fields, String title) {
-        String docxTemplatePath = "pdf-templates/SteelFab_Challan_Template.docx";
+    private byte[] generateDocxAndConvertToPdf(String docxTemplatePath, ChallanFields fields, String title) {
         try (InputStream is = new ClassPathResource(docxTemplatePath).getInputStream();
              XWPFDocument doc = new XWPFDocument(is)) {
 
