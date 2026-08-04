@@ -20,9 +20,13 @@ const QuotationsPage = lazy(() => import('../../features/quotation/pages/Quotati
 const AgreementsPage = lazy(() => import('../../features/agreement/pages/AgreementsPage').then((module) => ({ default: module.AgreementsPage })));
 const AgreementTemplatesPage = lazy(() => import('../../features/agreement/pages/AgreementTemplatesPage').then((module) => ({ default: module.AgreementTemplatesPage })));
 const BillingRunsPage = lazy(() => import('../../features/billing/pages/BillingRunsPage').then((module) => ({ default: module.BillingRunsPage })));
+const CreateBillingRunPage = lazy(() => import('../../features/billing/pages/CreateBillingRunPage').then((module) => ({ default: module.CreateBillingRunPage })));
+const BillingRunDetailsPage = lazy(() => import('../../features/billing/pages/BillingRunDetailsPage').then((module) => ({ default: module.BillingRunDetailsPage })));
 const InvoicesPage = lazy(() => import('../../features/billing/pages/InvoicesPage').then((module) => ({ default: module.InvoicesPage })));
 const InvoiceDetailsPage = lazy(() => import('../../features/billing/pages/InvoiceDetailsPage').then((module) => ({ default: module.InvoiceDetailsPage })));
 const PaymentsPage = lazy(() => import('../../features/payment/pages/PaymentsPage').then((module) => ({ default: module.PaymentsPage })));
+const CreatePaymentPage = lazy(() => import('../../features/payment/pages/CreatePaymentPage').then((module) => ({ default: module.CreatePaymentPage })));
+const PaymentDetailsPage = lazy(() => import('../../features/payment/pages/PaymentDetailsPage').then((module) => ({ default: module.PaymentDetailsPage })));
 const SecurityDepositsPage = lazy(() => import('../../features/payment/pages/SecurityDepositsPage').then((module) => ({ default: module.SecurityDepositsPage })));
 const OutstandingPage = lazy(() => import('../../features/payment/pages/OutstandingPage').then((module) => ({ default: module.OutstandingPage })));
 const ReportsPage = lazy(() => import('../../features/reports/pages/ReportsPage').then((module) => ({ default: module.ReportsPage })));
@@ -92,9 +96,13 @@ export const router = createBrowserRouter([
       { path: 'agreements', element: deferred(<AgreementsPage />) },
       { path: 'agreement-templates', element: deferred(<AgreementTemplatesPage />) },
       { path: 'billing-runs', element: deferred(<BillingRunsPage />) },
+      { path: 'billing-runs/new', element: deferred(<CreateBillingRunPage />) },
+      { path: 'billing-runs/:id', element: deferred(<BillingRunDetailsPage />) },
       { path: 'invoices', element: deferred(<InvoicesPage />) },
       { path: 'invoices/:id', element: deferred(<InvoiceDetailsPage />) },
       { path: 'payments', element: deferred(<PaymentsPage />) },
+      { path: 'payments/new', element: deferred(<CreatePaymentPage />) },
+      { path: 'payments/:id', element: deferred(<PaymentDetailsPage />) },
       { path: 'security-deposits', element: deferred(<SecurityDepositsPage />) },
       { path: 'outstanding', element: deferred(<OutstandingPage />) },
       { path: 'reports', element: deferred(<ReportsPage />) },
