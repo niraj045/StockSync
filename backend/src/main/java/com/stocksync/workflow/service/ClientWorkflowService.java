@@ -78,7 +78,7 @@ public class ClientWorkflowService {
     private InquiryResponse inquiry(long id){return jdbc.query("SELECT i.*,p.legal_name party_name,s.site_name,q.quotation_number FROM client_inquiries i LEFT JOIN parties p ON p.id=i.party_id LEFT JOIN sites s ON s.id=i.site_id LEFT JOIN quotations q ON q.id=i.quotation_id WHERE i.id=?",rs->{if(!rs.next())throw error("INQUIRY_NOT_FOUND","Inquiry not found");return inquiry(rs,0);},id);}
     private OperationResponse operation(long id){return jdbc.query(operationSql()+" WHERE o.id=?",rs->{if(!rs.next())throw error("SITE_OPERATION_NOT_FOUND","Site operation not found");return operation(rs,0);},id);}
     private String operationSql(){return """
-        SELECT o.*,p.legal_name party_name,s.site_name,ic.challan_number issued_challan_number,rc.challan_number receiving_challan_number
+        SELECT o.*,p.legal_name party_name,s.site_name,ic.challan_number issued_challan_number,rc.receiving_challan_number
         FROM site_operations o LEFT JOIN parties p ON p.id=o.party_id JOIN sites s ON s.id=o.site_id
         LEFT JOIN issued_challans ic ON ic.id=o.issued_challan_id LEFT JOIN receiving_challans rc ON rc.id=o.receiving_challan_id
         """;}

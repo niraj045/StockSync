@@ -3,7 +3,7 @@ import { CompositeScreenProps } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { AppButton, Card, PageHeader } from '../components/ui';
 import type { MainTabParams, RootStackParams } from '../navigation/types';
@@ -19,7 +19,7 @@ export function MoreScreen({ navigation }: Props) {
   const { user, logout } = useAuth();
   const canExportGst = user?.roles.some((role) => role === 'ROLE_ADMIN' || role === 'ROLE_ACCOUNTS') ?? false;
   return (
-    <View style={[styles.content, { paddingTop: insets.top + 18 }]}>
+    <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + 18 }]} bounces={false}>
       <PageHeader eyebrow="SteelFab" title="Account" />
       <Card>
         <View style={styles.profile}>
@@ -93,7 +93,7 @@ export function MoreScreen({ navigation }: Props) {
       <View style={styles.logout}>
         <AppButton title="Sign out" variant="danger" onPress={() => void logout()} />
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
