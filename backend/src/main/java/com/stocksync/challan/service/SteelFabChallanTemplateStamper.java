@@ -79,6 +79,10 @@ final class SteelFabChallanTemplateStamper {
                 }
             }
 
+            // Fill Terms and Conditions (Row 4, Col 4)
+            String termsText = fields.termsLines() != null ? String.join("\n", fields.termsLines()) : "";
+            setCellText(t2.getRow(4).getCell(4), termsText, false, 8.5f, ParagraphAlignment.LEFT);
+
             // 4. Vehicle / Driver Info (Row 14 to 17, Col 4)
             String vehicleNo = (fields.vehicleNumber() != null ? fields.vehicleNumber() : "");
             setCellLabeledText(t2.getRow(14).getCell(4), "Vehicle No.:- ", vehicleNo, 9, ParagraphAlignment.LEFT);
@@ -94,6 +98,9 @@ final class SteelFabChallanTemplateStamper {
             // 5. Receiver Info (Row 18, Col 2)
             String receiverBlock = "\nName: __________________\nMob No.: ________________\nSignature: ________________";
             setCellLabeledText(t2.getRow(18).getCell(2), "Counted, Confirmed and Received on Behalf of\nabove Client by:-", receiverBlock, 8.5f, ParagraphAlignment.LEFT);
+
+            // 6. Receiver Stamp Centered Bottom (Row 18, Col 1)
+            setCellText(t2.getRow(18).getCell(1), "\n\n\nReceiver's Stamp", true, 9, ParagraphAlignment.CENTER);
 
             // 6. Save filled DOCX to a temp file and convert to PDF
             File tempDocx = File.createTempFile("challan_", ".docx");
@@ -159,10 +166,18 @@ final class SteelFabChallanTemplateStamper {
         clearCell(cell, alignment);
         XWPFParagraph p = cell.getParagraphs().get(0);
         if (label != null && !label.isEmpty()) {
-            addRun(p, label, true, fontSizePt);
+            String[] labelLines = label.split("\n", -1);
+            for (int i = 0; i < labelLines.length; i++) {
+                if (i > 0) p.createRun().addBreak();
+                if (!labelLines[i].isEmpty()) addRun(p, labelLines[i], true, fontSizePt);
+            }
         }
         if (value != null && !value.isEmpty()) {
-            addRun(p, value, false, fontSizePt);
+            String[] valueLines = value.split("\n", -1);
+            for (int i = 0; i < valueLines.length; i++) {
+                if (i > 0) p.createRun().addBreak();
+                if (!valueLines[i].isEmpty()) addRun(p, valueLines[i], false, fontSizePt);
+            }
         }
     }
 
