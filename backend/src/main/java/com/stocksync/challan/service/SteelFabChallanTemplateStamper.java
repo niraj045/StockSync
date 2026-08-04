@@ -110,31 +110,34 @@ final class SteelFabChallanTemplateStamper {
 
             return pdfBytes;
         } catch (Exception e) {
-            throw new IllegalStateException("Failed to generate PDF from DOCX template", e);
+            e.printStackTrace();
+            throw new IllegalStateException("Failed to generate PDF from DOCX template: " + e.getMessage(), e);
         }
     }
 
     private File convertDocxToPdf(File tempDocx) throws Exception {
         File tempDir = tempDocx.getParentFile();
+        String loProfile = "file://" + tempDir.getAbsolutePath() + "/lo_profile_" + System.nanoTime();
         ProcessBuilder pb = new ProcessBuilder(
             "libreoffice", "--headless", "--convert-to", "pdf",
+            "-env:UserInstallation=" + loProfile,
             "--outdir", tempDir.getAbsolutePath(),
             tempDocx.getAbsolutePath()
         );
         pb.redirectErrorStream(true);
         Process p = pb.start();
 
-        // Consume output to prevent process hang
+        StringBuilder output = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                // Consume
+                output.append(line).append("\n");
             }
         }
 
         int exitCode = p.waitFor();
         if (exitCode != 0) {
-            throw new IOException("LibreOffice conversion failed with exit code " + exitCode);
+            throw new IOException("LibreOffice conversion failed (exit " + exitCode + "). Output: " + output);
         }
 
         String pdfName = tempDocx.getName().substring(0, tempDocx.getName().lastIndexOf('.')) + ".pdf";
