@@ -1,4 +1,11 @@
 services:
+  storage-init:
+    image: alpine:3.22
+    command: ["chown", "-R", "10001:10001", "/app/storage"]
+    volumes:
+      - uploaded_files:/app/storage
+    restart: "no"
+
   mysql:
     image: mysql:8.4
     restart: unless-stopped
@@ -41,6 +48,7 @@ services:
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      SERVER_PORT: 8080
       DB_HOST: mysql
       DB_PORT: 3306
       DB_NAME: ${DB_NAME}
@@ -60,6 +68,8 @@ services:
     volumes:
       - uploaded_files:/app/storage
     depends_on:
+      storage-init:
+        condition: service_completed_successfully
       mysql:
         condition: service_healthy
     healthcheck:

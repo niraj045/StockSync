@@ -34,7 +34,7 @@ export function InventoryPage() {
 
   const items = useQuery({
     queryKey: ['inventory-item-options'],
-    queryFn: async () => (await apiClient.get<PageResponse<ItemOption>>('/items', { params: { size: 500, active: true } })).data.content,
+    queryFn: async () => (await apiClient.get<PageResponse<ItemOption>>('/items', { params: { size: 500, active: true, sort: 'id,desc' } })).data.content,
   });
   const vendors = useQuery({
     queryKey: ['inventory-vendor-options'],

@@ -74,6 +74,16 @@ public final class PdfViewHelper {
         return Math.max(months, 1);
     }
 
+    public String billingMonths(Integer billableDays, LocalDate from, LocalDate to) {
+        if (billableDays == null || billableDays <= 0) {
+            return String.valueOf(months(from, to));
+        }
+        return BigDecimal.valueOf(billableDays)
+                .divide(BigDecimal.valueOf(30), 2, RoundingMode.HALF_UP)
+                .stripTrailingZeros()
+                .toPlainString();
+    }
+
     public String amountInWords(BigDecimal value) {
         if (value == null) {
             return "Rupees Zero Only";

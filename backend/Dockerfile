@@ -15,7 +15,7 @@ ENV TZ=Asia/Kolkata \
     JAVA_TOOL_OPTIONS="-Xms256m -Xmx1024m"
 
 RUN apt-get update \
-    && apt-get install --no-install-recommends -y curl tzdata \
+    && apt-get install --no-install-recommends -y curl tzdata libreoffice-writer fonts-liberation \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --system --gid 10001 stocksync \
     && useradd --system --uid 10001 --gid stocksync --home-dir /app --shell /usr/sbin/nologin stocksync \

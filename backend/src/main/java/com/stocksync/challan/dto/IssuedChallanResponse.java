@@ -23,5 +23,6 @@ public record IssuedChallanResponse(
     String notes,
     String createdBy,
     Instant createdAt,
+    List<String> termsAndConditions,
     List<IssuedChallanItemResponse> items
 ) {}

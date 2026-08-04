@@ -38,30 +38,29 @@ final class SteelFabChallanTemplateStamper {
             XWPFTable t1 = doc.getTables().get(1);
             setCellText(t1.getRow(0).getCell(1), title, true, 14, ParagraphAlignment.CENTER);
 
-            String challanNo = "Challan No.: " + (fields.number() != null ? fields.number() : "");
+            String challanNo = (fields.number() != null ? fields.number() : "");
             setCellText(t1.getRow(0).getCell(2), challanNo, true, 9, ParagraphAlignment.RIGHT);
 
             // 2. Client / Site info in Table 2
             XWPFTable t2 = doc.getTables().get(2);
 
-            String refNo = "Ref No.: " + (fields.refNo() != null ? fields.refNo() : "");
+            String refNo = (fields.refNo() != null ? fields.refNo() : "");
             setCellText(t2.getRow(0).getCell(0), refNo, false, 9, ParagraphAlignment.LEFT);
 
-            String dateStr = "Date: " + date(fields.date());
+            String dateStr = date(fields.date());
             setCellText(t2.getRow(0).getCell(1), dateStr, false, 9, ParagraphAlignment.LEFT);
 
-            String clientBlock = "Client's Name & Address:-\n" +
-                    (fields.clientName() != null ? fields.clientName() : "") + "\n" +
+            String clientBlock = (fields.clientName() != null ? fields.clientName() : "") + "\n" +
                     (fields.clientAddress() != null ? fields.clientAddress() : "");
             setCellText(t2.getRow(1).getCell(0), clientBlock, false, 9, ParagraphAlignment.LEFT);
 
-            String siteBlock = "Site Address:-\n" + (fields.siteAddress() != null ? fields.siteAddress() : "");
+            String siteBlock = (fields.siteAddress() != null ? fields.siteAddress() : "");
             setCellText(t2.getRow(1).getCell(1), siteBlock, false, 9, ParagraphAlignment.LEFT);
 
-            String gstNo = "GST No.: " + (fields.clientGstin() != null ? fields.clientGstin() : "");
+            String gstNo = (fields.clientGstin() != null ? fields.clientGstin() : "");
             setCellText(t2.getRow(2).getCell(0), gstNo, false, 9, ParagraphAlignment.LEFT);
 
-            String contact = "Client's Contact Person: " + (fields.contactPerson() != null ? fields.contactPerson() : "");
+            String contact = (fields.contactPerson() != null ? fields.contactPerson() : "");
             setCellText(t2.getRow(2).getCell(1), contact, false, 9, ParagraphAlignment.LEFT);
 
             // 3. Fill Table Items (Rows 4 to 17)
@@ -81,20 +80,19 @@ final class SteelFabChallanTemplateStamper {
             }
 
             // 4. Vehicle / Driver Info (Row 14 to 17, Col 4)
-            String vehicleNo = "Vehicle No.:- " + (fields.vehicleNumber() != null ? fields.vehicleNumber() : "");
+            String vehicleNo = (fields.vehicleNumber() != null ? fields.vehicleNumber() : "");
             setCellText(t2.getRow(14).getCell(4), vehicleNo, false, 9, ParagraphAlignment.LEFT);
 
-            String driverName = "Driver Name:- " + (fields.driverName() != null ? fields.driverName() : "");
+            String driverName = (fields.driverName() != null ? fields.driverName() : "");
             setCellText(t2.getRow(15).getCell(4), driverName, false, 9, ParagraphAlignment.LEFT);
 
-            String driverNumber = "Driver Number:- " + (fields.driverPhone() != null ? fields.driverPhone() : "");
+            String driverNumber = (fields.driverPhone() != null ? fields.driverPhone() : "");
             setCellText(t2.getRow(16).getCell(4), driverNumber, false, 9, ParagraphAlignment.LEFT);
 
-            setCellText(t2.getRow(17).getCell(4), "Driver Sign:-", false, 9, ParagraphAlignment.LEFT);
+            setCellText(t2.getRow(17).getCell(4), "", false, 9, ParagraphAlignment.LEFT);
 
             // 5. Receiver Info (Row 18, Col 2)
-            String receiverBlock = "Counted, Confirmed and Received on Behalf of\nabove Client by:-\nName: __________________\nMob No.: ________________\nSignature: ________________";
-            setCellText(t2.getRow(18).getCell(2), receiverBlock, false, 8.5f, ParagraphAlignment.LEFT);
+            setCellText(t2.getRow(18).getCell(2), "", false, 8.5f, ParagraphAlignment.LEFT);
 
             // 6. Save filled DOCX to a temp file and convert to PDF
             File tempDocx = File.createTempFile("challan_", ".docx");

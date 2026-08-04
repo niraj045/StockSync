@@ -36,8 +36,8 @@ export function QuotationsPage(){
   const isEditorRoute=location.pathname==='/quotations/new'||Boolean(quotationId);
   const quotations=useQuery({queryKey:['quotations',search,status],queryFn:async()=>(await apiClient.get<Page<Quotation>>('/quotations',{params:{search,status,size:50,sort:'id,desc'}})).data});
   const templates=useQuery({queryKey:['quotation-templates-active'],queryFn:async()=>(await apiClient.get<Page<Template>>('/quotation-templates',{params:{active:true,size:100}})).data.content});
-  const parties=useQuery({queryKey:['parties-options'],queryFn:async()=>(await apiClient.get<Page<Option>>('/parties',{params:{active:true,size:200}})).data.content});
-  const sites=useQuery({queryKey:['sites-options'],queryFn:async()=>(await apiClient.get<Page<Option>>('/sites',{params:{size:200}})).data.content});
+  const parties=useQuery({queryKey:['parties-options'],queryFn:async()=>(await apiClient.get<Page<Option>>('/parties',{params:{active:true,size:500,sort:'id,desc'}})).data.content});
+  const sites=useQuery({queryKey:['sites-options'],queryFn:async()=>(await apiClient.get<Page<Option>>('/sites',{params:{size:500,sort:'id,desc'}})).data.content});
   const items=useQuery({queryKey:['items-options'],queryFn:async()=>(await apiClient.get<Page<Option>>('/items',{params:{active:true,size:500}})).data.content});
   const stock=useQuery({queryKey:['quotation-stock-balances'],queryFn:async()=>(await apiClient.get<Page<StockRow>>('/stock/balances',{params:{size:500}})).data.content});
   const availability=useMemo(()=>new Map((stock.data??[]).map(row=>[row.itemId,Number(row.availableQuantity)||0])),[stock.data]);

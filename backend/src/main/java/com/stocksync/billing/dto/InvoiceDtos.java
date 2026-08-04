@@ -26,6 +26,7 @@ public class InvoiceDtos {
         String billingRunNumber,
         Long agreementId,
         String agreementNumberSnapshot,
+        String measurementBasis,
         String companyNameSnapshot,
         String companyAddressSnapshot,
         String companyGstinSnapshot,

@@ -72,8 +72,8 @@ try {
     const current = await driver.getCurrentUrl();
     return !current.includes('/login');
   }, timeout, 'Login did not leave the login page');
-  await expectText('Shuttering Inventory Management');
-  await expectText('Admin User');
+  await expectText('Operational Dashboard');
+  await expectText('SteelFab Administrator');
   console.log('✓ ADMIN login succeeds');
 
   // Client-story navigation: master data, stock control, commercial work, and audit.

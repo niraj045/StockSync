@@ -8,6 +8,8 @@ import {
   Platform,
   Pressable,
   StyleSheet,
+  ScrollView,
+  Switch,
   Text,
   TextInput,
   TextInputProps,
@@ -83,6 +85,30 @@ export function Field({
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
     </View>
   );
+}
+
+type SelectOption = string | { value: string; label: string };
+export function SelectField({ label, value, options, onChange }: { label: string; value: string; options: SelectOption[]; onChange: (value: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const normalized = options.map((option) => typeof option === 'string' ? { value: option, label: option.replaceAll('_', ' ') } : option);
+  const selected = normalized.find((option) => option.value === value);
+  return <View style={styles.field}>
+    <Text style={styles.label}>{label}</Text>
+    <Pressable accessibilityRole="button" accessibilityLabel={`Choose ${label}`} onPress={() => setOpen(true)} style={styles.dateButton}>
+      <Text style={[styles.dateValue, !selected && styles.datePlaceholder]}>{selected?.label ?? 'Select'}</Text>
+      <Ionicons name="chevron-down" size={18} color={colors.muted} />
+    </Pressable>
+    <Modal transparent animationType="slide" visible={open} onRequestClose={() => setOpen(false)}>
+      <View style={styles.selectBackdrop}><View style={styles.selectSheet}>
+        <View style={styles.dateSheetHeader}><Text style={styles.dateSheetTitle}>{label}</Text><Pressable onPress={() => setOpen(false)}><Ionicons name="close" size={24} color={colors.ink} /></Pressable></View>
+        <ScrollView>{normalized.map((option) => <Pressable key={option.value} style={styles.selectOption} onPress={() => { onChange(option.value); setOpen(false); }}><Text style={[styles.dateValue, option.value === value && styles.selectOptionActive]}>{option.label}</Text></Pressable>)}</ScrollView>
+      </View></View>
+    </Modal>
+  </View>;
+}
+
+export function ToggleField({ label, value, onChange }: { label: string; value: boolean; onChange: (value: boolean) => void }) {
+  return <View style={styles.toggleRow}><Text style={styles.label}>{label}</Text><Switch value={value} onValueChange={onChange} trackColor={{ true: colors.primarySoft }} thumbColor={value ? colors.primary : '#98A2B3'} /></View>;
 }
 
 type DateFieldProps = {
@@ -258,6 +284,11 @@ const styles = StyleSheet.create({
   buttonText: { color: '#fff', fontSize: 15, fontFamily: fonts.bold },
   buttonSecondaryText: { color: colors.primary },
   field: { gap: 7 },
+  toggleRow: { minHeight: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  selectBackdrop: { flex: 1, backgroundColor: 'rgba(4,25,23,0.45)', justifyContent: 'flex-end' },
+  selectSheet: { maxHeight: '72%', backgroundColor: colors.surface, borderTopLeftRadius: 12, borderTopRightRadius: 12, paddingBottom: 24 },
+  selectOption: { minHeight: 54, justifyContent: 'center', paddingHorizontal: 18, borderBottomWidth: 1, borderBottomColor: colors.line },
+  selectOptionActive: { color: colors.primary, fontFamily: fonts.bold },
   label: { color: colors.ink, fontSize: 13, fontFamily: fonts.semiBold },
   input: {
     minHeight: 50,

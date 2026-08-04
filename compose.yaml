@@ -1,4 +1,11 @@
 services:
+  storage-init:
+    image: alpine:3.22
+    command: ["chown", "-R", "10001:10001", "/app/storage"]
+    volumes:
+      - uploaded_files:/app/storage
+    restart: "no"
+
   mysql:
     image: mysql:8.4
     restart: unless-stopped
@@ -35,10 +42,13 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       FILE_STORAGE_PATH: /app/storage
       SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
+      SERVER_PORT: 8080
       TZ: UTC
     volumes:
       - uploaded_files:/app/storage
     depends_on:
+      storage-init:
+        condition: service_completed_successfully
       mysql:
         condition: service_healthy
     healthcheck:

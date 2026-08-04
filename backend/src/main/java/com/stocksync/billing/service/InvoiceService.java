@@ -180,6 +180,8 @@ public class InvoiceService {
             InvoiceItem item = new InvoiceItem();
             item.setLineType("RENTAL");
             item.setAgreementItem(s.getAgreementItem());
+            item.setSourceType("ISSUED_CHALLAN");
+            item.setSourceDocumentNumber(documentNumber(s.getSourceIssueReference()));
             item.setItem(s.getItem());
             item.setItemCodeSnapshot(s.getItemCodeSnapshot());
             item.setItemNameSnapshot(s.getItemNameSnapshot());
@@ -403,6 +405,7 @@ public class InvoiceService {
                 i.getBillingRun().getBillingRunNumber(),
                 i.getAgreement().getId(),
                 i.getAgreementNumberSnapshot(),
+                i.getAgreement().getMeasurementBasis().name(),
                 i.getCompanyNameSnapshot(),
                 i.getCompanyAddressSnapshot(),
                 i.getCompanyGstinSnapshot(),
@@ -457,6 +460,15 @@ public class InvoiceService {
         if (outstanding == null || outstanding.signum() <= 0) return "PAID";
         if (total != null && outstanding.compareTo(total) < 0) return "PARTIALLY_PAID";
         return "UNPAID";
+    }
+
+    private String documentNumber(String sourceReference) {
+        if (sourceReference == null || sourceReference.isBlank()) return null;
+        int open = sourceReference.indexOf('(');
+        int close = sourceReference.lastIndexOf(')');
+        return open >= 0 && close > open
+                ? sourceReference.substring(open + 1, close).trim()
+                : sourceReference.trim();
     }
 
     private int paymentDueDays(Quotation quotation) {

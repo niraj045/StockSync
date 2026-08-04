@@ -45,6 +45,24 @@ export function MoreScreen({ navigation }: Props) {
         <Ionicons name="chevron-forward" size={20} color={colors.muted} />
       </Pressable>
 
+      <Pressable style={styles.menuRow} onPress={() => navigation.navigate('Inquiries')}>
+        <View style={styles.menuIcon}><Ionicons name="mail-outline" size={21} color={colors.primary} /></View>
+        <View style={styles.menuCopy}>
+          <Text style={styles.menuTitle}>Inquiries</Text>
+          <Text style={styles.menuText}>Track leads, sources and quotation follow-ups</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+      </Pressable>
+
+      <Pressable style={styles.menuRow} onPress={() => navigation.navigate('SiteOperations')}>
+        <View style={styles.menuIcon}><Ionicons name="construct-outline" size={21} color={colors.primary} /></View>
+        <View style={styles.menuCopy}>
+          <Text style={styles.menuTitle}>Site operations</Text>
+          <Text style={styles.menuText}>Transport, labour, Mathadi, TPI and site costs</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+      </Pressable>
+
       <Pressable style={styles.menuRow} onPress={() => navigation.navigate('ExcelReports')}>
         <View style={styles.menuIcon}><Ionicons name="document-text-outline" size={21} color={colors.primary} /></View>
         <View style={styles.menuCopy}>

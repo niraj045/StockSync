@@ -37,5 +37,6 @@ public record ReceivingChallanResponse(
     String createdBy,
     Instant updatedAt,
     String updatedBy,
+    List<String> termsAndConditions,
     List<ReceivingChallanItemResponse> items
 ) {}

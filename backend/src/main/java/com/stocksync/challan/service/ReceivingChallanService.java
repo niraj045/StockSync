@@ -611,6 +611,7 @@ public class ReceivingChallanService {
                 c.getCreatedBy(),
                 c.getUpdatedAt(),
                 c.getUpdatedBy(),
+                lossDamageTerms(c),
                 c.getItems().stream().map(ci -> new ReceivingChallanItemResponse(
                         ci.getId(),
                         ci.getItem().getId(),
@@ -638,6 +639,54 @@ public class ReceivingChallanService {
                         ci.getSequence()
                 )).toList()
         );
+    }
+
+    private List<String> lossDamageTerms(ReceivingChallan challan) {
+        com.stocksync.agreement.entity.Agreement agreement = challan.getAgreement();
+        if (agreement == null && challan.getLinkedIssuedChallan() != null) {
+            agreement = challan.getLinkedIssuedChallan().getSiteOrder().getAgreement();
+        }
+        if (agreement == null) return List.of();
+        List<String> lines = new ArrayList<>();
+        agreement.getItems().stream()
+                .sorted(Comparator.comparingInt(com.stocksync.agreement.entity.AgreementItem::getSequence))
+                .map(this::lossDamageLine)
+                .filter(Objects::nonNull)
+                .forEach(lines::add);
+        return lines;
+    }
+
+    private String lossDamageLine(com.stocksync.agreement.entity.AgreementItem item) {
+        BigDecimal quotationReplacement = item.getSourceQuotationItem() == null
+                ? BigDecimal.ZERO
+                : Optional.ofNullable(item.getSourceQuotationItem().getReplacementRate()).orElse(BigDecimal.ZERO);
+        BigDecimal lossPiece = Optional.ofNullable(item.getLossRatePerPiece()).orElse(BigDecimal.ZERO);
+        BigDecimal lossWeight = Optional.ofNullable(item.getLossRatePerWeight()).orElse(BigDecimal.ZERO);
+        BigDecimal damage = Optional.ofNullable(item.getDamageRate()).orElse(BigDecimal.ZERO);
+        String rate;
+        if (quotationReplacement.signum() > 0) {
+            rate = "Rs." + money(quotationReplacement) + "/- per " + unit(item.getUnitSnapshot());
+        } else if (lossPiece.signum() > 0) {
+            rate = "Rs." + money(lossPiece) + "/- per no.";
+        } else if (lossWeight.signum() > 0) {
+            rate = "Rs." + money(lossWeight) + "/- per kg.";
+        } else if (damage.signum() > 0) {
+            rate = "Damage Rs." + money(damage) + "/-";
+        } else {
+            return null;
+        }
+        return item.getItemNameSnapshot() + ":- " + rate;
+    }
+
+    private String money(BigDecimal value) {
+        return value.stripTrailingZeros().toPlainString();
+    }
+
+    private String unit(String value) {
+        if (value == null || value.isBlank()) return "unit";
+        String unit = value.trim().toLowerCase(Locale.ROOT);
+        if ("pcs".equals(unit) || "piece".equals(unit) || "pieces".equals(unit)) return "no.";
+        return unit;
     }
 
     private void audit(String action, String entity, long id, String description, HttpServletRequest request) {
@@ -685,6 +734,7 @@ public class ReceivingChallanService {
                 c.getNotes(),
                 c.getCreatedBy(),
                 c.getCreatedAt(),
+                List.of(),
                 List.of()
         )).toList();
     }

@@ -229,6 +229,7 @@ public class IssuedChallanService {
                 c.getNotes(),
                 c.getCreatedBy(),
                 c.getCreatedAt(),
+                lossDamageTermsForSiteOrder(c.getSiteOrder().getId()),
                 c.getItems().stream().map(ci -> new IssuedChallanItemResponse(
                         ci.getId(),
                         ci.getItem().getId(),
@@ -238,6 +239,67 @@ public class IssuedChallanService {
                         ci.getQuantity()
                 )).toList()
         );
+    }
+
+    private List<String> lossDamageTermsForSiteOrder(Long siteOrderId) {
+        if (siteOrderId == null) return List.of();
+        List<String> rateLines = jdbc.query("""
+                SELECT ai.item_name_snapshot,
+                       ai.unit_snapshot,
+                       COALESCE(qi.replacement_rate, 0) AS quotation_replacement_rate,
+                       COALESCE(ai.loss_rate_per_piece, 0) AS loss_rate_per_piece,
+                       COALESCE(ai.loss_rate_per_weight, 0) AS loss_rate_per_weight,
+                       COALESCE(ai.damage_rate, 0) AS damage_rate
+                FROM site_orders so
+                JOIN agreement_items ai ON ai.agreement_id = so.agreement_id
+                LEFT JOIN quotation_items qi ON qi.id = ai.source_quotation_item_id
+                WHERE so.id = ?
+                ORDER BY ai.sequence_number ASC, ai.id ASC
+                """, (rs, rowNum) -> lossDamageLine(
+                        rs.getString("item_name_snapshot"),
+                        rs.getString("unit_snapshot"),
+                        rs.getBigDecimal("quotation_replacement_rate"),
+                        rs.getBigDecimal("loss_rate_per_piece"),
+                        rs.getBigDecimal("loss_rate_per_weight"),
+                        rs.getBigDecimal("damage_rate")
+                ), siteOrderId).stream().filter(Objects::nonNull).toList();
+        if (rateLines.isEmpty()) return List.of();
+        List<String> lines = new ArrayList<>();
+        lines.add("Loss/damage rates as per quotation:");
+        lines.addAll(rateLines);
+        return lines;
+    }
+
+    private String lossDamageLine(String itemName, String unit, BigDecimal quotationReplacement,
+            BigDecimal lossPiece, BigDecimal lossWeight, BigDecimal damage) {
+        quotationReplacement = Optional.ofNullable(quotationReplacement).orElse(BigDecimal.ZERO);
+        lossPiece = Optional.ofNullable(lossPiece).orElse(BigDecimal.ZERO);
+        lossWeight = Optional.ofNullable(lossWeight).orElse(BigDecimal.ZERO);
+        damage = Optional.ofNullable(damage).orElse(BigDecimal.ZERO);
+        String rate;
+        if (quotationReplacement.signum() > 0) {
+            rate = "Rs." + money(quotationReplacement) + "/- per " + unit(unit);
+        } else if (lossPiece.signum() > 0) {
+            rate = "Rs." + money(lossPiece) + "/- per no.";
+        } else if (lossWeight.signum() > 0) {
+            rate = "Rs." + money(lossWeight) + "/- per kg.";
+        } else if (damage.signum() > 0) {
+            rate = "Damage Rs." + money(damage) + "/-";
+        } else {
+            return null;
+        }
+        return itemName + ":- " + rate;
+    }
+
+    private String money(BigDecimal value) {
+        return value.stripTrailingZeros().toPlainString();
+    }
+
+    private String unit(String value) {
+        if (value == null || value.isBlank()) return "unit";
+        String unit = value.trim().toLowerCase(Locale.ROOT);
+        if ("pcs".equals(unit) || "piece".equals(unit) || "pieces".equals(unit)) return "no.";
+        return unit;
     }
 
     private void audit(String action, String entity, long id, String description, HttpServletRequest request) {

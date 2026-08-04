@@ -75,7 +75,7 @@ async function clickButton(text, scope) {
     return false;
   }, timeout, `Visible button not found: ${text}`);
   await driver.wait(until.elementIsEnabled(button), timeout);
-  await button.click();
+  await driver.executeScript('arguments[0].click()', button);
 }
 
 async function clickRowButton(rowLocatorFn, buttonLocator) {
@@ -116,6 +116,15 @@ async function typeField(label, value, scope) {
   const container = await fieldContainer(label, scope);
   const input = await container.findElement(By.css('input, textarea'));
   await driver.executeScript("arguments[0].scrollIntoView({block: 'center'});", input);
+  if ((await input.getAttribute('type')) === 'date') {
+    await driver.executeScript((element, nextValue) => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+      setter?.call(element, nextValue);
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+      element.dispatchEvent(new Event('change', { bubbles: true }));
+    }, input, String(value));
+    return;
+  }
   await input.sendKeys(Key.chord(Key.CONTROL, 'a'), String(value));
 }
 
@@ -124,6 +133,10 @@ async function selectField(label, optionText, scope) {
   const selector = await container.findElement(By.css('.ant-select-selector'));
   await driver.executeScript("arguments[0].scrollIntoView({block: 'center'});", selector);
   await selector.click();
+  const searchInputs = await container.findElements(By.css('input[type="search"]'));
+  if (searchInputs.length > 0) {
+    await searchInputs[0].sendKeys(Key.chord(Key.CONTROL, 'a'), optionText);
+  }
   await driver.sleep(300);
   await driver.executeScript(() => {
     const holders = document.querySelectorAll('.rc-virtual-list-holder');
@@ -131,11 +144,24 @@ async function selectField(label, optionText, scope) {
       h.scrollTop = h.scrollHeight;
     }
   });
-  const option = await visible(By.xpath(
+  const optionLocator = By.xpath(
     `//div[contains(@class,'ant-select-item-option') and not(contains(@class,'ant-select-item-option-disabled'))]` +
     `[contains(normalize-space(.),${literal(optionText)})]`,
-  ));
-  await option.click();
+  );
+  await driver.wait(async () => {
+    try {
+      const matches = await driver.findElements(optionLocator);
+      for (const match of matches) {
+        if (await match.isDisplayed()) {
+          await driver.executeScript('arguments[0].click()', match);
+          return true;
+        }
+      }
+    } catch {
+      // Ant Design can replace virtual-list nodes while options are loading.
+    }
+    return false;
+  }, timeout, `Selectable option not found: ${optionText}`);
 }
 
 async function saveModal(expectedText) {
@@ -405,9 +431,19 @@ async function createAndConfirmOrder(agreementNumber) {
   await pageContains('50');
   await pageContains('0');
 
-  const closeBtn = await modal.findElement(By.css('.ant-modal-close'));
-  await closeBtn.click();
-  await waitUntilClosed(modal);
+  const closeBtn = await visible(By.css('.ant-modal-content .ant-modal-close'));
+  await driver.executeScript('arguments[0].click()', closeBtn);
+  await driver.wait(async () => {
+    const openModals = await driver.findElements(By.css('.ant-modal-content'));
+    for (const element of openModals) {
+      try {
+        if (await element.isDisplayed()) return false;
+      } catch {
+        // A detached modal is closed.
+      }
+    }
+    return true;
+  }, timeout);
 
   await clickRowButton(getOrderRow, By.xpath(".//button[.//span[normalize-space()='PDF']]"));
   await driver.sleep(2000);
@@ -427,6 +463,8 @@ async function adjustStockIn(itemCode) {
   
   const itemSelect = await visible(By.xpath("//div[contains(@class,'ant-select')][.//input[@id='items_0_itemId']]"));
   await itemSelect.click();
+  const itemSearch = await itemSelect.findElement(By.css('input[type="search"]'));
+  await itemSearch.sendKeys(itemCode);
   await driver.sleep(300);
   
   const option = await visible(By.xpath(
@@ -564,7 +602,7 @@ try {
   await (await visible(By.id('login_form_password'))).sendKeys(password);
   const loginBtn = await visible(By.css('button[type="submit"]'));
   await driver.executeScript('arguments[0].click()', loginBtn);
-  await pageContains('Shuttering Inventory Management');
+  await pageContains('Operational Dashboard');
   console.log('✓ ADMIN login');
 
   await createCategory();

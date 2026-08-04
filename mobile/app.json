@@ -7,7 +7,8 @@
     "icon": "./assets/stocksync-icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.steelfab.stocksync"
     },
     "android": {
       "package": "com.steelfab.stocksync",
