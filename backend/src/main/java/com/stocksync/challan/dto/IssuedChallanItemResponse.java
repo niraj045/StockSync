@@ -8,5 +8,6 @@ public record IssuedChallanItemResponse(
     String itemCode,
     String itemName,
     String unit,
-    BigDecimal quantity
+    BigDecimal quantity,
+    String notes
 ) {}

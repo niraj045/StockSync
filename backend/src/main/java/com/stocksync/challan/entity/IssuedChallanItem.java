@@ -31,6 +31,9 @@ public class IssuedChallanItem {
     @Column(name = "unit_snapshot", nullable = false, length = 20)
     private String unitSnapshot;
 
+    @Column(length = 255)
+    private String notes;
+
     public Long getId() { return id; }
     public IssuedChallan getIssuedChallan() { return issuedChallan; }
     public void setIssuedChallan(IssuedChallan v) { issuedChallan = v; }
@@ -44,4 +47,6 @@ public class IssuedChallanItem {
     public void setItemNameSnapshot(String v) { itemNameSnapshot = v; }
     public String getUnitSnapshot() { return unitSnapshot; }
     public void setUnitSnapshot(String v) { unitSnapshot = v; }
+    public String getNotes() { return notes; }
+    public void setNotes(String v) { notes = v; }
 }

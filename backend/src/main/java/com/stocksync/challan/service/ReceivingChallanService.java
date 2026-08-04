@@ -174,6 +174,7 @@ public class ReceivingChallanService {
         c.setVehicleNumber(blank(r.vehicleNumber()));
         c.setDriverName(blank(r.driverName()));
         c.setDriverPhone(blank(r.driverPhone()));
+        c.setRefNo(blank(r.refNo()));
         c.setTransporterId(r.transporterId());
         c.setSourceType(SourceType.valueOf(r.sourceType()));
         c.setNotes(blank(r.notes()));
@@ -202,6 +203,7 @@ public class ReceivingChallanService {
         c.setVehicleNumber(blank(r.vehicleNumber()));
         c.setDriverName(blank(r.driverName()));
         c.setDriverPhone(blank(r.driverPhone()));
+        c.setRefNo(blank(r.refNo()));
         c.setTransporterId(r.transporterId());
         c.setSourceType(SourceType.valueOf(r.sourceType()));
         c.setNotes(blank(r.notes()));
@@ -598,6 +600,7 @@ public class ReceivingChallanService {
                 c.getVehicleNumber(),
                 c.getDriverName(),
                 c.getDriverPhone(),
+                c.getRefNo(),
                 c.getTransporterId(),
                 c.getSourceType().name(),
                 c.getNotes(),
@@ -731,6 +734,8 @@ public class ReceivingChallanService {
                 c.getDispatchDate(),
                 c.getVehicleNumber(),
                 c.getDriverName(),
+                c.getDriverPhone(),
+                c.getRefNo(),
                 c.getNotes(),
                 c.getCreatedBy(),
                 c.getCreatedAt(),

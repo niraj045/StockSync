@@ -20,6 +20,8 @@ public record IssuedChallanResponse(
     LocalDate dispatchDate,
     String vehicleNumber,
     String driverName,
+    String driverPhone,
+    String refNo,
     String notes,
     String createdBy,
     Instant createdAt,

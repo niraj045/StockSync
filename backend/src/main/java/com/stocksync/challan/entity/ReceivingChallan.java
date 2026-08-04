@@ -54,6 +54,9 @@ public class ReceivingChallan extends AuditedEntity {
     @Column(name = "driver_phone", length = 20)
     private String driverPhone;
 
+    @Column(name = "ref_no", length = 50)
+    private String refNo;
+
     @Column(name = "transporter_id")
     private Long transporterId;
 
@@ -111,6 +114,8 @@ public class ReceivingChallan extends AuditedEntity {
     public void setDriverName(String driverName) { this.driverName = driverName; }
     public String getDriverPhone() { return driverPhone; }
     public void setDriverPhone(String driverPhone) { this.driverPhone = driverPhone; }
+    public String getRefNo() { return refNo; }
+    public void setRefNo(String refNo) { this.refNo = refNo; }
     public Long getTransporterId() { return transporterId; }
     public void setTransporterId(Long transporterId) { this.transporterId = transporterId; }
     public SourceType getSourceType() { return sourceType; }

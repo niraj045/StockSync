@@ -15,6 +15,7 @@ public record ReceivingChallanRequest(
     @Size(max = 50) String vehicleNumber,
     @Size(max = 100) String driverName,
     @Size(max = 20) String driverPhone,
+    @Size(max = 50) String refNo,
     Long transporterId,
     @NotNull String sourceType,
     @Size(max = 1000) String notes,

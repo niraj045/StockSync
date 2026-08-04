@@ -6,5 +6,6 @@ import java.math.BigDecimal;
 
 public record IssuedChallanItemRequest(
     @NotNull Long itemId,
-    @NotNull @Positive BigDecimal quantity
+    @NotNull @Positive BigDecimal quantity,
+    @jakarta.validation.constraints.Size(max = 255) String notes
 ) {}

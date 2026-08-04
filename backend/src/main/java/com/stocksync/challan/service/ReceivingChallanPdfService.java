@@ -14,11 +14,11 @@ public class ReceivingChallanPdfService {
 
     public PdfDocument generate(ReceivingChallanResponse challan) {
         List<SteelFabChallanTemplateStamper.ChallanLine> lines = challan.items().stream()
-                .map(i -> new SteelFabChallanTemplateStamper.ChallanLine(i.itemName(), returned(i), i.unit()))
+                .map(i -> new SteelFabChallanTemplateStamper.ChallanLine(i.itemName(), returned(i), i.notes()))
                 .toList();
         var fields = new SteelFabChallanTemplateStamper.ChallanFields(
                 challan.receivingChallanNumber(),
-                challan.linkedIssuedChallanNumber() == null ? challan.agreementNumber() : challan.linkedIssuedChallanNumber(),
+                challan.refNo() != null ? challan.refNo() : (challan.linkedIssuedChallanNumber() == null ? challan.agreementNumber() : challan.linkedIssuedChallanNumber()),
                 challan.receiveDate(),
                 challan.partyName(),
                 challan.partyAddress(),

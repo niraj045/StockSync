@@ -11,6 +11,8 @@ public record IssuedChallanRequest(
     @NotNull LocalDate dispatchDate,
     @Size(max = 50) String vehicleNumber,
     @Size(max = 100) String driverName,
+    @Size(max = 50) String driverPhone,
+    @Size(max = 50) String refNo,
     @Size(max = 1000) String notes,
     @NotEmpty List<IssuedChallanItemRequest> items
 ) {}

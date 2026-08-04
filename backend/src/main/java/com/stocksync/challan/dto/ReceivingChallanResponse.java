@@ -24,6 +24,7 @@ public record ReceivingChallanResponse(
     String vehicleNumber,
     String driverName,
     String driverPhone,
+    String refNo,
     Long transporterId,
     String sourceType,
     String notes,

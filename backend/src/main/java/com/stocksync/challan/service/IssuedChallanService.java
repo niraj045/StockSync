@@ -99,6 +99,8 @@ public class IssuedChallanService {
         c.setDispatchDate(r.dispatchDate());
         c.setVehicleNumber(blank(r.vehicleNumber()));
         c.setDriverName(blank(r.driverName()));
+        c.setDriverPhone(blank(r.driverPhone()));
+        c.setRefNo(blank(r.refNo()));
         c.setNotes(blank(r.notes()));
         c.setCreatedBy(actor);
 
@@ -190,6 +192,7 @@ public class IssuedChallanService {
             ci.setItemCodeSnapshot(item.getItemCode());
             ci.setItemNameSnapshot(item.getItemName());
             ci.setUnitSnapshot(item.getUnit());
+            ci.setNotes(blank(line.notes()));
             challanItems.add(ci);
         }
 
@@ -226,6 +229,8 @@ public class IssuedChallanService {
                 c.getDispatchDate(),
                 c.getVehicleNumber(),
                 c.getDriverName(),
+                c.getDriverPhone(),
+                c.getRefNo(),
                 c.getNotes(),
                 c.getCreatedBy(),
                 c.getCreatedAt(),
@@ -236,7 +241,8 @@ public class IssuedChallanService {
                         ci.getItemCodeSnapshot(),
                         ci.getItemNameSnapshot(),
                         ci.getUnitSnapshot(),
-                        ci.getQuantity()
+                        ci.getQuantity(),
+                        ci.getNotes()
                 )).toList()
         );
     }

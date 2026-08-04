@@ -31,6 +31,12 @@ public class IssuedChallan {
     @Column(name = "driver_name", length = 100)
     private String driverName;
 
+    @Column(name = "driver_phone", length = 50)
+    private String driverPhone;
+
+    @Column(name = "ref_no", length = 50)
+    private String refNo;
+
     @Column(length = 1000)
     private String notes;
 
@@ -72,6 +78,10 @@ public class IssuedChallan {
     public void setNotes(String v) { notes = v; }
     public String getCreatedBy() { return createdBy; }
     public void setCreatedBy(String v) { createdBy = v; }
+    public String getDriverPhone() { return driverPhone; }
+    public void setDriverPhone(String v) { driverPhone = v; }
+    public String getRefNo() { return refNo; }
+    public void setRefNo(String v) { refNo = v; }
     public Instant getCreatedAt() { return createdAt; }
     public List<IssuedChallanItem> getItems() { return items; }
     public void setItems(List<IssuedChallanItem> v) { items = v; }

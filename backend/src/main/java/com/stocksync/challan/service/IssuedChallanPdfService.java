@@ -13,11 +13,11 @@ public class IssuedChallanPdfService {
 
     public PdfDocument generate(IssuedChallanResponse challan) {
         List<SteelFabChallanTemplateStamper.ChallanLine> lines = challan.items().stream()
-                .map(i -> new SteelFabChallanTemplateStamper.ChallanLine(i.itemName(), i.quantity(), i.unit()))
+                .map(i -> new SteelFabChallanTemplateStamper.ChallanLine(i.itemName(), i.quantity(), i.notes()))
                 .toList();
         var fields = new SteelFabChallanTemplateStamper.ChallanFields(
                 challan.challanNumber(),
-                challan.siteOrderNumber(),
+                challan.refNo() != null ? challan.refNo() : challan.siteOrderNumber(),
                 challan.dispatchDate(),
                 challan.partyName(),
                 challan.partyAddress(),
@@ -26,7 +26,7 @@ public class IssuedChallanPdfService {
                 challan.siteContact(),
                 challan.vehicleNumber(),
                 challan.driverName(),
-                "",
+                challan.driverPhone(),
                 lines,
                 challan.termsAndConditions());
         String filename = "challan-" + challan.challanNumber().replaceAll("[^A-Za-z0-9.-]", "-") + ".pdf";
