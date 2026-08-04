@@ -3,10 +3,10 @@ import { ArrowLeftOutlined, DownloadOutlined, FileDoneOutlined, SafetyCertificat
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router';
 import dayjs from 'dayjs';
-import { apiClient } from '../../../../api/client';
+import { apiClient } from '../../../api/client';
 import { paymentsApi } from '../../payment/api';
 import type { PaymentReceipt } from '../../payment/types';
-import { useAuth } from '../../../auth/context/AuthContext';
+import { useAuth } from '../../auth/context/AuthContext';
 
 const money = (value?: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(value ?? 0);
 const canPost = (roles: string[]) => roles.includes('ROLE_ADMIN') || roles.includes('ROLE_ACCOUNTS');
@@ -147,10 +147,10 @@ export function PaymentDetailsPage() {
                   form={tdsForm} 
                   layout="vertical"
                   initialValues={{
-                    deductionDate: selected.tdsDeductionDate ? dayjs(selected.tdsDeductionDate) : undefined,
-                    section: selected.tdsSection,
-                    certificateNumber: selected.tdsCertificateNumber,
-                    certificateDate: selected.tdsCertificateDate ? dayjs(selected.tdsCertificateDate) : undefined
+                    deductionDate: selected.tdsDetails?.deductionDate ? dayjs(selected.tdsDetails.deductionDate) : undefined,
+                    section: selected.tdsDetails?.section,
+                    certificateNumber: selected.tdsDetails?.certificateNumber,
+                    certificateDate: selected.tdsDetails?.certificateDate ? dayjs(selected.tdsDetails.certificateDate) : undefined
                   }}
                 >
                   <Space wrap size="large">
@@ -166,14 +166,14 @@ export function PaymentDetailsPage() {
                         await updateTds.mutateAsync({ pId: selected.id, values: { ...values, deductionDate: values.deductionDate?.format('YYYY-MM-DD'), certificateDate: values.certificateDate?.format('YYYY-MM-DD') } });
                       }}>Save TDS Info</Button>
                       
-                      {canPost(roles) && !selected.tdsVerified && (
+                      {canPost(roles) && selected.tdsDetails?.verificationStatus !== 'VERIFIED' && (
                         <Button onClick={() => verifyTds.mutate(selected.id)} loading={verifyTds.isPending}>
                           Verify TDS Details
                         </Button>
                       )}
                       
-                      {selected.tdsVerified && (
-                        <Tag color="green" style={{ marginLeft: 16 }}>TDS Verified on {selected.tdsVerificationDate}</Tag>
+                      {selected.tdsDetails?.verificationStatus === 'VERIFIED' && (
+                        <Tag color="green" style={{ marginLeft: 16 }}>TDS Verified</Tag>
                       )}
                     </Space>
                   </div>

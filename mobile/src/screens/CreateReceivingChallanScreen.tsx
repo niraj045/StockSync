@@ -22,10 +22,10 @@ import type { Page, Party, ReceivingChallan, Site, SiteOrder, SitePendingBalance
 import { localDate, quantity } from '../utils/format';
 
 type Props = NativeStackScreenProps<RootStackParams, 'CreateReceivingChallan'>;
-type ReturnValues = { good: string; damaged: string; lost: string; extra: string };
+type ReturnValues = { good: string; damaged: string; lost: string; extra: string; notes: string };
 type Picker = 'party' | 'site' | null;
 
-const emptyValues = (): ReturnValues => ({ good: '0', damaged: '0', lost: '0', extra: '0' });
+const emptyValues = (): ReturnValues => ({ good: '0', damaged: '0', lost: '0', extra: '0', notes: '' });
 
 export function CreateReceivingChallanScreen({ navigation, route }: Props) {
   const issued = route.params?.issuedChallan;
@@ -39,6 +39,7 @@ export function CreateReceivingChallanScreen({ navigation, route }: Props) {
   const [balances, setBalances] = useState<SitePendingBalance[]>([]);
   const [values, setValues] = useState<Record<number, ReturnValues>>({});
   const [receiveDate, setReceiveDate] = useState(localDate());
+  const [refNo, setRefNo] = useState('');
   const [vehicleNumber, setVehicleNumber] = useState(issued?.vehicleNumber ?? '');
   const [driverName, setDriverName] = useState(issued?.driverName ?? '');
   const [driverPhone, setDriverPhone] = useState('');
@@ -161,10 +162,11 @@ export function CreateReceivingChallanScreen({ navigation, route }: Props) {
           exchangedFromItemId: null,
           exchangedToItemId: null,
           exchangedQuantity: 0,
-          notes: null,
+          notes: line.notes.trim() || null,
         }];
       });
       const created = await apiClient.post<ReceivingChallan>('/challans/receiving', {
+        refNo: refNo.trim() || null,
         agreementId,
         partyId,
         siteId,
@@ -212,12 +214,13 @@ export function CreateReceivingChallanScreen({ navigation, route }: Props) {
         <Selector label="Site *" value={selectedSite ? `${selectedSite.siteCode} | ${selectedSite.siteName}` : ''} disabled={!!issued || !partyId || loading} onPress={() => setPicker('site')} />
         <View style={styles.twoColumns}>
           <View style={styles.column}><DateField label="Receive date *" value={receiveDate} onChange={setReceiveDate} /></View>
-          <View style={styles.column}><Field label="Vehicle number" value={vehicleNumber} onChangeText={setVehicleNumber} autoCapitalize="characters" /></View>
+          <View style={styles.column}><Field label="Ref no" value={refNo} onChangeText={setRefNo} /></View>
         </View>
         <View style={styles.twoColumns}>
+          <View style={styles.column}><Field label="Vehicle number" value={vehicleNumber} onChangeText={setVehicleNumber} autoCapitalize="characters" /></View>
           <View style={styles.column}><Field label="Driver name" value={driverName} onChangeText={setDriverName} /></View>
-          <View style={styles.column}><Field label="Driver phone" value={driverPhone} onChangeText={setDriverPhone} keyboardType="phone-pad" /></View>
         </View>
+        <Field label="Driver phone" value={driverPhone} onChangeText={setDriverPhone} keyboardType="phone-pad" />
 
         <View style={styles.sectionRow}>
           <Text style={styles.section}>Material received</Text>
@@ -245,6 +248,16 @@ export function CreateReceivingChallanScreen({ navigation, route }: Props) {
                 <QuantityInput label="Damaged" value={line.damaged} onChange={(value) => updateValue(balance.itemId, 'damaged', value)} />
                 <QuantityInput label="Lost" value={line.lost} onChange={(value) => updateValue(balance.itemId, 'lost', value)} />
                 <QuantityInput label="Extra" value={line.extra} onChange={(value) => updateValue(balance.itemId, 'extra', value)} />
+              </View>
+              <View style={styles.itemNotesRow}>
+                <Text style={styles.itemNotesLabel}>Remarks</Text>
+                <TextInput
+                  style={styles.itemNotesInput}
+                  value={line.notes}
+                  onChangeText={(value) => updateValue(balance.itemId, 'notes', value)}
+                  placeholder="Optional notes"
+                  placeholderTextColor={colors.muted}
+                />
               </View>
               {normal > Number(balance.pendingQuantity) ? <Text style={styles.lineError}>Normal return exceeds site pending quantity.</Text> : null}
             </Card>
@@ -350,6 +363,9 @@ const styles = StyleSheet.create({
   quantityLabel: { color: colors.muted, fontSize: 11, fontFamily: fonts.semiBold },
   quantityInput: { height: 45, borderWidth: 1, borderColor: colors.line, borderRadius: 7, backgroundColor: '#fff', color: colors.ink, fontSize: 16, fontFamily: fonts.bold, textAlign: 'right', paddingHorizontal: 11 },
   lineError: { color: colors.red, fontSize: 11 },
+  itemNotesRow: { flexDirection: 'row', alignItems: 'center', marginTop: 1, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: 13 },
+  itemNotesLabel: { color: colors.muted, fontSize: 11, fontFamily: fonts.semiBold, width: 60 },
+  itemNotesInput: { flex: 1, height: 38, borderWidth: 1, borderColor: colors.line, borderRadius: 6, backgroundColor: '#fff', color: colors.ink, fontSize: 13, fontFamily: fonts.semiBold, paddingHorizontal: 10 },
   summary: { flexDirection: 'row', backgroundColor: colors.ink },
   summaryValue: { flex: 1, alignItems: 'center' },
   summaryLabel: { color: '#B8BDC4', fontSize: 10, fontFamily: fonts.semiBold },

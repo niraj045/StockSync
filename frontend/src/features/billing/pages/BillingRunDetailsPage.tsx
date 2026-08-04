@@ -3,8 +3,8 @@ import { Alert, App, Button, Card, Checkbox, Descriptions, Divider, Empty, Form,
 import { ArrowLeftOutlined, CalculatorOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router';
-import { apiClient } from '../../../../api/client';
-import { useAuth } from '../../../auth/context/AuthContext';
+import { apiClient } from '../../../api/client';
+import { useAuth } from '../../auth/context/AuthContext';
 import type { BillingRun } from '../types';
 
 const money = (v?: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(v ?? 0);
@@ -44,7 +44,7 @@ export function BillingRunDetailsPage() {
       setAdjustmentVal(selectedRun.manualAdjustmentTotal);
       setDiscountType(selectedRun.discountType);
       setDiscountValue(selectedRun.discountValue);
-      setSelectedCharges(selectedRun.charges.filter(c => c.selected).map(c => c.id));
+      setSelectedCharges(selectedRun.charges.filter((c: any) => c.selected).map((c: any) => c.id));
     }
   }, [selectedRun]);
 
@@ -245,9 +245,9 @@ export function BillingRunDetailsPage() {
                           width: 40,
                           render: (_, row) => (
                             <Checkbox
-                              checked={selectedCharges.includes(row.id)}
+                              checked={selectedCharges.includes(row.id as any)}
                               disabled={selectedRun.status !== 'DRAFT' && selectedRun.status !== 'CALCULATED'}
-                              onChange={(e) => handleChargeToggle(row.id, e.target.checked)}
+                              onChange={(e) => handleChargeToggle(row.id as any, e.target.checked)}
                             />
                           )
                         },

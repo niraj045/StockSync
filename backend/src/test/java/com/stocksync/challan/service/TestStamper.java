@@ -27,8 +27,8 @@ public class TestStamper {
             ),
             List.of("Term 1", "Term 2")
         );
-        byte[] pdf = stamper.stamp("pdf-templates/steelfab_delivery_challan_exact_editable.docx", fields);
-        try (FileOutputStream fos = new FileOutputStream("/home/ainosoft/NIraj-workspace/StockSync/client-data/Generated_Delivery_Challan.pdf")) {
+        byte[] pdf = stamper.stamp("pdf-templates/steelfab_challan_template.docx", fields);
+        try (FileOutputStream fos = new FileOutputStream("/home/ainosoft/.gemini/antigravity/brain/6d2e0ca8-b88c-4321-a38b-4ee13001cdfd/artifacts/test_challan.pdf")) {
             fos.write(pdf);
         }
         System.out.println("Generated Delivery Challan PDF successfully");

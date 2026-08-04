@@ -4,7 +4,7 @@ import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 import dayjs from 'dayjs';
-import { apiClient } from '../../../../api/client';
+import { apiClient } from '../../../api/client';
 import type { BillingRun } from '../types';
 
 type EligibleAgreement = {
@@ -104,7 +104,7 @@ export function CreateBillingRunPage() {
               showSearch
               optionFilterProp="label"
               onChange={(v) => setCreateAgreementId(v)}
-              options={(eligibleAgreementsQuery.data || []).map(ag => ({
+              options={(eligibleAgreementsQuery.data || []).map((ag: any) => ({
                 value: ag.id,
                 label: `${ag.agreementNumber} — ${ag.partyName} (${ag.siteName})`
               }))}

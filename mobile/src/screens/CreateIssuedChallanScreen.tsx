@@ -27,9 +27,12 @@ export function CreateIssuedChallanScreen({ navigation, route }: Props) {
   const [stock, setStock] = useState<StockBalance[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [quantities, setQuantities] = useState<Record<number, string>>({});
+  const [itemNotes, setItemNotes] = useState<Record<number, string>>({});
   const [dispatchDate, setDispatchDate] = useState(localDate());
+  const [refNo, setRefNo] = useState('');
   const [vehicleNumber, setVehicleNumber] = useState('');
   const [driverName, setDriverName] = useState('');
+  const [driverPhone, setDriverPhone] = useState('');
   const [notes, setNotes] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -107,14 +110,20 @@ export function CreateIssuedChallanScreen({ navigation, route }: Props) {
     setSubmitting(true);
     try {
       const response = await apiClient.post<IssuedChallan>('/challans/issued', {
+        refNo: refNo.trim() || null,
         siteOrderId: selectedId,
         dispatchDate,
         vehicleNumber: vehicleNumber.trim() || null,
         driverName: driverName.trim() || null,
+        driverPhone: driverPhone.trim() || null,
         notes: notes.trim() || null,
         items: dispatchItems
           .filter((item) => Number(quantities[item.itemId]) > 0)
-          .map((item) => ({ itemId: item.itemId, quantity: Number(quantities[item.itemId]) })),
+          .map((item) => ({ 
+            itemId: item.itemId, 
+            quantity: Number(quantities[item.itemId]),
+            notes: itemNotes[item.itemId]?.trim() || null,
+          })),
       });
       navigation.replace('IssuedChallanDetail', { challan: response.data });
     } catch (cause) {
@@ -141,10 +150,14 @@ export function CreateIssuedChallanScreen({ navigation, route }: Props) {
 
         <View style={styles.twoFields}>
           <View style={styles.half}><DateField label="Dispatch date" value={dispatchDate} onChange={setDispatchDate} /></View>
-          <View style={styles.half}><Field label="Vehicle number" value={vehicleNumber} onChangeText={setVehicleNumber} autoCapitalize="characters" /></View>
+          <View style={styles.half}><Field label="Ref no" value={refNo} onChangeText={setRefNo} /></View>
         </View>
-        <Field label="Driver name" value={driverName} onChangeText={setDriverName} />
-        <Field label="Notes" value={notes} onChangeText={setNotes} multiline />
+        <View style={styles.twoFields}>
+          <View style={styles.half}><Field label="Vehicle number" value={vehicleNumber} onChangeText={setVehicleNumber} autoCapitalize="characters" /></View>
+          <View style={styles.half}><Field label="Driver name" value={driverName} onChangeText={setDriverName} /></View>
+        </View>
+        <Field label="Driver phone" value={driverPhone} onChangeText={setDriverPhone} keyboardType="phone-pad" />
+        <Field label="Challan notes" value={notes} onChangeText={setNotes} multiline />
 
         <Text style={styles.heading}>Dispatch items</Text>
         {!selected ? (
@@ -169,6 +182,16 @@ export function CreateIssuedChallanScreen({ navigation, route }: Props) {
                   value={quantities[item.itemId] ?? '0'}
                 />
                 <Text style={styles.unit}>{item.unit}</Text>
+              </View>
+              <View style={styles.itemNotesRow}>
+                <Text style={styles.itemNotesLabel}>Remarks</Text>
+                <TextInput
+                  style={styles.itemNotesInput}
+                  value={itemNotes[item.itemId] ?? ''}
+                  onChangeText={(value) => setItemNotes((current) => ({ ...current, [item.itemId]: value }))}
+                  placeholder="Optional notes"
+                  placeholderTextColor={colors.muted}
+                />
               </View>
             </Card>
           );
@@ -227,6 +250,9 @@ const styles = StyleSheet.create({
   quantityLabel: { color: colors.ink, fontWeight: '700', flex: 1 },
   quantityInput: { width: 90, height: 44, borderWidth: 1, borderColor: colors.primary, borderRadius: 7, backgroundColor: '#fff', color: colors.ink, fontSize: 17, fontWeight: '800', textAlign: 'right', paddingHorizontal: 10 },
   unit: { color: colors.muted, fontSize: 11, width: 48, marginLeft: 7 },
+  itemNotesRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12 },
+  itemNotesLabel: { color: colors.muted, fontSize: 12, fontWeight: '600', width: 60 },
+  itemNotesInput: { flex: 1, height: 38, borderWidth: 1, borderColor: colors.line, borderRadius: 6, backgroundColor: '#fff', color: colors.ink, fontSize: 13, paddingHorizontal: 10 },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(4, 25, 23, 0.45)', justifyContent: 'flex-end' },
   sheet: { maxHeight: '78%', backgroundColor: colors.surface, borderTopLeftRadius: 12, borderTopRightRadius: 12, paddingBottom: 20 },
   sheetHeader: { minHeight: 64, paddingHorizontal: 18, borderBottomWidth: 1, borderBottomColor: colors.line, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

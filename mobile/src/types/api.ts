@@ -266,11 +266,13 @@ export type IssuedChallanItem = {
   itemName: string;
   unit: string;
   quantity: number;
+  notes?: string;
 };
 
 export type IssuedChallan = {
   id: number;
   challanNumber: string;
+  refNo?: string;
   siteOrderId: number;
   siteOrderNumber: string;
   siteId: number;
@@ -280,6 +282,7 @@ export type IssuedChallan = {
   dispatchDate: string;
   vehicleNumber?: string;
   driverName?: string;
+  driverPhone?: string;
   notes?: string;
   createdBy: string;
   createdAt: string;
@@ -289,6 +292,7 @@ export type IssuedChallan = {
 export type ReceivingChallan = {
   id: number;
   receivingChallanNumber: string;
+  refNo?: string;
   agreementId?: number;
   agreementNumber?: string;
   partyId: number;
@@ -315,6 +319,7 @@ export type ReceivingChallan = {
     lostQuantity: number;
     extraReturnedQuantity: number;
     pendingQuantitySnapshot: number;
+    notes?: string;
   }[];
 };
 

@@ -4,7 +4,7 @@ import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router';
-import { apiClient } from '../../../../api/client';
+import { apiClient } from '../../../api/client';
 import { paymentsApi, type AllocationInput, type PaymentInput } from '../../payment/api';
 import type { EligibleInvoice } from '../../payment/types';
 
@@ -123,7 +123,7 @@ export function CreatePaymentPage() {
               <Select
                 showSearch
                 optionFilterProp="label"
-                options={(parties.data ?? []).map((party) => ({ value: party.id, label: party.legalName }))}
+                options={(parties.data ?? []).map((party: any) => ({ value: party.id, label: party.legalName }))}
                 onChange={setPartyId}
                 placeholder="Select Party"
               />
