@@ -24,7 +24,9 @@ import { GstExportScreen } from '../screens/GstExportScreen';
 import { ExcelReportsScreen } from '../screens/ExcelReportsScreen';
 import { BillingScreen } from '../screens/BillingScreen';
 import { InquiriesScreen } from '../screens/InquiriesScreen';
-
+import { CreateInquiryScreen } from '../screens/CreateInquiryScreen';
+import { SiteOperationsScreen } from '../screens/SiteOperationsScreen';
+import { CreateSiteOperationScreen } from '../screens/CreateSiteOperationScreen';
 import { colors, fonts } from '../theme';
 import type { MainTabParams, RootStackParams } from './types';
 
@@ -116,7 +118,9 @@ export function AppNavigator() {
             <Stack.Screen name="IssuedChallanDetail" component={IssuedChallanDetailScreen} options={{ title: 'Issued challan' }} />
             <Stack.Screen name="ReceivingChallanDetail" component={ReceivingChallanDetailScreen} options={{ title: 'Receiving challan' }} />
             <Stack.Screen name="Inquiries" component={InquiriesScreen} options={{ title: 'Inquiries' }} />
-
+            <Stack.Screen name="CreateInquiry" component={CreateInquiryScreen} options={{ title: 'Inquiry details' }} />
+            <Stack.Screen name="SiteOperations" component={SiteOperationsScreen} options={{ title: 'Site operations' }} />
+            <Stack.Screen name="CreateSiteOperation" component={CreateSiteOperationScreen} options={{ title: 'Operation details' }} />
           </>
         ) : (
           <>
