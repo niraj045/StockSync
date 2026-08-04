@@ -48,7 +48,7 @@ final class SteelFabChallanTemplateStamper {
             setCellLabeledText(t2.getRow(0).getCell(0), "Ref No.: ", refNo, 9, ParagraphAlignment.LEFT);
 
             String dateStr = date(fields.date());
-            setCellLabeledText(t2.getRow(0).getCell(1), "Date: ", dateStr, 9, ParagraphAlignment.LEFT);
+            setCellLabeledText(t2.getRow(0).getCell(1), "Date: ", dateStr, 9, ParagraphAlignment.RIGHT);
 
             String clientBlock = (fields.clientName() != null ? fields.clientName() : "") + "\n" +
                     (fields.clientAddress() != null ? fields.clientAddress() : "");
