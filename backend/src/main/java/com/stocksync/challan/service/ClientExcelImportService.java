@@ -15,7 +15,7 @@ import com.stocksync.site.entity.SiteStatus;
 import com.stocksync.site.repository.SiteRepository;
 import com.stocksync.agreement.entity.Agreement;
 import com.stocksync.agreement.entity.AgreementStatus;
-import com.stocksync.agreement.entity.RentalType;
+import com.stocksync.quotation.entity.RentalType;
 import com.stocksync.agreement.entity.BillingCycle;
 import com.stocksync.agreement.entity.MeasurementBasis;
 import com.stocksync.agreement.entity.BillingCommencementRule;
