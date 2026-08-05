@@ -10,8 +10,8 @@ import { apiClient } from '../../../api/client';
 interface SiteOrderOption {
   id: number;
   orderNumber: string;
-  party: { legalName: string };
-  site: { siteName: string };
+  partyName: string;
+  siteName: string;
 }
 
 interface PageResponse<T> {
@@ -77,7 +77,7 @@ export function ClientExcelImportPage() {
               loading={siteOrders.isLoading}
               options={(siteOrders.data ?? []).map((order) => ({ 
                 value: order.id, 
-                label: `${order.orderNumber} · ${order.party.legalName} / ${order.site.siteName}` 
+                label: `${order.orderNumber} · ${order.partyName} / ${order.siteName}` 
               }))} 
             />
           </Form.Item>
