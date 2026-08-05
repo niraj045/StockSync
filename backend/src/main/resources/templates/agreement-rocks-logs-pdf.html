@@ -41,7 +41,7 @@ p{margin:7px 0}.right{text-align:right}.center{text-align:center}.bold{font-weig
  agreement for the hire of scaffolding materials for your project. The commercial details and the
  conditions governing the hire are recorded below.</p>
 
-<div class="section">PART A: HIRE CHARGES &amp; COSTS</div>
+<div class="section" th:text="${fmt.hasText(a.partATitle) ? a.partATitle : 'PART A: HIRE CHARGES &amp; COSTS'}">PART A: HIRE CHARGES &amp; COSTS</div>
 <ul class="intro-list">
  <li>The charges mentioned below are for material hire only.</li>
  <li>Billing will follow the agreed billing cycle and minimum billing period recorded in this agreement.</li>
@@ -101,7 +101,7 @@ by the client's authorised representative.</p>
 
 <div class="page-break"></div>
 <div th:if="${fmt.hasText(a.terms)}">
- <div class="section">PART B: TERMS AND CONDITIONS</div><div class="pre" th:text="${a.terms}">Terms</div>
+ <div class="section" th:text="${fmt.hasText(a.partBTitle) ? a.partBTitle : 'PART B: TERMS AND CONDITIONS'}">PART B: TERMS AND CONDITIONS</div><div class="pre" th:text="${a.terms}">Terms</div>
 </div>
 <div th:if="${fmt.hasText(a.notes)}" class="avoid">
  <div class="section">NOTES</div><div class="pre" th:text="${a.notes}">Notes</div>

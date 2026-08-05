@@ -68,13 +68,14 @@ public class QuotationTemplateService {
         t.setTemplateCode(r.templateCode().trim().toUpperCase(Locale.ROOT));t.setName(r.name().trim());
         t.setDescription(trim(r.description()));t.setCompanyName(trim(r.companyName()));t.setCompanyAddress(trim(r.companyAddress()));
         t.setCompanyGstin(trim(r.companyGstin()));t.setHeaderText(trim(r.headerText()));t.setFooterText(trim(r.footerText()));
+        t.setDefaultPartATitle(trim(r.defaultPartATitle()));t.setDefaultPartBTitle(trim(r.defaultPartBTitle()));
         t.setDefaultTerms(trim(r.defaultTerms()));t.setDefaultNotes(trim(r.defaultNotes()));
         t.setLogoAttachment(r.logoAttachmentId()==null?null:attachments.findById(r.logoAttachmentId())
                 .orElseThrow(()->new BusinessRuleException("ATTACHMENT_NOT_FOUND","Logo attachment not found")));
     }
     private QuotationTemplate required(Long id){return templates.findById(id).orElseThrow(()->new BusinessRuleException("QUOTATION_TEMPLATE_NOT_FOUND","Quotation template not found"));}
     private QuotationTemplateResponse response(QuotationTemplate t){return new QuotationTemplateResponse(t.getId(),t.getTemplateCode(),t.getName(),t.getDescription(),
-        t.getCompanyName(),t.getCompanyAddress(),t.getCompanyGstin(),t.getHeaderText(),t.getFooterText(),t.getDefaultTerms(),t.getDefaultNotes(),
+        t.getCompanyName(),t.getCompanyAddress(),t.getCompanyGstin(),t.getHeaderText(),t.getFooterText(),t.getDefaultPartATitle(),t.getDefaultPartBTitle(),t.getDefaultTerms(),t.getDefaultNotes(),
         t.getLogoAttachment()==null?null:t.getLogoAttachment().getId(),t.isActive(),t.getVersion(),t.getCreatedAt(),t.getCreatedBy(),t.getUpdatedAt(),t.getUpdatedBy());}
     private void duplicate(){throw new BusinessRuleException("DUPLICATE_TEMPLATE_CODE","Template code already exists");}
     private String trim(String v){return v==null||v.isBlank()?null:v.trim();}

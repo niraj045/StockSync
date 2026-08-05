@@ -25,6 +25,8 @@ public class AgreementTemplate extends AuditedEntity {
     @Column(name="content_type",length=100) private String contentType;
     @Column(name="file_size",nullable=false) private long fileSize;
     @Column(name="storage_path",nullable=false,length=500) private String storagePath;
+    @Column(name="default_part_a_title",length=255) private String defaultPartATitle;
+    @Column(name="default_part_b_title",length=255) private String defaultPartBTitle;
     @Column(nullable=false) private boolean active=true;
     public Long getId(){return id;} public String getTemplateCode(){return templateCode;} public void setTemplateCode(String v){templateCode=v;}
     public String getName(){return name;} public void setName(String v){name=v;} public String getDescription(){return description;}
@@ -33,6 +35,8 @@ public class AgreementTemplate extends AuditedEntity {
     public void setStoredFilename(String v){storedFilename=v;} public String getContentType(){return contentType;}
     public void setContentType(String v){contentType=v;} public long getFileSize(){return fileSize;} public void setFileSize(long v){fileSize=v;}
     public String getStoragePath(){return storagePath;} public void setStoragePath(String v){storagePath=v;}
+    public String getDefaultPartATitle(){return defaultPartATitle;} public void setDefaultPartATitle(String v){defaultPartATitle=v;}
+    public String getDefaultPartBTitle(){return defaultPartBTitle;} public void setDefaultPartBTitle(String v){defaultPartBTitle=v;}
     public boolean isActive(){return active;} public void setActive(boolean v){active=v;}
     public AgreementTemplateRenderingMode getRenderingMode(){return renderingMode;} public void setRenderingMode(AgreementTemplateRenderingMode v){renderingMode=v;}
     public String getLayoutKey(){return layoutKey;} public void setLayoutKey(String v){layoutKey=v;}

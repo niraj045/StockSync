@@ -11,6 +11,8 @@ public record QuotationTemplateRequest(
         @Pattern(regexp="^$|^[0-9A-Z]{15}$", message="must be a valid 15-character GSTIN") String companyGstin,
         @Size(max=2000) String headerText,
         @Size(max=2000) String footerText,
+        @Size(max=255) String defaultPartATitle,
+        @Size(max=255) String defaultPartBTitle,
         @Size(max=4000) String defaultTerms,
         @Size(max=2000) String defaultNotes,
         Long logoAttachmentId,

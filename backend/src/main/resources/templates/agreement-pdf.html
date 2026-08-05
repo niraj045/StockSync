@@ -54,7 +54,7 @@ th{text-align:center;font-weight:700}
   </tr>
 </table>
 
-<div class="section-title">PART A: HIRE CHARGES &amp; COSTS</div>
+<div class="section-title" th:text="${fmt.hasText(a.partATitle) ? a.partATitle : 'PART A: HIRE CHARGES &amp; COSTS'}">PART A: HIRE CHARGES &amp; COSTS</div>
 <table>
   <thead>
   <tr>
@@ -99,7 +99,7 @@ th{text-align:center;font-weight:700}
 <p><span class="bold">Amount in Words:</span> <span th:text="${fmt.amountInWords(a.grandTotal)}">Rupees Zero Only</span></p>
 <p><span class="bold">Security Deposit:</span> Rs. <span th:text="${fmt.amount(a.securityDeposit)}">0</span></p>
 
-<div class="section-title" th:if="${fmt.hasText(a.terms)}">PART B: TERMS AND CONDITIONS</div>
+<div class="section-title" th:if="${fmt.hasText(a.terms)}" th:text="${fmt.hasText(a.partBTitle) ? a.partBTitle : 'PART B: TERMS AND CONDITIONS'}">PART B: TERMS AND CONDITIONS</div>
 <div class="pre" th:if="${fmt.hasText(a.terms)}" th:text="${a.terms}">Terms and conditions</div>
 
 <div class="section-title" th:if="${fmt.hasText(a.notes)}">Notes</div>

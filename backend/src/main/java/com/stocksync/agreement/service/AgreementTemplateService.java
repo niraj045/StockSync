@@ -176,6 +176,8 @@ public class AgreementTemplateService {
                 t.getOriginalFilename(),
                 t.getContentType(),
                 t.getFileSize(),
+                t.getDefaultPartATitle(),
+                t.getDefaultPartBTitle(),
                 t.isActive(),
                 t.getVersion(),
                 t.getCreatedAt()

@@ -46,7 +46,7 @@ th{text-align:center;font-weight:700}
 <div class="pre" th:if="${fmt.hasText(q.headerText)}" th:text="${q.headerText}">With reference to your requirement, we are pleased to submit our quotation for the supply of scaffolding materials on hire.</div>
 <p th:unless="${fmt.hasText(q.headerText)}">With reference to your requirement, we are pleased to submit our quotation for the supply of scaffolding materials on hire.</p>
 
-<div class="section-title">PART A: HIRE CHARGES &amp; COSTS</div>
+<div class="section-title" th:text="${fmt.hasText(q.partATitle) ? q.partATitle : 'PART A: HIRE CHARGES &amp; COSTS'}">PART A: HIRE CHARGES &amp; COSTS</div>
 <ol class="costs">
   <li>Hire charges are calculated as per the quantities and rates mentioned below.</li>
   <li>Rates are exclusive of to and fro transportation, Mathadi union payments, taxes and any local statutory payments unless specifically mentioned.</li>
@@ -97,7 +97,7 @@ th{text-align:center;font-weight:700}
 <p><span class="bold">Amount in Words:</span> <span th:text="${fmt.amountInWords(q.grandTotal)}">Rupees Zero Only</span></p>
 <p><span class="bold">Security Deposit:</span> Rs. <span th:text="${fmt.amount(q.securityDeposit)}">0</span></p>
 
-<div class="section-title" th:if="${fmt.hasText(q.terms)}">PART B: TERMS AND CONDITIONS</div>
+<div class="section-title" th:if="${fmt.hasText(q.terms)}" th:text="${fmt.hasText(q.partBTitle) ? q.partBTitle : 'PART B: TERMS AND CONDITIONS'}">PART B: TERMS AND CONDITIONS</div>
 <div class="pre" th:if="${fmt.hasText(q.terms)}" th:text="${q.terms}">Terms and conditions</div>
 
 <div class="section-title" th:if="${fmt.hasText(q.notes)}">Notes</div>

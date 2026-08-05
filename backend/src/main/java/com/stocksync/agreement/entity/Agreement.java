@@ -62,6 +62,8 @@ public class Agreement extends AuditedEntity {
  @Column(name="round_off",precision=19,scale=2,nullable=false) private BigDecimal roundOff=BigDecimal.ZERO;
  @Column(name="grand_total",precision=19,scale=2,nullable=false) private BigDecimal grandTotal=BigDecimal.ZERO;
  @Column(name="header_text",length=2000) private String headerText;
+ @Column(name="part_a_title",length=255) private String partATitle;
+ @Column(name="part_b_title",length=255) private String partBTitle;
  @Column(length=4000) private String terms; @Column(length=1000) private String notes;
  @OneToOne(fetch=FetchType.LAZY) @JoinColumn(name="generated_document_attachment_id") private FileAttachment generatedDocument;
  @Column(name="generated_filename") private String generatedFilename; @Column(name="generated_storage_path") private String generatedStoragePath;
@@ -106,6 +108,8 @@ public class Agreement extends AuditedEntity {
  public BigDecimal getIgstAmount(){return igstAmount;} public void setIgstAmount(BigDecimal v){igstAmount=v;} public BigDecimal getTotalTax(){return totalTax;} public void setTotalTax(BigDecimal v){totalTax=v;}
  public BigDecimal getTransportCharge(){return transportCharge;} public void setTransportCharge(BigDecimal v){transportCharge=v;} public BigDecimal getLoadingCharge(){return loadingCharge;} public void setLoadingCharge(BigDecimal v){loadingCharge=v;}
  public String getHeaderText(){return headerText;} public void setHeaderText(String v){headerText=v;}
+ public String getPartATitle(){return partATitle;} public void setPartATitle(String v){partATitle=v;}
+ public String getPartBTitle(){return partBTitle;} public void setPartBTitle(String v){partBTitle=v;}
  public BigDecimal getUnloadingCharge(){return unloadingCharge;} public void setUnloadingCharge(BigDecimal v){unloadingCharge=v;} public BigDecimal getOtherCharge(){return otherCharge;} public void setOtherCharge(BigDecimal v){otherCharge=v;}
  public BigDecimal getRoundOff(){return roundOff;} public void setRoundOff(BigDecimal v){roundOff=v;} public BigDecimal getGrandTotal(){return grandTotal;} public void setGrandTotal(BigDecimal v){grandTotal=v;}
  public String getTerms(){return terms;} public void setTerms(String v){terms=v;} public String getNotes(){return notes;} public void setNotes(String v){notes=v;}

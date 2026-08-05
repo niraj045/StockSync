@@ -45,6 +45,6 @@ public class TermsTemplateService {
         // Both Quotation and Agreement currently share the same default terms,
         // but this service encapsulates that logic and allows future divergence.
         String header = "AGREEMENT".equalsIgnoreCase(documentType) ? DEFAULT_AGREEMENT_HEADER : DEFAULT_HEADER;
-        return new DefaultTermsResponse(documentType, header, DEFAULT_TERMS, 1);
+        return new DefaultTermsResponse(documentType, header, "PART A: HIRE CHARGES & COSTS", "PART B: TERMS AND CONDITIONS", DEFAULT_TERMS, 1);
     }
 }
