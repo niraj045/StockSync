@@ -118,6 +118,7 @@ public class ClientExcelImportService {
                 throw new BusinessRuleException("SITE_ORDER_NOT_FOUND", "Could not automatically determine the Site Order from the Excel file contents, and no Site Order was explicitly selected. Ensure the site name is present above the header row, or select a Target Site Order manually.");
             }
             
+            final SiteOrder finalOrder = order;
             Row headerRow = sheet.getRow(headerRowIndex);
             
             // Map columns to Items
@@ -185,7 +186,7 @@ public class ClientExcelImportService {
                 
                 IssuedChallan c = new IssuedChallan();
                 c.setChallanNumber(challanNo);
-                c.setSiteOrder(order);
+                c.setSiteOrder(finalOrder);
                 c.setDispatchDate(dispatchDate);
                 c.setNotes("Historical Import");
                 c.setCreatedBy(actor);
@@ -217,9 +218,9 @@ public class ClientExcelImportService {
                         balance.setIssuedQuantity(balance.getIssuedQuantity().add(qty));
                         balances.save(balance);
 
-                        SiteStockBalance siteBalance = siteBalances.findForUpdate(order.getSite().getId(), item.getId()).orElseGet(() -> {
-                            jdbc.update("INSERT IGNORE INTO site_stock_balances(site_id, item_id) VALUES(?, ?)", order.getSite().getId(), item.getId());
-                            return siteBalances.findForUpdate(order.getSite().getId(), item.getId()).orElseThrow();
+                        SiteStockBalance siteBalance = siteBalances.findForUpdate(finalOrder.getSite().getId(), item.getId()).orElseGet(() -> {
+                            jdbc.update("INSERT IGNORE INTO site_stock_balances(site_id, item_id) VALUES(?, ?)", finalOrder.getSite().getId(), item.getId());
+                            return siteBalances.findForUpdate(finalOrder.getSite().getId(), item.getId()).orElseThrow();
                         });
                         siteBalance.setPendingQuantity(siteBalance.getPendingQuantity().add(qty));
                         siteBalances.save(siteBalance);
@@ -249,8 +250,8 @@ public class ClientExcelImportService {
                         txIn.setStockBucket("PENDING_SITE");
                         txIn.setSourceType("ISSUED_CHALLAN");
                         txIn.setSourceId(0L); 
-                        txIn.setSite(order.getSite());
-                        txIn.setParty(order.getParty());
+                        txIn.setSite(finalOrder.getSite());
+                        txIn.setParty(finalOrder.getParty());
                         txIn.setCreatedBy(actor);
                         transactions.save(txIn);
                         
