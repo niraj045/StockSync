@@ -32,6 +32,7 @@ export function SiteOrdersPage() {
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<string>();
+  const [siteId, setSiteId] = useState<number>();
   const [selected, setSelected] = useState<SiteOrder>();
   const [editing, setEditing] = useState<SiteOrder | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -41,11 +42,11 @@ export function SiteOrdersPage() {
 
   // Queries
   const orders = useQuery({
-    queryKey: ['orders', search, status],
+    queryKey: ['orders', search, status, siteId],
     queryFn: async () =>
       (
         await apiClient.get<Page<SiteOrder>>('/orders', {
-          params: { search, status, size: 50, sort: 'id,desc' },
+          params: { search, status, siteId, size: 50, sort: 'id,desc' },
         })
       ).data,
   });
@@ -58,6 +59,12 @@ export function SiteOrdersPage() {
           params: { status: 'ACTIVE', size: 100 },
         })
       ).data.content,
+  });
+
+  const sites = useQuery({
+    queryKey: ['sites-options'],
+    queryFn: async () =>
+      (await apiClient.get<{ content: any[] }>('/sites', { params: { size: 300 } })).data.content,
   });
 
   // Find selected agreement to display details & filter items
@@ -232,7 +239,7 @@ export function SiteOrdersPage() {
           </p>
         </div>
         <Space wrap>
-          <ReportExcelButton reportType="SITE_ORDERS_REGISTER" filters={{ status, documentNumber: search || undefined }} />
+          <ReportExcelButton reportType="SITE_ORDERS_REGISTER" filters={{ status, siteId, documentNumber: search || undefined }} />
           {canWrite && (
           <Button
             type="primary"
@@ -271,6 +278,16 @@ export function SiteOrdersPage() {
               label: s.replaceAll('_', ' '),
             }))}
             style={{ width: 180 }}
+          />
+          <Select
+            placeholder="All sites"
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            value={siteId}
+            onChange={setSiteId}
+            options={sites.data?.map((s) => ({ value: s.id, label: s.siteName }))}
+            style={{ width: 220 }}
           />
         </Space>
 
