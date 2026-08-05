@@ -155,7 +155,7 @@ public class ReportQueryService {
                     UNION
                     SELECT rc.site_id, rci.item_id FROM receiving_challan_items rci JOIN receiving_challans rc ON rc.id = rci.receiving_challan_id
                     UNION
-                    SELECT so.site_id, soi.item_id FROM site_order_items soi JOIN site_orders so ON so.id = soi.site_order_id
+                    SELECT so.site_id, soi.item_id FROM site_order_items soi JOIN site_orders so ON so.id = soi.order_id
                     UNION
                     SELECT a.site_id, ai.item_id FROM agreement_items ai JOIN agreements a ON a.id = ai.agreement_id WHERE a.status <> 'CANCELLED'
                 )
