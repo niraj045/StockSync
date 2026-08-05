@@ -187,7 +187,7 @@ export function AgreementFlowScreen({ navigation, route }: Props) {
           <DateField label="Effective date *" value={effectiveDate} onChange={setEffectiveDate} />
           <DateField label="Expiry date" value={expiryDate} onChange={setExpiryDate} optional minimumDate={new Date(`${effectiveDate}T12:00:00`)} />
           <Field label="Security deposit (INR)" value={securityDeposit} onChangeText={setSecurityDeposit} keyboardType="decimal-pad" />
-          <Field label={<View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}><Text style={styles.label}>Terms</Text><Pressable onPress={applyStandardTerms}><Text style={{color: colors.primary, fontWeight: '700', fontSize: 12}}>Use Standard Terms</Text></Pressable></View>} value={terms} onChangeText={setTerms} multiline />
+          <Field label={<View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8}}><Text style={styles.label}>Terms</Text><Pressable onPress={applyStandardTerms}><Text style={{color: colors.primary, fontWeight: '700', fontSize: 12}}>Use Standard Terms</Text></Pressable></View>} value={terms} onChangeText={setTerms} multiline />
           <Text style={styles.fieldHelp}>Use the standard terms, edit them manually, or leave the field blank to generate the document without terms.</Text>
           <Field label="Agreement notes" value={notes} onChangeText={setNotes} multiline />
           <AppButton title="Create draft agreement" onPress={convert} loading={working === 'convert'} disabled={!!error} />

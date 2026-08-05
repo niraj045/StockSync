@@ -75,7 +75,7 @@ export function Field({
 }: TextInputProps & { label: string | ReactNode; error?: string; keyboardType?: KeyboardTypeOptions }) {
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
+      {typeof label === 'string' ? <Text style={styles.label}>{label}</Text> : label}
       <TextInput
         {...props}
         keyboardType={keyboardType}
