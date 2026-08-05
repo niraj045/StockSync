@@ -11,7 +11,7 @@ export type RootStackParams = {
   CreateParty: undefined;
   CreateSite: { partyId?: number } | undefined;
   CreateQuotation: { partyId?: number; siteId?: number } | undefined;
-  AgreementFlow: { quotationId?: number; agreementId?: number };
+  AgreementFlow: { quotationId?: number; agreementId?: number; mode?: 'edit' | 'view' };
   CreateOrder: { agreementId?: number } | undefined;
   CreateIssuedChallan: { orderId?: number } | undefined;
   CreateReceivingChallan: { issuedChallan?: IssuedChallan } | undefined;

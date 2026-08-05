@@ -11,6 +11,7 @@ import {
   ShopOutlined,
   SwapOutlined,
   TeamOutlined,
+  CloudUploadOutlined,
 } from '@ant-design/icons';
 import type { ItemType } from 'antd/es/menu/interface';
 import type { ReactNode } from 'react';
@@ -40,6 +41,7 @@ export const navigationSections: NavigationSection[] = [
       { key: '/client-workflow', label: 'Inquiries & Site Costs' },
       { key: '/challans/issued', label: 'Issued Challans' },
       { key: '/challans/receiving', label: 'Receiving Challans' },
+      { key: '/challans/import-client-excel', label: 'Historical D&R Import' },
       { key: '/site-transfers', label: 'Site Transfers' },
       { key: '/stock-losses', label: 'Stock Losses' },
       { key: '/stock-damages', label: 'Stock Damages' },
@@ -114,6 +116,7 @@ const routeIcons: Record<string, ReactNode> = {
   '/reports': <BarChartOutlined />,
   '/challans/issued': <FileTextOutlined />,
   '/challans/receiving': <FileTextOutlined />,
+  '/challans/import-client-excel': <CloudUploadOutlined />,
   '/site-transfers': <SwapOutlined />,
   '/inventory': <AppstoreOutlined />,
   '/items': <AppstoreOutlined />,

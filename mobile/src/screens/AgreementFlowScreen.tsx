@@ -29,11 +29,25 @@ export function AgreementFlowScreen({ navigation, route }: Props) {
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState('');
   const [error, setError] = useState('');
+  const [isEditing, setIsEditing] = useState(route.params.mode === 'edit');
 
   useEffect(() => {
     if (route.params.agreementId) {
       apiClient.get<Agreement>(`/agreements/${route.params.agreementId}`)
-        .then((response) => setAgreement(response.data))
+        .then((response) => {
+          setAgreement(response.data);
+          if (route.params.mode === 'edit') {
+            setEffectiveDate(response.data.effectiveDate ?? localDate());
+            setExpiryDate(response.data.expiryDate ?? '');
+            setSecurityDeposit(String(response.data.securityDeposit ?? 0));
+            setHeaderText(response.data.headerText ?? '');
+            setPartATitle(response.data.partATitle ?? '');
+            setPartAText(response.data.partAText ?? '');
+            setPartBTitle(response.data.partBTitle ?? '');
+            setTerms(response.data.terms ?? '');
+            setNotes(response.data.notes ?? '');
+          }
+        })
         .catch((cause) => setError(apiErrorMessage(cause, 'Unable to load this agreement.')))
         .finally(() => setLoading(false));
     } else if (route.params.quotationId) {
@@ -93,6 +107,44 @@ export function AgreementFlowScreen({ navigation, route }: Props) {
       setAgreement(response.data);
     } catch (cause) {
       Alert.alert('Agreement not created', apiErrorMessage(cause, 'Unable to convert this quotation.'));
+    } finally {
+      setWorking('');
+    }
+  };
+
+  const save = async () => {
+    if (!agreement?.id) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(effectiveDate) || (expiryDate && !/^\d{4}-\d{2}-\d{2}$/.test(expiryDate))) {
+      Alert.alert('Check agreement dates', 'Use YYYY-MM-DD format.');
+      return;
+    }
+    setWorking('save');
+    try {
+      const response = await apiClient.put<Agreement>(`/agreements/${agreement.id}`, {
+        version: agreement.version,
+        agreementDate: agreement.agreementDate,
+        billingCycle: agreement.billingCycle,
+        measurementBasis: agreement.measurementBasis ?? 'ITEM_QUANTITY',
+        billingCommencementRule: agreement.billingCommencementRule ?? 'FIRST_DISPATCH',
+        fixedBillingStartDate: agreement.fixedBillingStartDate,
+        customBillingCycleDays: agreement.customBillingCycleDays,
+        gracePeriodDays: agreement.gracePeriodDays,
+        minimumBillingDays: agreement.minimumBillingDays,
+        items: agreement.items,
+        effectiveDate,
+        expiryDate: expiryDate || null,
+        securityDeposit: Number(securityDeposit) || 0,
+        headerText: headerText.trim() || null,
+        partATitle: partATitle.trim() || null,
+        partAText: partAText.trim() || null,
+        partBTitle: partBTitle.trim() || null,
+        notes: notes.trim() || null,
+        terms: terms.trim() || null,
+      });
+      setAgreement(response.data);
+      setIsEditing(false);
+    } catch (cause) {
+      Alert.alert('Agreement not saved', apiErrorMessage(cause, 'Unable to update this agreement.'));
     } finally {
       setWorking('');
     }
@@ -189,13 +241,13 @@ export function AgreementFlowScreen({ navigation, route }: Props) {
 
   if (loading) return <LoadingBlock />;
 
-  if (!agreement) {
+  if (!agreement || isEditing) {
     return (
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.root}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'} automaticallyAdjustKeyboardInsets>
           {error ? <Text style={styles.error}>{error}</Text> : null}
-          <Text style={styles.title}>Convert approved quotation</Text>
-          <Text style={styles.intro}>Set the contract period and deposit. Commercial lines and terms are copied from the approved quotation.</Text>
+          <Text style={styles.title}>{isEditing ? 'Edit agreement terms' : 'Convert approved quotation'}</Text>
+          <Text style={styles.intro}>{isEditing ? 'Update the contract period, deposit, and terms.' : 'Set the contract period and deposit. Commercial lines and terms are copied from the approved quotation.'}</Text>
           <DateField label="Effective date *" value={effectiveDate} onChange={setEffectiveDate} />
           <DateField label="Expiry date" value={expiryDate} onChange={setExpiryDate} optional minimumDate={new Date(`${effectiveDate}T12:00:00`)} />
           <Field label="Security deposit (INR)" value={securityDeposit} onChangeText={setSecurityDeposit} keyboardType="decimal-pad" />
@@ -212,7 +264,11 @@ export function AgreementFlowScreen({ navigation, route }: Props) {
           <Field label="Terms" value={terms} onChangeText={setTerms} multiline />
           <Text style={styles.fieldHelp}>Use the standard terms, edit them manually, or leave the field blank to generate the document without terms.</Text>
           <Field label="Agreement notes" value={notes} onChangeText={setNotes} multiline />
-          <AppButton title="Create draft agreement" onPress={convert} loading={working === 'convert'} disabled={!!error} />
+          {isEditing ? (
+            <AppButton title="Save agreement" onPress={save} loading={working === 'save'} disabled={!!error} />
+          ) : (
+            <AppButton title="Create draft agreement" onPress={convert} loading={working === 'convert'} disabled={!!error} />
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     );

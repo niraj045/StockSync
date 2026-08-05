@@ -202,6 +202,7 @@ export function SalesScreen({ navigation }: Props) {
             <Text style={styles.name}>{agreement.partyName}</Text>
             <Text style={styles.meta}>{agreement.siteName} | effective {dateLabel(agreement.effectiveDate)}</Text>
             <AppButton title={agreement.status === 'ACTIVE' ? 'Open agreement' : 'Continue setup'} variant="secondary" onPress={() => navigation.navigate('AgreementFlow', { agreementId: agreement.id })} />
+            {canWrite ? <AppButton title="Edit agreement" variant="secondary" onPress={() => navigation.navigate('AgreementFlow', { agreementId: agreement.id, mode: 'edit' })} /> : null}
             {canWrite && agreement.status === 'ACTIVE' ? <AppButton title="Create site order" onPress={() => navigation.navigate('CreateOrder', { agreementId: agreement.id })} /> : null}
           </Card>
         )) : !loading ? <Card><EmptyBlock title="No agreements" message="Approve a quotation and convert it into an agreement." /></Card> : null

@@ -38,6 +38,7 @@ const StockDamagesPage = lazy(() => import('../../features/exception/pages/Stock
 const ItemExchangesPage = lazy(() => import('../../features/exception/pages/ItemExchangesPage').then((module) => ({ default: module.ItemExchangesPage })));
 const SiteTransfersPage = lazy(() => import('../../features/exception/pages/SiteTransfersPage').then((module) => ({ default: module.SiteTransfersPage })));
 const ClientWorkflowPage = lazy(() => import('../../features/workflow/pages/ClientWorkflowPage').then((module) => ({ default: module.ClientWorkflowPage })));
+const ClientExcelImportPage = lazy(() => import('../../features/challan/pages/ClientExcelImportPage').then((module) => ({ default: module.ClientExcelImportPage })));
 const deferred = (element: React.ReactNode) => <Suspense fallback={<Spin fullscreen />}>{element}</Suspense>;
 
 export const router = createBrowserRouter([
@@ -114,6 +115,7 @@ export const router = createBrowserRouter([
       { path: 'item-exchanges', element: deferred(<ItemExchangesPage />) },
       { path: 'site-transfers', element: deferred(<SiteTransfersPage />) },
       { path: 'client-workflow', element: deferred(<ClientWorkflowPage />) },
+      { path: 'challans/import-client-excel', element: deferred(<ClientExcelImportPage />) },
     ],
   },
   {
