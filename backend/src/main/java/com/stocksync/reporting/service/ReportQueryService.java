@@ -148,6 +148,17 @@ public class ReportQueryService {
 
     private QuerySpec sitePendingStock(ReportFilterRequest f) {
         Sql sql = new Sql("""
+                WITH site_items AS (
+                    SELECT site_id, item_id FROM site_stock_balances
+                    UNION
+                    SELECT so.site_id, ici.item_id FROM issued_challan_items ici JOIN issued_challans ic ON ic.id = ici.issued_challan_id JOIN site_orders so ON so.id = ic.site_order_id
+                    UNION
+                    SELECT rc.site_id, rci.item_id FROM receiving_challan_items rci JOIN receiving_challans rc ON rc.id = rci.receiving_challan_id
+                    UNION
+                    SELECT so.site_id, soi.item_id FROM site_order_items soi JOIN site_orders so ON so.id = soi.site_order_id
+                    UNION
+                    SELECT a.site_id, ai.item_id FROM agreement_items ai JOIN agreements a ON a.id = ai.agreement_id WHERE a.status <> 'CANCELLED'
+                )
                 SELECT p.legal_name party, s.site_name site, a.agreement_number agreement, i.item_code item_code, i.item_name item,
                        COALESCE(opening.opening_qty,0) opening_site_quantity,
                        COALESCE(issued.issued_qty,0) issued,
@@ -156,11 +167,12 @@ public class ReportQueryService {
                        COALESCE(damage.damaged_qty,0) damaged,
                        COALESCE(tin.transfer_in,0) transfers_in,
                        COALESCE(tout.transfer_out,0) transfers_out,
-                       ssb.pending_quantity closing_pending
-                FROM site_stock_balances ssb
-                JOIN sites s ON s.id = ssb.site_id
+                       COALESCE(ssb.pending_quantity, (COALESCE(opening.opening_qty,0) + COALESCE(issued.issued_qty,0) - COALESCE(received.received_qty,0) - COALESCE(loss.lost_qty,0) - COALESCE(damage.damaged_qty,0) + COALESCE(tin.transfer_in,0) - COALESCE(tout.transfer_out,0))) closing_pending
+                FROM site_items si
+                JOIN sites s ON s.id = si.site_id
                 JOIN parties p ON p.id = s.party_id
-                JOIN items i ON i.id = ssb.item_id
+                JOIN items i ON i.id = si.item_id
+                LEFT JOIN site_stock_balances ssb ON ssb.site_id = si.site_id AND ssb.item_id = si.item_id
                 LEFT JOIN agreements a ON a.site_id = s.id AND a.status <> 'CANCELLED'
                 LEFT JOIN (SELECT site_id,item_id,SUM(quantity) opening_qty FROM stock_transactions WHERE transaction_type='OPENING_STOCK' GROUP BY site_id,item_id) opening ON opening.site_id=s.id AND opening.item_id=i.id
                 LEFT JOIN (SELECT so.site_id, ici.item_id, SUM(ici.quantity) issued_qty FROM issued_challan_items ici JOIN issued_challans ic ON ic.id=ici.issued_challan_id JOIN site_orders so ON so.id=ic.site_order_id GROUP BY so.site_id, ici.item_id) issued ON issued.site_id=s.id AND issued.item_id=i.id
