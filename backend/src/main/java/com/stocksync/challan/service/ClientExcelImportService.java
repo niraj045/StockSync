@@ -191,10 +191,11 @@ public class ClientExcelImportService {
                 agreement.setBillingCycle(BillingCycle.MONTHLY);
                 agreement.setMeasurementBasis(MeasurementBasis.ITEM_QUANTITY);
                 agreement.setBillingCommencementRule(BillingCommencementRule.FIRST_DISPATCH);
-                agreement.setStatus(AgreementStatus.ACTIVE);
+                agreement.setStatus(AgreementStatus.DRAFT);
                 agreement.setPartyLegalNameSnapshot(party.getLegalName());
                 agreement.setSiteNameSnapshot(site.getSiteName());
                 agreement.setSiteCodeSnapshot(site.getSiteCode());
+                
                 agreement = agreements.save(agreement);
                 
                 SiteOrder newOrder = new SiteOrder();
@@ -203,8 +204,9 @@ public class ClientExcelImportService {
                 newOrder.setSite(site);
                 newOrder.setAgreement(agreement);
                 newOrder.setOrderDate(LocalDate.now());
-                newOrder.setStatus(OrderStatus.CONFIRMED);
-                newOrder.setNotes("Auto-created from Historical Excel Import");
+                newOrder.setStatus(OrderStatus.DRAFT);
+                newOrder.setNotes("Auto-created from Historical Excel Import (Please edit to add actual items and confirm)");
+                
                 order = orders.save(newOrder);
             }
             
@@ -220,6 +222,10 @@ public class ClientExcelImportService {
                 String headerName = cell.getStringCellValue().trim();
                 if (headerName.isEmpty()) continue;
                 
+                // Normalize header for fuzzy matching
+                String normHeader = headerName.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
+                if (normHeader.endsWith("s")) normHeader = normHeader.substring(0, normHeader.length() - 1);
+                
                 // Fuzzy match item
                 Item matched = null;
                 for (Item item : allItems) {
@@ -231,8 +237,10 @@ public class ClientExcelImportService {
                 // Fallback: partial match
                 if (matched == null) {
                     for (Item item : allItems) {
-                        if (item.getItemName().toLowerCase().contains(headerName.toLowerCase()) || 
-                            headerName.toLowerCase().contains(item.getItemName().toLowerCase())) {
+                        String normItem = item.getItemName().replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
+                        if (normItem.endsWith("s")) normItem = normItem.substring(0, normItem.length() - 1);
+                        
+                        if (normItem.contains(normHeader) || normHeader.contains(normItem)) {
                             matched = item;
                             break;
                         }
