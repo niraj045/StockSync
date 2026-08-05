@@ -5,7 +5,7 @@ import com.stocksync.settings.service.TermsTemplateService;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/settings")
+@RequestMapping("/api/v1/settings")
 public class SettingsController {
 
     private final TermsTemplateService termsTemplateService;
