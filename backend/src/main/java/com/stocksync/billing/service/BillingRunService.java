@@ -307,9 +307,7 @@ public class BillingRunService {
         if (end.isBefore(start)) {
             throw new BusinessRuleException("INVALID_PERIOD", "Period end date cannot precede start date");
         }
-        if (start.isBefore(ag.getEffectiveDate())) {
-            throw new BusinessRuleException("INVALID_PERIOD", "Period cannot begin before agreement effective date (" + ag.getEffectiveDate() + ")");
-        }
+        // Validation removed: allow period to start before agreement effective date (e.g. for calendar month billing)
         if (ag.getExpiryDate() != null && end.isAfter(ag.getExpiryDate())) {
             throw new BusinessRuleException("INVALID_PERIOD", "Period cannot extend beyond agreement expiry date (" + ag.getExpiryDate() + ")");
         }

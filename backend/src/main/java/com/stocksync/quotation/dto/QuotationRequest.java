@@ -26,6 +26,7 @@ public record QuotationRequest(
         @NotNull BigDecimal roundOff,
         String headerText,
         String partATitle,
+        String partAText,
         String partBTitle,
         @NotNull @DecimalMin("0") BigDecimal securityDeposit,
         @Size(max=4000) String terms,

@@ -87,8 +87,8 @@ export function QuotationsPage(){
     const current = form.getFieldValue('terms');
     const doFetch = async () => {
       try {
-        const r = await apiClient.get<{headerText?:string, partATitle?:string, partBTitle?:string, terms:string}>('/settings/default-terms?documentType=QUOTATION');
-        form.setFieldsValue({ headerText: r.data.headerText, partATitle: r.data.partATitle, partBTitle: r.data.partBTitle, terms: r.data.terms });
+        const r = await apiClient.get<{headerText?:string, partATitle?:string, partAText?:string, partBTitle?:string, terms:string}>('/settings/default-terms?documentType=QUOTATION');
+        form.setFieldsValue({ headerText: r.data.headerText, partATitle: r.data.partATitle, partAText: r.data.partAText, partBTitle: r.data.partBTitle, terms: r.data.terms });
       } catch (e) {
         message.error('Failed to load standard terms');
       }
@@ -163,7 +163,7 @@ export function QuotationsPage(){
       </div></section>}
       <section className="quotation-form-section">
         <h2>Terms and notes</h2>
-        <div className="master-form-grid"><Form.Item className="master-form-wide" name="headerText" label="Header Intro" extra={<div><Button size="small" onClick={applyStandardTerms} style={{marginBottom:4}}>Use Standard Text</Button><br/>Introductory paragraph.</div>}><Input.TextArea rows={3}/></Form.Item><Form.Item name="partATitle" label="Part A Title" extra="Leave blank to use default."><Input/></Form.Item><Form.Item name="partBTitle" label="Part B Title" extra="Leave blank to use default."><Input/></Form.Item><Form.Item className="master-form-wide" name="terms" label="Terms" extra="Use the standard terms, edit them manually, or leave the field blank to generate the document without terms."><Input.TextArea rows={3}/></Form.Item><Form.Item className="master-form-wide" name="notes" label="Notes"><Input.TextArea rows={3}/></Form.Item></div>
+        <div className="master-form-grid"><Form.Item className="master-form-wide" name="headerText" label="Header Intro" extra={<div><Button size="small" onClick={applyStandardTerms} style={{marginBottom:4}}>Use Standard Text</Button><br/>Introductory paragraph.</div>}><Input.TextArea rows={3}/></Form.Item><Form.Item name="partATitle" label="Part A Title" extra="Leave blank to use default."><Input/></Form.Item><Form.Item className="master-form-wide" name="partAText" label="Part A Custom Text" extra="Provide custom text to override the auto-generated item table and calculations."><Input.TextArea rows={3}/></Form.Item><Form.Item name="partBTitle" label="Part B Title" extra="Leave blank to use default."><Input/></Form.Item><Form.Item className="master-form-wide" name="terms" label="Terms" extra="Use the standard terms, edit them manually, or leave the field blank to generate the document without terms."><Input.TextArea rows={3}/></Form.Item><Form.Item className="master-form-wide" name="notes" label="Notes"><Input.TextArea rows={3}/></Form.Item></div>
       </section>
       <section className="quotation-form-section quotation-summary"><h2>Quotation summary</h2><Alert type="info" showIcon message={`Estimated grand total: ${money(estimate)}`} description="The backend recalculates and stores the authoritative total."/></section>
       <footer className="quotation-action-footer"><Space>{editing&&isExact&&<Button icon={<EyeOutlined/>} onClick={()=>void preview(editing)}>Preview exact PDF</Button>}<Button onClick={closeEditor}>Cancel</Button><Button type="primary" loading={save.isPending} onClick={()=>form.submit()}>{editing?'Save changes':'Create quotation'}</Button></Space></footer>

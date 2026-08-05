@@ -12,6 +12,7 @@ public record QuotationTemplateRequest(
         @Size(max=2000) String headerText,
         @Size(max=2000) String footerText,
         @Size(max=255) String defaultPartATitle,
+        String defaultPartAText,
         @Size(max=255) String defaultPartBTitle,
         @Size(max=4000) String defaultTerms,
         @Size(max=2000) String defaultNotes,

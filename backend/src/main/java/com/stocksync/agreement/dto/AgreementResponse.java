@@ -17,7 +17,7 @@ public record AgreementResponse(
  BigDecimal securityDeposit,BigDecimal subtotal,BigDecimal discountAmount,BigDecimal taxableAmount,
  BigDecimal cgstAmount,BigDecimal sgstAmount,BigDecimal igstAmount,BigDecimal totalTax,
  BigDecimal transportCharge,BigDecimal loadingCharge,BigDecimal unloadingCharge,BigDecimal otherCharge,
- BigDecimal roundOff,BigDecimal grandTotal,String headerText,String partATitle,String partBTitle,String terms,String notes,
+ BigDecimal roundOff,BigDecimal grandTotal,String headerText,String partATitle,String partAText,String partBTitle,String terms,String notes,
  Long generatedDocumentAttachmentId,String generatedFilename,Instant generatedAt,
  Long signedDocumentAttachmentId,String signedFilename,Instant signedUploadedAt,
  Instant readyForReviewAt,String readyForReviewBy,

@@ -61,6 +61,7 @@ public class Quotation extends AuditedEntity {
     @Column(name="security_deposit",nullable=false,precision=19,scale=2) private BigDecimal securityDeposit=BigDecimal.ZERO;
     @Column(name = "header_text", length = 2000) private String headerText;
     @Column(name = "part_a_title", length = 255) private String partATitle;
+    @Column(name = "part_a_text", columnDefinition = "TEXT") private String partAText;
     @Column(name = "part_b_title", length = 255) private String partBTitle;
     @Column(length = 4000) private String terms;
     @Column(length = 1000) private String notes;
@@ -115,6 +116,7 @@ public class Quotation extends AuditedEntity {
     public BigDecimal getSecurityDeposit(){return securityDeposit;} public void setSecurityDeposit(BigDecimal v){securityDeposit=v;}
     public String getHeaderText(){return headerText;} public void setHeaderText(String v){headerText=v;}
     public String getPartATitle(){return partATitle;} public void setPartATitle(String v){partATitle=v;}
+    public String getPartAText(){return partAText;} public void setPartAText(String v){partAText=v;}
     public String getPartBTitle(){return partBTitle;} public void setPartBTitle(String v){partBTitle=v;}
     public String getTerms(){return terms;} public void setTerms(String v){terms=v;}
     public String getNotes(){return notes;} public void setNotes(String v){notes=v;}

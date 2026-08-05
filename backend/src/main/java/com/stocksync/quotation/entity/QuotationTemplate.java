@@ -19,6 +19,7 @@ public class QuotationTemplate extends AuditedEntity {
     @Column(name = "default_terms", length = 4000) private String defaultTerms;
     @Column(name = "default_notes", length = 2000) private String defaultNotes;
     @Column(name = "default_part_a_title", length = 255) private String defaultPartATitle;
+    @Column(name = "default_part_a_text", columnDefinition = "TEXT") private String defaultPartAText;
     @Column(name = "default_part_b_title", length = 255) private String defaultPartBTitle;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "logo_attachment_id") private FileAttachment logoAttachment;
     @Column(nullable = false) private boolean active = true;
@@ -35,6 +36,7 @@ public class QuotationTemplate extends AuditedEntity {
     public String getDefaultTerms(){return defaultTerms;} public void setDefaultTerms(String v){defaultTerms=v;}
     public String getDefaultNotes(){return defaultNotes;} public void setDefaultNotes(String v){defaultNotes=v;}
     public String getDefaultPartATitle(){return defaultPartATitle;} public void setDefaultPartATitle(String v){defaultPartATitle=v;}
+    public String getDefaultPartAText(){return defaultPartAText;} public void setDefaultPartAText(String v){defaultPartAText=v;}
     public String getDefaultPartBTitle(){return defaultPartBTitle;} public void setDefaultPartBTitle(String v){defaultPartBTitle=v;}
     public FileAttachment getLogoAttachment(){return logoAttachment;} public void setLogoAttachment(FileAttachment v){logoAttachment=v;}
     public boolean isActive(){return active;} public void setActive(boolean v){active=v;}

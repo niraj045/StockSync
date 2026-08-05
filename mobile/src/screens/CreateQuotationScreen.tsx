@@ -117,6 +117,7 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
   const [securityDeposit, setSecurityDeposit] = useState('0');
   const [headerText, setHeaderText] = useState('');
   const [partATitle, setPartATitle] = useState('');
+  const [partAText, setPartAText] = useState('');
   const [partBTitle, setPartBTitle] = useState('');
   const [terms, setTerms] = useState('');
   const [notes, setNotes] = useState('');
@@ -273,9 +274,10 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
   const applyStandardTerms = async () => {
     const doFetch = async () => {
       try {
-        const response = await apiClient.get<{headerText?:string, partATitle?:string, partBTitle?:string, terms:string}>('/settings/default-terms?documentType=QUOTATION');
+        const response = await apiClient.get<{headerText?:string, partATitle?:string, partAText?:string, partBTitle?:string, terms:string}>('/settings/default-terms?documentType=QUOTATION');
         setHeaderText(response.data.headerText ?? '');
         setPartATitle(response.data.partATitle ?? '');
+        setPartAText(response.data.partAText ?? '');
         setPartBTitle(response.data.partBTitle ?? '');
         setTerms(response.data.terms);
       } catch (cause) {
@@ -343,6 +345,7 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
         securityDeposit: Number(securityDeposit) || 0,
         headerText: headerText.trim() || null,
         partATitle: partATitle.trim() || null,
+        partAText: partAText.trim() || null,
         partBTitle: partBTitle.trim() || null,
         terms: terms.trim() || null,
         notes: notes.trim() || null,
@@ -519,6 +522,7 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
         </View>
         <Field label="" value={headerText} onChangeText={setHeaderText} multiline />
         <Field label="Part A Title (optional)" value={partATitle} onChangeText={setPartATitle} />
+        <Field label="Part A Custom Text" value={partAText} onChangeText={setPartAText} multiline numberOfLines={3} placeholder="Overrides auto-generated item table if provided" />
         <Field label="Part B Title (optional)" value={partBTitle} onChangeText={setPartBTitle} />
         <Field label="Terms" value={terms} onChangeText={setTerms} multiline />
         <Text style={styles.fieldHelp}>Use the standard terms, edit them manually, or leave the field blank to generate the document without terms.</Text>
