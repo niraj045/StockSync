@@ -137,7 +137,7 @@ export function SiteDetailScreen({ route, navigation }: Props) {
             style={[styles.tabBtn, activeTab === tab && styles.tabBtnActive]}
           >
             <Text style={[styles.tabTxt, activeTab === tab && styles.tabTxtActive]}>
-              {tab === 'stock' ? `Stock (${stock.length})` :
+              {tab === 'stock' ? `Materials (${stock.length})` :
                tab === 'orders' ? `Orders (${orders.length})` :
                tab === 'challans' ? `Challans (${issuedChallans.length + receivingChallans.length})` :
                `Operations (${operations.length})`}
@@ -149,6 +149,14 @@ export function SiteDetailScreen({ route, navigation }: Props) {
       {/* Tab Contents */}
       {activeTab === 'stock' && (
         <View style={styles.tabContent}>
+          <View style={styles.sectionHeaderRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.sectionHeading}>Site Material Inventory</Text>
+              <Text style={styles.sectionSub}>All items & materials at this site</Text>
+            </View>
+            <ExcelExportButton reportType="SITE_PENDING_STOCK" filters={{ siteId: String(siteId) }} />
+          </View>
+
           {stock.length ? stock.map((stk) => (
             <Card key={stk.itemId} style={styles.itemCard}>
               <View style={styles.itemHeader}>
@@ -158,7 +166,7 @@ export function SiteDetailScreen({ route, navigation }: Props) {
               <Text style={styles.itemName}>{stk.itemName}</Text>
             </Card>
           )) : !loading ? (
-            <EmptyBlock title="No material stock" message="No pending materials recorded at this site." />
+            <EmptyBlock title="No material stock" message="No materials recorded at this site." />
           ) : null}
         </View>
       )}
@@ -283,6 +291,8 @@ const styles = StyleSheet.create({
   qtyText: { color: colors.ink, fontSize: 14, fontFamily: fonts.extraBold },
   metaText: { color: colors.muted, fontSize: 12 },
   sectionHeading: { color: colors.ink, fontSize: 15, fontFamily: fonts.bold },
+  sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
+  sectionSub: { color: colors.muted, fontSize: 12, marginTop: 2 },
   emptySub: { color: colors.muted, fontSize: 13, fontStyle: 'italic', paddingVertical: 6 },
   cardActions: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
 });

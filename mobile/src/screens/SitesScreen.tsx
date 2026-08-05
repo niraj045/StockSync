@@ -137,6 +137,7 @@ export function SitesScreen({ navigation }: Props) {
                 <View style={styles.topRight}>
                   {item.defaulter ? <Text style={styles.defaulterBadge}>DEFAULTER</Text> : null}
                   <StatusPill value={item.status} />
+                  <ExcelExportButton reportType="SITE_PENDING_STOCK" filters={{ siteId: String(item.id) }} />
                 </View>
               </View>
               <Text style={styles.name}>{item.siteName}</Text>
