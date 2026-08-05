@@ -1,6 +1,6 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiClient, apiErrorMessage } from '../api/client';
@@ -74,6 +74,118 @@ export function SiteDetailScreen({ route, navigation }: Props) {
     void loadData();
   }, [loadData]);
 
+  const aggregatedMaterials = useMemo(() => {
+    const map = new Map<string, {
+      key: string;
+      itemId?: number;
+      itemCode: string;
+      itemName: string;
+      unit: string;
+      totalDispatched: number;
+      totalReturned: number;
+      totalLostOrDamaged: number;
+      currentSiteQuantity: number;
+    }>();
+
+    // 1. Process Stock Balances from API if any
+    for (const stk of stock) {
+      const code = stk.itemCode || `ITEM-${stk.itemId}`;
+      const key = code.toLowerCase();
+      map.set(key, {
+        key,
+        itemId: stk.itemId,
+        itemCode: code,
+        itemName: stk.itemName || code,
+        unit: stk.unit || 'pcs',
+        totalDispatched: 0,
+        totalReturned: 0,
+        totalLostOrDamaged: 0,
+        currentSiteQuantity: Number(stk.availableQuantity || stk.hiredQuantity || (stk as any).pendingQuantity || 0),
+      });
+    }
+
+    // 2. Process Issued Challans (dispatched materials)
+    for (const ch of issuedChallans) {
+      if (!ch.items) continue;
+      for (const itm of ch.items) {
+        const code = itm.itemCode || `ITEM-${itm.itemId || itm.id}`;
+        const key = code.toLowerCase();
+        const qty = Number(itm.quantity || 0);
+        const existing = map.get(key) || {
+          key,
+          itemId: itm.itemId,
+          itemCode: code,
+          itemName: itm.itemName || code,
+          unit: itm.unit || 'pcs',
+          totalDispatched: 0,
+          totalReturned: 0,
+          totalLostOrDamaged: 0,
+          currentSiteQuantity: 0,
+        };
+        existing.totalDispatched += qty;
+        map.set(key, existing);
+      }
+    }
+
+    // 3. Process Receiving Challans (returned / loss / damage materials)
+    for (const rch of receivingChallans) {
+      if (rch.status === 'CANCELLED' || !rch.items) continue;
+      for (const itm of rch.items) {
+        const code = itm.itemCode || `ITEM-${itm.id}`;
+        const key = code.toLowerCase();
+        const retQty = Number(itm.goodReturnedQuantity || 0);
+        const lossDmg = Number(itm.damagedReturnedQuantity || 0) + Number(itm.lostQuantity || 0);
+        const existing = map.get(key) || {
+          key,
+          itemCode: code,
+          itemName: itm.itemName || code,
+          unit: itm.unit || 'pcs',
+          totalDispatched: 0,
+          totalReturned: 0,
+          totalLostOrDamaged: 0,
+          currentSiteQuantity: 0,
+        };
+        existing.totalReturned += retQty;
+        existing.totalLostOrDamaged += lossDmg;
+        map.set(key, existing);
+      }
+    }
+
+    // 4. Process Orders items if not in challans yet
+    for (const ord of orders) {
+      if (!ord.items) continue;
+      for (const itm of ord.items) {
+        const code = itm.itemCode || `ITEM-${itm.itemId || itm.id}`;
+        const key = code.toLowerCase();
+        if (!map.has(key)) {
+          map.set(key, {
+            key,
+            itemId: itm.itemId,
+            itemCode: code,
+            itemName: itm.itemName || code,
+            unit: itm.unit || 'pcs',
+            totalDispatched: Number(itm.issuedQuantity || 0),
+            totalReturned: 0,
+            totalLostOrDamaged: 0,
+            currentSiteQuantity: Number(itm.issuedQuantity || 0),
+          });
+        }
+      }
+    }
+
+    // 5. Final calculation of net current quantity
+    const list = Array.from(map.values()).map((mat) => {
+      const netCalculated = mat.totalDispatched - mat.totalReturned - mat.totalLostOrDamaged;
+      const netSiteQty = mat.currentSiteQuantity > 0 ? mat.currentSiteQuantity : Math.max(0, netCalculated);
+      return {
+        ...mat,
+        currentSiteQuantity: netSiteQty,
+      };
+    });
+
+    return list.sort((a, b) => a.itemName.localeCompare(b.itemName));
+  }, [stock, issuedChallans, receivingChallans, orders]);
+
   const partyName = site?.partyLegalName || site?.partyName || 'Customer';
 
   return (
@@ -112,7 +224,7 @@ export function SiteDetailScreen({ route, navigation }: Props) {
 
         <View style={styles.summaryBar}>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryVal}>{stock.length}</Text>
+            <Text style={styles.summaryVal}>{aggregatedMaterials.length}</Text>
             <Text style={styles.summaryLbl}>Material Items</Text>
           </View>
           <View style={styles.summaryDivider} />
@@ -137,7 +249,7 @@ export function SiteDetailScreen({ route, navigation }: Props) {
             style={[styles.tabBtn, activeTab === tab && styles.tabBtnActive]}
           >
             <Text style={[styles.tabTxt, activeTab === tab && styles.tabTxtActive]}>
-              {tab === 'stock' ? `Materials (${stock.length})` :
+              {tab === 'stock' ? `Materials (${aggregatedMaterials.length})` :
                tab === 'orders' ? `Orders (${orders.length})` :
                tab === 'challans' ? `Challans (${issuedChallans.length + receivingChallans.length})` :
                `Operations (${operations.length})`}
@@ -152,24 +264,44 @@ export function SiteDetailScreen({ route, navigation }: Props) {
           <View style={styles.sectionHeaderRow}>
             <View style={{ flex: 1 }}>
               <Text style={styles.sectionHeading}>Site Material Inventory</Text>
-              <Text style={styles.sectionSub}>All items & materials at this site</Text>
+              <Text style={styles.sectionSub}>Combined materials across all site challans & orders</Text>
             </View>
             <ExcelExportButton reportType="SITE_PENDING_STOCK" filters={{ siteId: String(siteId) }} />
           </View>
 
-          {stock.length ? stock.map((stk) => (
-            <Card key={stk.itemId} style={styles.itemCard}>
+          {aggregatedMaterials.length ? aggregatedMaterials.map((mat) => (
+            <Card key={mat.key} style={styles.itemCard}>
               <View style={styles.itemHeader}>
-                <Text style={styles.itemCode}>{stk.itemCode}</Text>
-                <Text style={styles.qtyText}>{quantity(stk.availableQuantity || stk.hiredQuantity)} {stk.unit}</Text>
+                <Text style={styles.itemCode}>{mat.itemCode}</Text>
+                <Text style={styles.qtyText}>
+                  {quantity(mat.currentSiteQuantity > 0 ? mat.currentSiteQuantity : mat.totalDispatched)} {mat.unit}
+                </Text>
               </View>
-              <Text style={styles.itemName}>{stk.itemName}</Text>
+              <Text style={styles.itemName}>{mat.itemName}</Text>
+
+              <View style={styles.materialMetricsRow}>
+                <View style={styles.metricBadge}>
+                  <Text style={styles.metricLbl}>Dispatched</Text>
+                  <Text style={styles.metricVal}>{quantity(mat.totalDispatched)}</Text>
+                </View>
+                <View style={styles.metricBadge}>
+                  <Text style={styles.metricLbl}>Returned</Text>
+                  <Text style={styles.metricVal}>{quantity(mat.totalReturned)}</Text>
+                </View>
+                {mat.totalLostOrDamaged > 0 ? (
+                  <View style={[styles.metricBadge, { backgroundColor: colors.redSoft }]}>
+                    <Text style={[styles.metricLbl, { color: colors.red }]}>Loss/Damage</Text>
+                    <Text style={[styles.metricVal, { color: colors.red }]}>{quantity(mat.totalLostOrDamaged)}</Text>
+                  </View>
+                ) : null}
+              </View>
             </Card>
           )) : !loading ? (
             <EmptyBlock title="No material stock" message="No materials recorded at this site." />
           ) : null}
         </View>
       )}
+
 
       {activeTab === 'orders' && (
         <View style={styles.tabContent}>
@@ -290,6 +422,32 @@ const styles = StyleSheet.create({
   itemName: { color: colors.ink, fontSize: 16, fontFamily: fonts.bold },
   qtyText: { color: colors.ink, fontSize: 14, fontFamily: fonts.extraBold },
   metaText: { color: colors.muted, fontSize: 12 },
+  materialMetricsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: colors.line,
+    paddingTop: 8,
+  },
+  metricBadge: {
+    backgroundColor: colors.surface,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  metricLbl: {
+    fontSize: 10,
+    color: colors.muted,
+    fontFamily: fonts.semiBold,
+  },
+  metricVal: {
+    fontSize: 12,
+    color: colors.ink,
+    fontFamily: fonts.bold,
+  },
   sectionHeading: { color: colors.ink, fontSize: 15, fontFamily: fonts.bold },
   sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
   sectionSub: { color: colors.muted, fontSize: 12, marginTop: 2 },
