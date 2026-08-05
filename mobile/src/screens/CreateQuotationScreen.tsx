@@ -116,6 +116,8 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
   const [igstRate, setIgstRate] = useState('0');
   const [securityDeposit, setSecurityDeposit] = useState('0');
   const [headerText, setHeaderText] = useState('');
+  const [partATitle, setPartATitle] = useState('');
+  const [partBTitle, setPartBTitle] = useState('');
   const [terms, setTerms] = useState('');
   const [notes, setNotes] = useState('');
   const [templateCode, setTemplateCode] = useState('CLIENT-QUOTATION');
@@ -271,8 +273,10 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
   const applyStandardTerms = async () => {
     const doFetch = async () => {
       try {
-        const response = await apiClient.get<{headerText?:string, terms:string}>('/settings/default-terms?documentType=QUOTATION');
+        const response = await apiClient.get<{headerText?:string, partATitle?:string, partBTitle?:string, terms:string}>('/settings/default-terms?documentType=QUOTATION');
         setHeaderText(response.data.headerText ?? '');
+        setPartATitle(response.data.partATitle ?? '');
+        setPartBTitle(response.data.partBTitle ?? '');
         setTerms(response.data.terms);
       } catch (cause) {
         Alert.alert('Error', apiErrorMessage(cause, 'Failed to load standard terms.'));
@@ -338,6 +342,8 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
         roundOff: 0,
         securityDeposit: Number(securityDeposit) || 0,
         headerText: headerText.trim() || null,
+        partATitle: partATitle.trim() || null,
+        partBTitle: partBTitle.trim() || null,
         terms: terms.trim() || null,
         notes: notes.trim() || null,
         exactHire: isExact ? {
@@ -505,7 +511,15 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
           <Field label="Customer phone" value={exactHire.acceptedPhone} onChangeText={(value) => updateExactHire('acceptedPhone', value)} keyboardType="phone-pad" />
           <DateField label="Acceptance date" value={exactHire.acceptedDate} onChange={(value) => updateExactHire('acceptedDate', value)} optional />
         </> : null}
-        <Field label={<View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8}}><Text style={styles.label}>Header Intro</Text><Pressable onPress={applyStandardTerms}><Text style={{color: colors.primary, fontWeight: '700', fontSize: 12}}>Use Standard Text</Text></Pressable></View>} value={headerText} onChangeText={setHeaderText} multiline />
+        <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4, marginTop: 8}}>
+          <Text style={styles.label}>Header Intro</Text>
+          <Pressable onPress={applyStandardTerms} hitSlop={12}>
+            <Text style={{color: colors.primary, fontWeight: '700', fontSize: 13}}>Use Standard Text</Text>
+          </Pressable>
+        </View>
+        <Field label="" value={headerText} onChangeText={setHeaderText} multiline />
+        <Field label="Part A Title (optional)" value={partATitle} onChangeText={setPartATitle} />
+        <Field label="Part B Title (optional)" value={partBTitle} onChangeText={setPartBTitle} />
         <Field label="Terms" value={terms} onChangeText={setTerms} multiline />
         <Text style={styles.fieldHelp}>Use the standard terms, edit them manually, or leave the field blank to generate the document without terms.</Text>
         <Field label="Notes" value={notes} onChangeText={setNotes} multiline />

@@ -22,6 +22,8 @@ export function AgreementFlowScreen({ navigation, route }: Props) {
   const [securityDeposit, setSecurityDeposit] = useState('0');
   const [notes, setNotes] = useState('');
   const [headerText, setHeaderText] = useState('');
+  const [partATitle, setPartATitle] = useState('');
+  const [partBTitle, setPartBTitle] = useState('');
   const [terms, setTerms] = useState('');
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState('');
@@ -35,8 +37,8 @@ export function AgreementFlowScreen({ navigation, route }: Props) {
         .finally(() => setLoading(false));
     } else if (route.params.quotationId) {
       // Need to fetch quotation to initialize terms
-      apiClient.get<{headerText: string, terms: string}>(`/quotations/${route.params.quotationId}`)
-        .then((response) => { setHeaderText(response.data.headerText ?? ''); setTerms(response.data.terms ?? ''); })
+      apiClient.get<{headerText: string, partATitle: string, partBTitle: string, terms: string}>(`/quotations/${route.params.quotationId}`)
+        .then((response) => { setHeaderText(response.data.headerText ?? ''); setPartATitle(response.data.partATitle ?? ''); setPartBTitle(response.data.partBTitle ?? ''); setTerms(response.data.terms ?? ''); })
         .catch((cause) => setError(apiErrorMessage(cause, 'Unable to load source quotation.')))
         .finally(() => setLoading(false));
     } else {
@@ -47,9 +49,11 @@ export function AgreementFlowScreen({ navigation, route }: Props) {
   const applyStandardTerms = async () => {
     const doFetch = async () => {
       try {
-        const response = await apiClient.get<{headerText?:string, terms:string}>('/settings/default-terms?documentType=AGREEMENT');
+        const response = await apiClient.get<{headerText?:string, partATitle?:string, partBTitle?:string, terms:string}>('/settings/default-terms?documentType=AGREEMENT');
         setHeaderText(response.data.headerText ?? '');
-        setTerms(response.data.terms);
+        setPartATitle(response.data.partATitle ?? '');
+        setPartBTitle(response.data.partBTitle ?? '');
+        setTerms(response.data.terms ?? '');
       } catch (cause) {
         Alert.alert('Error', apiErrorMessage(cause, 'Failed to load standard terms.'));
       }
@@ -78,6 +82,8 @@ export function AgreementFlowScreen({ navigation, route }: Props) {
         expiryDate: expiryDate || null,
         securityDeposit: Number(securityDeposit) || 0,
         headerText: headerText.trim() || null,
+        partATitle: partATitle.trim() || null,
+        partBTitle: partBTitle.trim() || null,
         notes: notes.trim() || null,
         terms: terms.trim() || null,
       });
@@ -190,7 +196,15 @@ export function AgreementFlowScreen({ navigation, route }: Props) {
           <DateField label="Effective date *" value={effectiveDate} onChange={setEffectiveDate} />
           <DateField label="Expiry date" value={expiryDate} onChange={setExpiryDate} optional minimumDate={new Date(`${effectiveDate}T12:00:00`)} />
           <Field label="Security deposit (INR)" value={securityDeposit} onChangeText={setSecurityDeposit} keyboardType="decimal-pad" />
-          <Field label={<View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8}}><Text style={styles.label}>Header Intro</Text><Pressable onPress={applyStandardTerms}><Text style={{color: colors.primary, fontWeight: '700', fontSize: 12}}>Use Standard Text</Text></Pressable></View>} value={headerText} onChangeText={setHeaderText} multiline />
+          <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4, marginTop: 8}}>
+            <Text style={styles.label}>Header Intro</Text>
+            <Pressable onPress={applyStandardTerms} hitSlop={12}>
+              <Text style={{color: colors.primary, fontWeight: '700', fontSize: 13}}>Use Standard Text</Text>
+            </Pressable>
+          </View>
+          <Field label="" value={headerText} onChangeText={setHeaderText} multiline />
+          <Field label="Part A Title (optional)" value={partATitle} onChangeText={setPartATitle} />
+          <Field label="Part B Title (optional)" value={partBTitle} onChangeText={setPartBTitle} />
           <Field label="Terms" value={terms} onChangeText={setTerms} multiline />
           <Text style={styles.fieldHelp}>Use the standard terms, edit them manually, or leave the field blank to generate the document without terms.</Text>
           <Field label="Agreement notes" value={notes} onChangeText={setNotes} multiline />
