@@ -4,5 +4,6 @@ import org.springframework.web.multipart.MultipartFile;
 import jakarta.validation.constraints.NotNull;
 
 public record ClientExcelImportRequest(
+    Long siteOrderId,
     @NotNull MultipartFile file
 ) {}

@@ -21,7 +21,7 @@ interface PageResponse<T> {
 
 export function ClientExcelImportPage() {
   const queryClient = useQueryClient();
-  const [form] = Form.useForm<{ siteOrderId: number; file: UploadFile[] }>();
+  const [form] = Form.useForm<{ siteOrderId?: number; file: UploadFile[] }>();
   
   const siteOrders = useQuery({
     queryKey: ['import-site-order-options'],
@@ -31,12 +31,14 @@ export function ClientExcelImportPage() {
   });
 
   const upload = useMutation({
-    mutationFn: async (values: { siteOrderId: number; file: UploadFile[] }) => {
+    mutationFn: async (values: { siteOrderId?: number; file: UploadFile[] }) => {
       const source = values.file[0]?.originFileObj;
       if (!source) throw new Error('Select the client XLSX workbook');
       
       const body = new FormData();
-      body.append('siteOrderId', values.siteOrderId.toString());
+      if (values.siteOrderId) {
+        body.append('siteOrderId', values.siteOrderId.toString());
+      }
       body.append('file', source);
       
       return (await apiClient.post<{ success: boolean; importedCount: number }>('/challans/issued/import-client-excel', body, {
@@ -65,15 +67,16 @@ export function ClientExcelImportPage() {
 
       <Card className="premium-card">
         <Typography.Paragraph>
-          This tool parses standard SBUT D&R Excel layouts. It scans for the "Challan no." header, maps column labels to system items (fuzzy match), and creates immutable Issued Challan records along with ledger transactions.
+          This tool parses standard client D&R Excel layouts. It automatically detects the site order from the contents (if left blank), scans for the "Challan no." header, maps column labels to system items (fuzzy match), and creates immutable Issued Challan records along with ledger transactions.
         </Typography.Paragraph>
 
         <Form form={form} layout="vertical" onFinish={(values) => upload.mutate(values)} style={{ maxWidth: 600, marginTop: 24 }}>
-          <Form.Item name="siteOrderId" label="Target Site Order" rules={[{ required: true, message: 'Select the site order' }]}>
+          <Form.Item name="siteOrderId" label="Target Site Order (Optional Override)" tooltip="Leave blank to automatically detect the Site based on the Excel file contents. Select a specific order here if the auto-detect fails or the Excel file doesn't clearly contain the site name.">
             <Select 
               showSearch 
+              allowClear
               optionFilterProp="label" 
-              placeholder="Select an active Site Order to attach challans to"
+              placeholder="Leave blank for auto-detect, or select manually..."
               loading={siteOrders.isLoading}
               options={(siteOrders.data ?? []).map((order) => ({ 
                 value: order.id, 
