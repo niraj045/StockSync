@@ -124,6 +124,21 @@ export type Agreement = {
   signedFilename?: string;
   signedUploadedAt?: string;
   status: 'DRAFT' | 'READY_FOR_REVIEW' | 'ACTIVE' | 'EXPIRED' | 'TERMINATED' | 'CLOSED' | 'CANCELLED';
+  headerText?: string;
+  partATitle?: string;
+  partAText?: string;
+  partBTitle?: string;
+  terms?: string;
+  notes?: string;
+  version: number;
+  agreementDate: string;
+  billingCycle: string;
+  measurementBasis?: string;
+  billingCommencementRule?: string;
+  fixedBillingStartDate?: string;
+  customBillingCycleDays?: number;
+  gracePeriodDays?: number;
+  minimumBillingDays?: number;
   items: AgreementItem[];
 };
 
@@ -164,6 +179,7 @@ export type QuotationTemplate = {
   companyName?: string;
   companyAddress?: string;
   companyGstin?: string;
+  headerText?: string;
   defaultTerms?: string;
   defaultNotes?: string;
   active: boolean;

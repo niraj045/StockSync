@@ -146,6 +146,9 @@ export function SalesScreen({ navigation }: Props) {
                     <Text style={styles.siteName}>{site.siteName}</Text>
                     <Text style={styles.meta}>{site.siteCode}</Text>
                   </View>
+                  <View style={{ marginRight: 8 }}>
+                    <ExcelExportButton reportType="SITE_PENDING_STOCK" filters={{ siteId: site.id }} />
+                  </View>
                   <StatusPill value={site.status} />
                 </View>
               ))}
