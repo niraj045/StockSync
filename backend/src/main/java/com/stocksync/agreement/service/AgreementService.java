@@ -133,7 +133,7 @@ public class AgreementService implements AgreementAccess {
     var item=items.findById(v.itemId()).filter(com.stocksync.inventory.entity.Item::isActive)
      .orElseThrow(()->error("ITEM_NOT_FOUND_OR_INACTIVE","Active item not found: "+v.itemId()));
     i=new AgreementItem();i.setItem(item);i.setItemCodeSnapshot(item.getItemCode());i.setItemNameSnapshot(item.getItemName());
-    i.setDescriptionSnapshot(item.getDescription());i.setSizeSnapshot(item.getSize());i.setUnitSnapshot(item.getUnit());
+    i.setDescriptionSnapshot(item.getItemName());i.setSizeSnapshot(item.getSize());i.setUnitSnapshot(item.getUnit());
     i.setWeightSnapshot(item.getWeightPerPiece());i.setRentalType(a.getRentalType());
    }
    i.setAgreedQuantity(v.contractedQuantity());i.setUnitRate(v.rate());i.setRentalRate(v.rate());i.setArea(v.area());i.setAreaRate(v.areaRate());i.setWeightRate(v.weightRate());
