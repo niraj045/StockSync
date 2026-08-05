@@ -6,7 +6,20 @@ import com.stocksync.common.exception.BusinessRuleException;
 import com.stocksync.inventory.entity.*;
 import com.stocksync.inventory.repository.*;
 import com.stocksync.order.entity.SiteOrder;
+import com.stocksync.order.entity.OrderStatus;
 import com.stocksync.order.repository.SiteOrderRepository;
+import com.stocksync.party.entity.Party;
+import com.stocksync.party.repository.PartyRepository;
+import com.stocksync.site.entity.Site;
+import com.stocksync.site.entity.SiteStatus;
+import com.stocksync.site.repository.SiteRepository;
+import com.stocksync.agreement.entity.Agreement;
+import com.stocksync.agreement.entity.AgreementStatus;
+import com.stocksync.agreement.entity.RentalType;
+import com.stocksync.agreement.entity.BillingCycle;
+import com.stocksync.agreement.entity.MeasurementBasis;
+import com.stocksync.agreement.entity.BillingCommencementRule;
+import com.stocksync.agreement.repository.AgreementRepository;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -30,6 +43,9 @@ public class ClientExcelImportService {
     private final SiteStockBalanceRepository siteBalances;
     private final StockTransactionRepository transactions;
     private final JdbcTemplate jdbc;
+    private final PartyRepository parties;
+    private final SiteRepository sites;
+    private final AgreementRepository agreements;
 
     public ClientExcelImportService(
             IssuedChallanRepository challans,
@@ -38,7 +54,10 @@ public class ClientExcelImportService {
             StockBalanceRepository balances,
             SiteStockBalanceRepository siteBalances,
             StockTransactionRepository transactions,
-            JdbcTemplate jdbc) {
+            JdbcTemplate jdbc,
+            PartyRepository parties,
+            SiteRepository sites,
+            AgreementRepository agreements) {
         this.challans = challans;
         this.orders = orders;
         this.items = items;
@@ -46,6 +65,9 @@ public class ClientExcelImportService {
         this.siteBalances = siteBalances;
         this.transactions = transactions;
         this.jdbc = jdbc;
+        this.parties = parties;
+        this.sites = sites;
+        this.agreements = agreements;
     }
 
     @Transactional
@@ -115,7 +137,75 @@ public class ClientExcelImportService {
             }
             
             if (order == null) {
-                throw new BusinessRuleException("SITE_ORDER_NOT_FOUND", "Could not automatically determine the Site Order from the Excel file contents, and no Site Order was explicitly selected. Ensure the site name is present above the header row, or select a Target Site Order manually.");
+                // Auto-create missing entities
+                String rawName = "Unknown Client";
+                if (headerRowIndex > 0) {
+                    for (int i = 0; i < headerRowIndex; i++) {
+                        Row r = sheet.getRow(i);
+                        if (r == null) continue;
+                        for (Cell c : r) {
+                            if (c.getCellType() == CellType.STRING) {
+                                String v = c.getStringCellValue().trim();
+                                if (!v.isEmpty()) {
+                                    rawName = v;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!rawName.equals("Unknown Client")) break;
+                    }
+                }
+                
+                final String finalRawName = rawName.length() > 100 ? rawName.substring(0, 100) : rawName;
+                
+                Party party = parties.findAll().stream()
+                        .filter(p -> p.getLegalName().equalsIgnoreCase(finalRawName))
+                        .findFirst()
+                        .orElseGet(() -> {
+                            Party p = new Party();
+                            p.setLegalName(finalRawName);
+                            p.setActive(true);
+                            return parties.save(p);
+                        });
+                
+                Site site = sites.findAll().stream()
+                        .filter(s -> s.getParty().getId().equals(party.getId()) && s.getSiteName().equalsIgnoreCase(finalRawName))
+                        .findFirst()
+                        .orElseGet(() -> {
+                            Site s = new Site();
+                            s.setParty(party);
+                            s.setSiteName(finalRawName);
+                            s.setSiteCode("HIST-" + System.currentTimeMillis());
+                            s.setStatus(SiteStatus.ACTIVE);
+                            s.setDefaulter(false);
+                            return sites.save(s);
+                        });
+                
+                Agreement agreement = new Agreement();
+                agreement.setAgreementNumber("AGR-HIST-" + System.currentTimeMillis());
+                agreement.setParty(party);
+                agreement.setSite(site);
+                agreement.setAgreementDate(LocalDate.now());
+                agreement.setEffectiveDate(LocalDate.now());
+                agreement.setRentalType(RentalType.MONTHLY);
+                agreement.setBillingCycle(BillingCycle.MONTHLY);
+                agreement.setMeasurementBasis(MeasurementBasis.ITEM_QUANTITY);
+                agreement.setBillingCommencementRule(BillingCommencementRule.FIRST_DISPATCH);
+                agreement.setStatus(AgreementStatus.ACTIVE);
+                agreement.setPartyLegalNameSnapshot(party.getLegalName());
+                agreement.setSiteNameSnapshot(site.getSiteName());
+                agreement.setSiteCodeSnapshot(site.getSiteCode());
+                agreement = agreements.save(agreement);
+                
+                SiteOrder newOrder = new SiteOrder();
+                newOrder.setOrderNumber("ORD-HIST-" + System.currentTimeMillis());
+                newOrder.setParty(party);
+                newOrder.setSite(site);
+                newOrder.setAgreement(agreement);
+                newOrder.setOrderDate(LocalDate.now());
+                newOrder.setStatus(OrderStatus.CONFIRMED);
+                newOrder.setNotes("Auto-created from Historical Excel Import");
+                order = orders.save(newOrder);
             }
             
             final SiteOrder finalOrder = order;
