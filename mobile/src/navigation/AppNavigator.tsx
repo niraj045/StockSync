@@ -24,6 +24,7 @@ import { GstExportScreen } from '../screens/GstExportScreen';
 import { ExcelReportsScreen } from '../screens/ExcelReportsScreen';
 import { OpeningStockImportScreen } from '../screens/OpeningStockImportScreen';
 import { SiteLedgerImportScreen } from '../screens/SiteLedgerImportScreen';
+import { ClientExcelImportScreen } from '../screens/ClientExcelImportScreen';
 import { BillingScreen } from '../screens/BillingScreen';
 import { BillingRunDetailScreen } from '../screens/BillingRunDetailScreen';
 import { InquiriesScreen } from '../screens/InquiriesScreen';
@@ -112,6 +113,7 @@ export function AppNavigator() {
             <Stack.Screen name="ExcelReports" component={ExcelReportsScreen} options={{ title: 'Excel reports' }} />
             <Stack.Screen name="OpeningStockImport" component={OpeningStockImportScreen} options={{ title: 'Import Stock' }} />
             <Stack.Screen name="SiteLedgerImport" component={SiteLedgerImportScreen} options={{ title: 'Import Site Ledger' }} />
+            <Stack.Screen name="ClientExcelImport" component={ClientExcelImportScreen} options={{ title: 'Historical D&R Import' }} />
             <Stack.Screen name="Billing" component={BillingScreen} options={{ title: 'Monthly rental billing' }} />
             <Stack.Screen name="BillingRunDetail" component={BillingRunDetailScreen} options={{ title: 'Billing details' }} />
             <Stack.Screen name="CreateParty" component={CreatePartyScreen} options={{ title: 'New customer' }} />

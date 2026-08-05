@@ -23,6 +23,7 @@ export type RootStackParams = {
   CreateSiteOperation: { operationId?: number } | undefined;
   OpeningStockImport: undefined;
   SiteLedgerImport: undefined;
+  ClientExcelImport: undefined;
 };
 
 export type MainTabParams = {

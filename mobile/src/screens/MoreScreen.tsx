@@ -108,6 +108,15 @@ export function MoreScreen({ navigation }: Props) {
         <Ionicons name="chevron-forward" size={20} color={colors.muted} />
       </Pressable>
 
+      <Pressable style={styles.menuRow} onPress={() => navigation.navigate('ClientExcelImport')}>
+        <View style={styles.menuIcon}><Ionicons name="cloud-upload-outline" size={21} color={colors.primary} /></View>
+        <View style={styles.menuCopy}>
+          <Text style={styles.menuTitle}>Historical D&R Import</Text>
+          <Text style={styles.menuText}>Import historical client D&R Excel workbooks to generate issued challans</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+      </Pressable>
+
       <View style={styles.logout}>
         <AppButton title="Sign out" variant="danger" onPress={() => void logout()} />
       </View>
