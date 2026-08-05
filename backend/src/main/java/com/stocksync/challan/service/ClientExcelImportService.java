@@ -83,24 +83,61 @@ public class ClientExcelImportService {
             int headerRowIndex = -1;
             int challanNoCol = -1;
             int dateCol = -1;
+            int particularsCol = -1;
+            int qtyCol = -1;
             
             for (Row row : sheet) {
                 for (Cell cell : row) {
                     if (cell.getCellType() == CellType.STRING) {
                         String val = cell.getStringCellValue().trim().toLowerCase();
-                        if (val.contains("challan no") || val.contains("challan number")) {
+                        if (val.contains("challan no") || val.contains("challan number") || val.contains("challan") || val.contains("sr. no") || val.contains("sr.no")) {
                             headerRowIndex = row.getRowNum();
-                            challanNoCol = cell.getColumnIndex();
-                        } else if (val.equals("date") && headerRowIndex == row.getRowNum()) {
+                            if (val.contains("challan")) challanNoCol = cell.getColumnIndex();
+                            else if (challanNoCol == -1) challanNoCol = cell.getColumnIndex();
+                        } else if (val.contains("date") && headerRowIndex == row.getRowNum()) {
                             dateCol = cell.getColumnIndex();
+                        } else if ((val.contains("particular") || val.contains("item") || val.contains("description")) && headerRowIndex == row.getRowNum()) {
+                            particularsCol = cell.getColumnIndex();
+                        } else if ((val.contains("qty") || val.contains("quantity")) && headerRowIndex == row.getRowNum()) {
+                            qtyCol = cell.getColumnIndex();
                         }
                     }
                 }
-                if (headerRowIndex != -1 && challanNoCol != -1 && dateCol != -1) break;
+                if (headerRowIndex != -1 && (challanNoCol != -1 || particularsCol != -1)) {
+                    if (dateCol == -1) dateCol = challanNoCol;
+                    break;
+                }
             }
             
             if (headerRowIndex == -1) {
-                throw new BusinessRuleException("INVALID_FORMAT", "Could not find 'Challan no.' header in the first sheet.");
+                // Fallback scan: search any row for 'particulars' or 'qty' or 'challan'
+                for (Row row : sheet) {
+                    for (Cell cell : row) {
+                        if (cell.getCellType() == CellType.STRING) {
+                            String val = cell.getStringCellValue().trim().toLowerCase();
+                            if (val.contains("particular") || val.contains("qty") || val.contains("challan")) {
+                                headerRowIndex = row.getRowNum();
+                                for (Cell c : row) {
+                                    if (c.getCellType() == CellType.STRING) {
+                                        String v = c.getStringCellValue().trim().toLowerCase();
+                                        if (v.contains("challan")) challanNoCol = c.getColumnIndex();
+                                        else if (v.contains("date")) dateCol = c.getColumnIndex();
+                                        else if (v.contains("particular") || v.contains("item") || v.contains("description")) particularsCol = c.getColumnIndex();
+                                        else if (v.contains("qty") || v.contains("quantity")) qtyCol = c.getColumnIndex();
+                                    }
+                                }
+                                if (dateCol == -1) dateCol = challanNoCol != -1 ? challanNoCol : 0;
+                                if (challanNoCol == -1) challanNoCol = dateCol != -1 ? dateCol : 0;
+                                break;
+                            }
+                        }
+                    }
+                    if (headerRowIndex != -1) break;
+                }
+            }
+
+            if (headerRowIndex == -1) {
+                throw new BusinessRuleException("INVALID_FORMAT", "Could not find 'Challan no.' or 'Particulars' header in the first sheet.");
             }
             
             SiteOrder order = null;

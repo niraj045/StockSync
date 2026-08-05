@@ -62,7 +62,7 @@ export function InquiriesScreen({ navigation }: Props) {
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
       {inquiries.length ? inquiries.map((inq) => {
-        const companyName = inq.partyName || (inq.notes?.match(/Company:\s*([^\n]+)/i)?.[1]) || 'Direct Lead';
+        const companyName = inq.companyName || inq.partyName || (inq.notes?.match(/Company:\s*([^\n]+)/i)?.[1]) || 'Direct Lead';
         return (
           <Card key={inq.id} style={styles.card}>
             <View style={styles.top}>

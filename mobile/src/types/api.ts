@@ -358,6 +358,7 @@ export type SitePendingBalance = {
 export type InquiryRequest = {
   inquiryDate: string;
   source: string;
+  companyName?: string;
   contactName: string;
   phone?: string;
   email?: string;
@@ -373,6 +374,7 @@ export type InquiryRequest = {
 export type InquiryResponse = InquiryRequest & {
   id: number;
   inquiryNumber: string;
+  companyName?: string;
   partyName?: string;
   siteName?: string;
   quotationNumber?: string;
