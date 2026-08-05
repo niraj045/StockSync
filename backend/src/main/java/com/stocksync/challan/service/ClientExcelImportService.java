@@ -187,7 +187,7 @@ public class ClientExcelImportService {
                 agreement.setSite(site);
                 agreement.setAgreementDate(LocalDate.now());
                 agreement.setEffectiveDate(LocalDate.now());
-                agreement.setRentalType(RentalType.MONTHLY);
+                agreement.setRentalType(RentalType.PER_PIECE_PER_MONTH);
                 agreement.setBillingCycle(BillingCycle.MONTHLY);
                 agreement.setMeasurementBasis(MeasurementBasis.ITEM_QUANTITY);
                 agreement.setBillingCommencementRule(BillingCommencementRule.FIRST_DISPATCH);
