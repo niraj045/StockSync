@@ -34,6 +34,7 @@ export const shadow = {
 
 export const fonts = {
   regular: 'Inter',
+  medium: 'Inter',
   semiBold: 'InterSemiBold',
   bold: 'InterBold',
   extraBold: 'InterExtraBold',

@@ -16,7 +16,7 @@ import {
 import { apiClient, apiErrorMessage } from '../api/client';
 import { AppButton, Card, DateField, EmptyBlock, Field } from '../components/ui';
 import type { RootStackParams } from '../navigation/types';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
 import type { IssuedChallan, Page, SiteOrder, StockBalance } from '../types/api';
 import { localDate, quantity } from '../utils/format';
 
@@ -393,14 +393,14 @@ const styles = StyleSheet.create({
   code: { color: colors.primary, fontSize: 11, fontFamily: fonts.bold },
   itemName: { color: colors.ink, fontSize: 16, fontFamily: fonts.bold, marginTop: 3 },
   balanceRow: { flexDirection: 'row', gap: 16, marginTop: 9 },
-  balance: { color: colors.muted, fontSize: 12, fontFamily: fonts.medium },
+  balance: { color: colors.muted, fontSize: 12, fontFamily: fonts.semiBold },
   noStock: { color: colors.red },
   quantityRow: { flexDirection: 'row', alignItems: 'center', marginTop: 13, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.line },
   quantityLabel: { color: colors.ink, fontFamily: fonts.bold, flex: 1 },
   quantityInput: { width: 90, height: 44, borderWidth: 1, borderColor: colors.primary, borderRadius: 7, backgroundColor: '#fff', color: colors.ink, fontSize: 17, fontFamily: fonts.bold, textAlign: 'right', paddingHorizontal: 10 },
   unit: { color: colors.muted, fontSize: 11, width: 48, marginLeft: 7 },
   itemNotesRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12 },
-  itemNotesLabel: { color: colors.muted, fontSize: 12, fontFamily: fonts.medium, width: 60 },
+  itemNotesLabel: { color: colors.muted, fontSize: 12, fontFamily: fonts.semiBold, width: 60 },
   itemNotesInput: { flex: 1, height: 38, borderWidth: 1, borderColor: colors.line, borderRadius: 6, backgroundColor: '#fff', color: colors.ink, fontSize: 13, paddingHorizontal: 10 },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(4, 25, 23, 0.45)', justifyContent: 'flex-end' },
   sheet: { maxHeight: '82%', backgroundColor: colors.surface, borderTopLeftRadius: 12, borderTopRightRadius: 12, paddingBottom: 20 },
@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
   close: { padding: 8 },
   searchBarContainer: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 14, marginTop: 12, paddingHorizontal: 10, height: 44, borderRadius: 8, backgroundColor: '#fff', borderWidth: 1, borderColor: colors.line },
   searchIcon: { marginRight: 8 },
-  searchInput: { flex: 1, color: colors.ink, fontSize: 14, fontFamily: fonts.medium },
+  searchInput: { flex: 1, color: colors.ink, fontSize: 14, fontFamily: fonts.semiBold },
   orderList: { padding: 14 },
   order: { minHeight: 82, padding: 14, borderBottomWidth: 1, borderBottomColor: colors.line, flexDirection: 'row', alignItems: 'center' },
   orderCopy: { flex: 1 },
