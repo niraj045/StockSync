@@ -127,7 +127,15 @@ public class AgreementService implements AgreementAccess {
   Map<Long,AgreementItem> originals=new HashMap<>();for(AgreementItem i:a.getItems())originals.put(i.getItem().getId(),i);
   List<AgreementItem> lines=new ArrayList<>();Set<Long> unique=new HashSet<>();for(AgreementItemRequest v:r.items()){
    if(!unique.add(v.itemId()))throw error("DUPLICATE_ITEM_LINE","Each item may appear only once");
-   AgreementItem i=originals.get(v.itemId());if(i==null)throw error("AGREEMENT_ITEM_NOT_FROM_QUOTATION","Agreement items must originate from the quotation");
+   AgreementItem i=originals.get(v.itemId());
+   if(i==null){
+    // Allow adding new items from inventory to a draft agreement
+    var item=items.findById(v.itemId()).filter(com.stocksync.inventory.entity.Item::isActive)
+     .orElseThrow(()->error("ITEM_NOT_FOUND_OR_INACTIVE","Active item not found: "+v.itemId()));
+    i=new AgreementItem();i.setItem(item);i.setItemCodeSnapshot(item.getItemCode());i.setItemNameSnapshot(item.getItemName());
+    i.setDescriptionSnapshot(item.getDescription());i.setSizeSnapshot(item.getSize());i.setUnitSnapshot(item.getUnit());
+    i.setWeightSnapshot(item.getWeightPerPiece());i.setRentalType(a.getRentalType());
+   }
    i.setAgreedQuantity(v.contractedQuantity());i.setUnitRate(v.rate());i.setRentalRate(v.rate());i.setArea(v.area());i.setAreaRate(v.areaRate());i.setWeightRate(v.weightRate());
    i.setLossRatePerPiece(v.lossRatePerPiece());i.setLossRatePerWeight(v.lossRatePerWeight());i.setDamageRate(v.damageRate());i.setSequence(zero(v.sequence()));i.setNotes(trim(v.notes()));
    List<AgreementItemSlab> slabsList = new ArrayList<>();

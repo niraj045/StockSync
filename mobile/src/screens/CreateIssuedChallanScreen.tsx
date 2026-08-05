@@ -71,19 +71,38 @@ export function CreateIssuedChallanScreen({ navigation, route }: Props) {
   }, [route.params?.orderId]);
 
   const selected = orders.find((order) => order.id === selectedId);
-  const dispatchItems = useMemo(
-    () => selected?.items.filter((item) => Number(item.remainingQuantity) > 0) ?? [],
-    [selected],
-  );
+  const dispatchItems = useMemo(() => {
+    if (!selected) return [];
+    if (selected.items && selected.items.length > 0) {
+      const remaining = selected.items.filter((item) => Number(item.remainingQuantity) > 0);
+      if (remaining.length > 0) return remaining;
+      return selected.items; // Fallback to all order items if all remaining are 0
+    }
+    // Fallback: If order has no line items, map stock items so user can dispatch materials
+    return stock.map((stk) => ({
+      id: 0,
+      itemId: stk.itemId,
+      itemCode: stk.itemCode,
+      itemName: stk.itemName,
+      unit: stk.unit,
+      orderedQuantity: '999999',
+      issuedQuantity: '0',
+      remainingQuantity: String(stk.availableQuantity),
+      unitPrice: '0',
+      version: 0,
+    }));
+  }, [selected, stock]);
 
   const chooseOrder = (order: SiteOrder) => {
     setSelectedId(order.id);
-    setQuantities(Object.fromEntries(order.items
-      .filter((item) => Number(item.remainingQuantity) > 0)
-      .map((item) => {
-        const available = Number(stock.find((balance) => balance.itemId === item.itemId)?.availableQuantity ?? 0);
-        return [item.itemId, String(Math.min(Number(item.remainingQuantity), available))];
-      })));
+    const items = (order.items && order.items.length > 0) ? order.items : stock.map((stk) => ({
+      itemId: stk.itemId,
+      remainingQuantity: String(stk.availableQuantity),
+    }));
+    setQuantities(Object.fromEntries(items.map((item) => {
+      const available = Number(stock.find((balance) => balance.itemId === item.itemId)?.availableQuantity ?? 0);
+      return [item.itemId, String(Math.min(Number(item.remainingQuantity || available), available))];
+    })));
     setPickerOpen(false);
   };
 
@@ -169,7 +188,7 @@ export function CreateIssuedChallanScreen({ navigation, route }: Props) {
               <Text style={styles.code}>{item.itemCode}</Text>
               <Text style={styles.itemName}>{item.itemName}</Text>
               <View style={styles.balanceRow}>
-                <Text style={styles.balance}>Order: {quantity(item.remainingQuantity)}</Text>
+                <Text style={styles.balance}>Order: {quantity(Number(item.remainingQuantity))}</Text>
                 <Text style={[styles.balance, available <= 0 && styles.noStock]}>Godown: {quantity(available)}</Text>
               </View>
               <View style={styles.quantityRow}>

@@ -103,32 +103,34 @@ export function OrdersScreen({ navigation }: Props) {
         const total = item.items.reduce((sum, row) => sum + Number(row.orderedQuantity), 0);
         const dispatchable = item.status === 'CONFIRMED' || item.status === 'PARTIALLY_FULFILLED';
         return (
-          <Card style={styles.order}>
-            <View style={styles.top}>
-              <Text style={styles.number}>{item.orderNumber}</Text>
-              <StatusPill value={item.status} />
-            </View>
-            <Text style={styles.party}>{item.partyName}</Text>
-            <Text style={styles.site}>{item.siteName}</Text>
-            <View style={styles.meta}>
-              <Text style={styles.metaText}>{dateLabel(item.orderDate)}</Text>
-              <Text style={styles.total}>{quantity(total)} ordered</Text>
-            </View>
-            {canWrite && item.status === 'DRAFT' ? (
-              <AppButton
-                title="Confirm order"
-                variant="secondary"
-                loading={workingId === item.id}
-                onPress={() => confirm(item)}
-              />
-            ) : null}
-            {canWrite && dispatchable ? (
-              <AppButton
-                title="Issue challan"
-                onPress={() => navigation.navigate('CreateIssuedChallan', { orderId: item.id })}
-              />
-            ) : null}
-          </Card>
+          <Pressable onPress={() => item.siteId && navigation.navigate('SiteDetail', { siteId: item.siteId })}>
+            <Card style={styles.order}>
+              <View style={styles.top}>
+                <Text style={styles.number}>{item.orderNumber}</Text>
+                <StatusPill value={item.status} />
+              </View>
+              <Text style={styles.party}>{item.partyName}</Text>
+              <Text style={styles.site}>{item.siteName} <Text style={styles.siteLink}>(Tap for site details)</Text></Text>
+              <View style={styles.meta}>
+                <Text style={styles.metaText}>{dateLabel(item.orderDate)}</Text>
+                <Text style={styles.total}>{quantity(total)} ordered</Text>
+              </View>
+              {canWrite && item.status === 'DRAFT' ? (
+                <AppButton
+                  title="Confirm order"
+                  variant="secondary"
+                  loading={workingId === item.id}
+                  onPress={() => confirm(item)}
+                />
+              ) : null}
+              {canWrite && dispatchable ? (
+                <AppButton
+                  title="Issue challan"
+                  onPress={() => navigation.navigate('CreateIssuedChallan', { orderId: item.id })}
+                />
+              ) : null}
+            </Card>
+          </Pressable>
         );
       }}
     />
@@ -146,6 +148,7 @@ const styles = StyleSheet.create({
   number: { color: colors.primary, fontFamily: fonts.bold, flexShrink: 1 },
   party: { color: colors.ink, fontSize: 17, fontFamily: fonts.bold },
   site: { color: colors.muted, fontSize: 13, marginTop: -7 },
+  siteLink: { color: colors.primary, fontSize: 12, fontFamily: fonts.bold },
   meta: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: colors.line, paddingTop: 11 },
   metaText: { color: colors.muted, fontSize: 12 },
   total: { color: colors.ink, fontFamily: fonts.bold, fontSize: 12 },

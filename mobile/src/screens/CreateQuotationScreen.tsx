@@ -134,6 +134,8 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  const [quotationVersion, setQuotationVersion] = useState<number>(0);
+
   useEffect(() => {
     Promise.all([
       apiClient.get<Page<QuotationTemplate>>('/quotation-templates', { params: { active: true, size: 100 } }),
@@ -141,14 +143,62 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
       apiClient.get<Page<Site>>('/sites', { params: { size: 300 } }),
       apiClient.get<Page<ItemOption>>('/items', { params: { active: true, size: 500 } }),
       apiClient.get<Page<StockBalance>>('/stock/balances', { params: { size: 500 } }),
-    ]).then(([templateResponse, partyResponse, siteResponse, itemResponse, stockResponse]) => {
+      route.params?.quotationId ? apiClient.get<Quotation>(`/quotations/${route.params.quotationId}`) : Promise.resolve(null),
+    ]).then(([templateResponse, partyResponse, siteResponse, itemResponse, stockResponse, quotationResponse]) => {
       const availableTemplates = templateResponse.data.content;
       setTemplates(availableTemplates);
       setParties(partyResponse.data.content);
       setSites(siteResponse.data.content);
       setItems(itemResponse.data.content);
       setStockBalances(stockResponse.data.content);
-      if (availableTemplates.length === 1) {
+
+      const q = quotationResponse?.data;
+      if (q) {
+        setQuotationVersion(q.version);
+        setTemplateId(q.quotationTemplateId ?? null);
+        setPartyId(q.partyId);
+        setSiteId(q.siteId);
+        setQuotationDate(q.quotationDate);
+        setValidUntil(q.validUntil);
+        setRentalType(q.rentalType);
+        setCgstRate(String(q.cgstRate ?? ''));
+        setSgstRate(String(q.sgstRate ?? ''));
+        setIgstRate(String(q.igstRate ?? ''));
+        setSecurityDeposit(String(q.securityDeposit ?? ''));
+        setHeaderText(q.headerText ?? '');
+        setTerms(q.terms ?? '');
+        setNotes(q.notes ?? '');
+        if (q.exactHire) {
+          setExactHire({
+            partyAddress: q.exactHire.partyAddress ?? '',
+            subject: q.exactHire.subject ?? '',
+            validityDays: String(q.exactHire.validityDays ?? ''),
+            minimumHirePeriod: q.exactHire.minimumHirePeriod ?? '',
+            minimumHireDays: String(q.exactHire.minimumHireDays ?? ''),
+            siteLengthRmt: String(q.exactHire.siteLengthRmt ?? ''),
+            siteHeightMtr: String(q.exactHire.siteHeightMtr ?? ''),
+            gstPercentage: String(q.exactHire.gstPercentage ?? ''),
+            advanceRent: String(q.exactHire.advanceRent ?? ''),
+            paymentDueDays: String(q.exactHire.paymentDueDays ?? ''),
+            authorizedPerson: q.exactHire.authorizedPerson ?? '',
+            authorizedDesignation: q.exactHire.authorizedDesignation ?? '',
+            authorizedPhone: q.exactHire.authorizedPhone ?? '',
+            acceptedBy: q.exactHire.acceptedBy ?? '',
+            acceptedDesignation: q.exactHire.acceptedDesignation ?? '',
+            acceptedPhone: q.exactHire.acceptedPhone ?? '',
+            acceptedDate: q.exactHire.acceptedDate ?? '',
+          });
+        }
+        setLines(q.items.map((i) => ({
+          itemId: i.itemId,
+          quantity: String(i.quantity ?? ''),
+          rate: String(i.rate ?? ''),
+          requiredQuantity: i.requiredQuantity ? String(i.requiredQuantity) : '',
+          hireMonths: i.hireMonths ? String(i.hireMonths) : '',
+          replacementRate: i.replacementRate ? String(i.replacementRate) : '',
+          area: '',
+        })));
+      } else if (availableTemplates.length === 1) {
         setTemplateId(availableTemplates[0].id);
         setHeaderText(availableTemplates[0].headerText ?? '');
         setTerms(availableTemplates[0].defaultTerms ?? '');
@@ -161,7 +211,7 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
       }
     }).catch((cause) => setError(apiErrorMessage(cause, 'Unable to load quotation setup data.')))
       .finally(() => setLoading(false));
-  }, []);
+  }, [route.params?.quotationId]);
 
   const selectedTemplate = templates.find((row) => row.id === templateId);
   const selectedParty = parties.find((row) => row.id === partyId);
@@ -325,7 +375,7 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
     setSaving(true);
     try {
       const advanceRent = exactHire.advanceRent === '' ? oneMonthRent : Number(exactHire.advanceRent);
-      const response = await apiClient.post<Quotation>('/quotations', {
+      const payload = {
         quotationTemplateId: templateId,
         partyId,
         siteId,
@@ -372,14 +422,20 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
           weight: 0,
           description: null,
         })),
-      });
+        version: quotationVersion,
+      };
+
+      const response = route.params?.quotationId
+        ? await apiClient.put<Quotation>(`/quotations/${route.params.quotationId}`, payload)
+        : await apiClient.post<Quotation>('/quotations', payload);
+
       Alert.alert(
-        'Quotation created',
+        route.params?.quotationId ? 'Quotation updated' : 'Quotation created',
         `${response.data.quotationNumber} is saved as a draft. Open it in Sales to send and approve it.`,
         [{ text: 'Open Sales', onPress: () => navigation.navigate('Main') }],
       );
     } catch (cause) {
-      Alert.alert('Quotation not created', apiErrorMessage(cause, 'Unable to create this quotation.'));
+      Alert.alert(route.params?.quotationId ? 'Quotation not updated' : 'Quotation not created', apiErrorMessage(cause, 'Unable to save this quotation.'));
     } finally {
       setSaving(false);
     }

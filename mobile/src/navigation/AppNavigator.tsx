@@ -31,6 +31,8 @@ import { InquiriesScreen } from '../screens/InquiriesScreen';
 import { CreateInquiryScreen } from '../screens/CreateInquiryScreen';
 import { SiteOperationsScreen } from '../screens/SiteOperationsScreen';
 import { CreateSiteOperationScreen } from '../screens/CreateSiteOperationScreen';
+import { SitesScreen } from '../screens/SitesScreen';
+import { SiteDetailScreen } from '../screens/SiteDetailScreen';
 import { colors, fonts } from '../theme';
 import type { MainTabParams, RootStackParams } from './types';
 
@@ -54,6 +56,7 @@ const tabIcons: Record<keyof MainTabParams, keyof typeof Ionicons.glyphMap> = {
   Sales: 'briefcase-outline',
   Orders: 'clipboard-outline',
   Challans: 'document-text-outline',
+  Sites: 'business-outline',
   More: 'menu-outline',
 };
 
@@ -85,6 +88,7 @@ function MainTabs() {
       <Tab.Screen name="Sales" component={SalesScreen} />
       <Tab.Screen name="Orders" component={OrdersScreen} />
       <Tab.Screen name="Challans" component={ChallansScreen} />
+      <Tab.Screen name="Sites" component={SitesScreen} />
       <Tab.Screen name="More" component={MoreScreen} />
     </Tab.Navigator>
   );
@@ -108,6 +112,7 @@ export function AppNavigator() {
         {user ? (
           <>
             <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
+            <Stack.Screen name="SiteDetail" component={SiteDetailScreen} options={{ title: 'Site overview' }} />
             <Stack.Screen name="Stock" component={StockScreen} options={{ title: 'Current stock' }} />
             <Stack.Screen name="GstExport" component={GstExportScreen} options={{ title: 'Monthly GST export' }} />
             <Stack.Screen name="ExcelReports" component={ExcelReportsScreen} options={{ title: 'Excel reports' }} />

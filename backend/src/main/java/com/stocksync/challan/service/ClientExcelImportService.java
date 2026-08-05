@@ -371,6 +371,22 @@ public class ClientExcelImportService {
                     importedCount++;
                 }
             }
+
+            // Sync imported items into SiteOrderItem and set order status to CONFIRMED
+            if (finalOrder != null) {
+                jdbc.execute("UPDATE site_orders SET status = 'CONFIRMED' WHERE id = " + finalOrder.getId());
+                // Insert items into site_order_items if missing or update ordered_quantity
+                for (Item item : columnItemMap.values()) {
+                    jdbc.update("""
+                        INSERT INTO site_order_items (order_id, item_id, ordered_quantity, issued_quantity, version)
+                        SELECT ?, ?, COALESCE(SUM(ici.quantity), 0), COALESCE(SUM(ici.quantity), 0), 0
+                        FROM issued_challans ic
+                        JOIN issued_challan_items ici ON ici.issued_challan_id = ic.id
+                        WHERE ic.site_order_id = ? AND ici.item_id = ?
+                        ON DUPLICATE KEY UPDATE ordered_quantity = VALUES(ordered_quantity), issued_quantity = VALUES(issued_quantity)
+                    """, finalOrder.getId(), item.getId(), finalOrder.getId(), item.getId());
+                }
+            }
             
         } catch (Exception e) {
             throw new BusinessRuleException("IMPORT_FAILED", "Failed to parse Excel file: " + e.getMessage());

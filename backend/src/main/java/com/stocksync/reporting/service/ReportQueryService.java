@@ -82,6 +82,7 @@ public class ReportQueryService {
             case "ISSUED_CHALLANS_REGISTER" -> issuedChallans(f);
             case "RECEIVING_CHALLANS_REGISTER" -> receivingChallans(f);
             case "SITE_TRANSFERS_REGISTER" -> siteTransfers(f);
+            case "SITE_OPERATIONS_REGISTER" -> siteOperations(f);
             case "LOSS_RECORDS_REGISTER" -> lossRecords(f);
             case "DAMAGE_RECORDS_REGISTER" -> damageRecords(f);
             case "ITEM_EXCHANGES_REGISTER" -> itemExchanges(f);
@@ -89,6 +90,7 @@ public class ReportQueryService {
             case "SCRAP_REGISTER" -> scrap(f);
             case "STOCK_ADJUSTMENTS_REGISTER" -> adjustments(f);
             case "QUOTATION_REGISTER" -> quotations(f);
+            case "INQUIRY_REGISTER" -> inquiryRegister(f);
             case "AGREEMENT_REGISTER" -> agreements(f);
             case "BILLING_RUN_REGISTER" -> billingRuns(f);
             case "INVOICE_REGISTER" -> invoiceRegister(f);
@@ -397,6 +399,38 @@ public class ReportQueryService {
         status(sql, f, "st.status");
         doc(sql, f, "st.transfer_number");
         sql.append(" GROUP BY st.id, st.transfer_number, st.transfer_date, sp.legal_name, ss.site_name, dp.legal_name, ds.site_name, st.status, st.vehicle_number ORDER BY st.transfer_date DESC");
+        return sql.spec();
+    }
+
+    private QuerySpec siteOperations(ReportFilterRequest f) {
+        Sql sql = new Sql("""
+                SELECT o.operation_number document_number, o.operation_date date, o.operation_type type, o.direction direction,
+                       p.legal_name party, s.site_name site, o.provider_type provider_type, o.provider_name provider,
+                       o.transporter_name transporter, o.vehicle_number vehicle, o.driver_name driver, o.worker_count workers,
+                       o.quantity quantity, o.rate rate, o.amount amount, o.charge_to_client charge_client, o.status status, o.reference_number ref_no
+                FROM site_operations o LEFT JOIN parties p ON p.id=o.party_id JOIN sites s ON s.id=o.site_id WHERE 1=1
+                """);
+        common(sql, f, "o.party_id", "o.site_id", null, null);
+        date(sql, f, "o.operation_date");
+        status(sql, f, "o.status");
+        doc(sql, f, "o.operation_number");
+        sql.append(" ORDER BY o.operation_date DESC, o.id DESC");
+        return sql.spec();
+    }
+
+    private QuerySpec inquiryRegister(ReportFilterRequest f) {
+        Sql sql = new Sql("""
+                SELECT i.inquiry_number document_number, i.inquiry_date date, i.source source, i.contact_name contact,
+                       i.phone phone, i.email email, p.legal_name party, s.site_name site, i.requirement requirement,
+                       i.follow_up_date follow_up_date, i.status status, q.quotation_number quote_no, i.notes notes
+                FROM client_inquiries i LEFT JOIN parties p ON p.id=i.party_id LEFT JOIN sites s ON s.id=i.site_id
+                LEFT JOIN quotations q ON q.id=i.quotation_id WHERE 1=1
+                """);
+        common(sql, f, "i.party_id", "i.site_id", null, null);
+        date(sql, f, "i.inquiry_date");
+        status(sql, f, "i.status");
+        doc(sql, f, "i.inquiry_number");
+        sql.append(" ORDER BY i.inquiry_date DESC, i.id DESC");
         return sql.spec();
     }
 

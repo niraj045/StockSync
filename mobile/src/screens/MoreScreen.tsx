@@ -99,15 +99,6 @@ export function MoreScreen({ navigation }: Props) {
         <Ionicons name="chevron-forward" size={20} color={colors.muted} />
       </Pressable>
 
-      <Pressable style={styles.menuRow} onPress={() => navigation.navigate('SiteLedgerImport')}>
-        <View style={styles.menuIcon}><Ionicons name="documents-outline" size={21} color={colors.primary} /></View>
-        <View style={styles.menuCopy}>
-          <Text style={styles.menuTitle}>Import site ledger</Text>
-          <Text style={styles.menuText}>Upload a customer D&R statement to auto-generate opening site balances</Text>
-        </View>
-        <Ionicons name="chevron-forward" size={20} color={colors.muted} />
-      </Pressable>
-
       <Pressable style={styles.menuRow} onPress={() => navigation.navigate('ClientExcelImport')}>
         <View style={styles.menuIcon}><Ionicons name="cloud-upload-outline" size={21} color={colors.primary} /></View>
         <View style={styles.menuCopy}>

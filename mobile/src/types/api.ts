@@ -235,6 +235,9 @@ export type Quotation = {
   totalTax?: number;
   grandTotal: number;
   securityDeposit: number;
+  headerText?: string;
+  terms?: string;
+  notes?: string;
   exactHire?: ExactHireFields;
   exactPdfAttachmentId?: number;
   items: QuotationItem[];

@@ -10,7 +10,7 @@ export type RootStackParams = {
   BillingRunDetail: { runId: number };
   CreateParty: undefined;
   CreateSite: { partyId?: number } | undefined;
-  CreateQuotation: { partyId?: number; siteId?: number } | undefined;
+  CreateQuotation: { partyId?: number; siteId?: number; quotationId?: number } | undefined;
   AgreementFlow: { quotationId?: number; agreementId?: number; mode?: 'edit' | 'view' };
   CreateOrder: { agreementId?: number } | undefined;
   CreateIssuedChallan: { orderId?: number } | undefined;
@@ -24,6 +24,7 @@ export type RootStackParams = {
   OpeningStockImport: undefined;
   SiteLedgerImport: undefined;
   ClientExcelImport: undefined;
+  SiteDetail: { siteId: number; siteName?: string };
 };
 
 export type MainTabParams = {
@@ -31,5 +32,6 @@ export type MainTabParams = {
   Sales: undefined;
   Orders: undefined;
   Challans: undefined;
+  Sites: undefined;
   More: undefined;
 };
