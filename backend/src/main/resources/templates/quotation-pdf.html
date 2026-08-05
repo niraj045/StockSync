@@ -43,7 +43,8 @@ th{text-align:center;font-weight:700}
   <span th:text="${q.siteName}">Site</span>.
 </div>
 
-<p>With reference to your requirement, we are pleased to submit our quotation for the supply of scaffolding materials on hire.</p>
+<div class="pre" th:if="${fmt.hasText(q.headerText)}" th:text="${q.headerText}">With reference to your requirement, we are pleased to submit our quotation for the supply of scaffolding materials on hire.</div>
+<p th:unless="${fmt.hasText(q.headerText)}">With reference to your requirement, we are pleased to submit our quotation for the supply of scaffolding materials on hire.</p>
 
 <div class="section-title">PART A: HIRE CHARGES &amp; COSTS</div>
 <ol class="costs">

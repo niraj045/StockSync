@@ -44,6 +44,8 @@ th{text-align:center;font-weight:700}
   <span th:text="${a.siteName}">Site</span>.
 </div>
 
+<div class="pre" th:if="${fmt.hasText(a.headerText)}" th:text="${a.headerText}"></div>
+
 <table class="meta">
   <tr>
     <td><span class="bold">Agreement Date</span><br/><span th:text="${fmt.shortDate(a.agreementDate)}">-</span></td>

@@ -115,6 +115,7 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
   const [sgstRate, setSgstRate] = useState('9');
   const [igstRate, setIgstRate] = useState('0');
   const [securityDeposit, setSecurityDeposit] = useState('0');
+  const [headerText, setHeaderText] = useState('');
   const [terms, setTerms] = useState('');
   const [notes, setNotes] = useState('');
   const [templateCode, setTemplateCode] = useState('CLIENT-QUOTATION');
@@ -146,6 +147,7 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
       setStockBalances(stockResponse.data.content);
       if (availableTemplates.length === 1) {
         setTemplateId(availableTemplates[0].id);
+        setHeaderText(availableTemplates[0].headerText ?? '');
         setTerms(availableTemplates[0].defaultTerms ?? '');
         setNotes(availableTemplates[0].defaultNotes ?? '');
         if (availableTemplates[0].templateCode === exactTemplateCode) {
@@ -184,6 +186,7 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
   const selectTemplate = (template: QuotationTemplate) => {
     const wasExact = selectedTemplate?.templateCode === exactTemplateCode;
     setTemplateId(template.id);
+    setHeaderText(template.headerText ?? '');
     setTerms(template.defaultTerms ?? '');
     setNotes(template.defaultNotes ?? '');
     if (template.templateCode === exactTemplateCode) {
@@ -249,7 +252,7 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
         companyName: companyName.trim(),
         companyAddress: companyAddress.trim() || null,
         companyGstin: companyGstin.trim().toUpperCase() || null,
-        headerText: null,
+        headerText: headerText.trim() || null,
         footerText: null,
         defaultTerms: terms.trim() || null,
         defaultNotes: notes.trim() || null,
@@ -268,14 +271,15 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
   const applyStandardTerms = async () => {
     const doFetch = async () => {
       try {
-        const response = await apiClient.get<{terms:string}>('/settings/default-terms?documentType=QUOTATION');
+        const response = await apiClient.get<{headerText?:string, terms:string}>('/settings/default-terms?documentType=QUOTATION');
+        setHeaderText(response.data.headerText ?? '');
         setTerms(response.data.terms);
       } catch (cause) {
         Alert.alert('Error', apiErrorMessage(cause, 'Failed to load standard terms.'));
       }
     };
-    if (terms && terms.trim()) {
-      Alert.alert('Replace terms?', 'This will replace the current terms with the standard terms. Continue?', [
+    if ((terms && terms.trim()) || (headerText && headerText.trim())) {
+      Alert.alert('Replace text?', 'This will replace the current header text and terms with the standard ones. Continue?', [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Replace', style: 'destructive', onPress: doFetch },
       ]);
@@ -333,6 +337,7 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
         otherCharge: 0,
         roundOff: 0,
         securityDeposit: Number(securityDeposit) || 0,
+        headerText: headerText.trim() || null,
         terms: terms.trim() || null,
         notes: notes.trim() || null,
         exactHire: isExact ? {
@@ -500,7 +505,8 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
           <Field label="Customer phone" value={exactHire.acceptedPhone} onChangeText={(value) => updateExactHire('acceptedPhone', value)} keyboardType="phone-pad" />
           <DateField label="Acceptance date" value={exactHire.acceptedDate} onChange={(value) => updateExactHire('acceptedDate', value)} optional />
         </> : null}
-        <Field label={<View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8}}><Text style={styles.label}>Terms</Text><Pressable onPress={applyStandardTerms}><Text style={{color: colors.primary, fontWeight: '700', fontSize: 12}}>Use Standard Terms</Text></Pressable></View>} value={terms} onChangeText={setTerms} multiline />
+        <Field label={<View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8}}><Text style={styles.label}>Header Intro</Text><Pressable onPress={applyStandardTerms}><Text style={{color: colors.primary, fontWeight: '700', fontSize: 12}}>Use Standard Text</Text></Pressable></View>} value={headerText} onChangeText={setHeaderText} multiline />
+        <Field label="Terms" value={terms} onChangeText={setTerms} multiline />
         <Text style={styles.fieldHelp}>Use the standard terms, edit them manually, or leave the field blank to generate the document without terms.</Text>
         <Field label="Notes" value={notes} onChangeText={setNotes} multiline />
         <Card style={styles.totalCard}>

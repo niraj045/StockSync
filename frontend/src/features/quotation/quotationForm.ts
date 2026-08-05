@@ -6,7 +6,7 @@ export type QuotationEditor = {
   quotationTemplateId: number; partyId: number; siteId: number; quotationDate: string; validUntil: string;
   rentalType: string; discountType: string; discountValue: number; cgstRate: number; sgstRate: number; igstRate: number;
   transportCharge: number; loadingCharge: number; unloadingCharge: number; otherCharge: number; roundOff: number;
-  securityDeposit: number; terms?: string; notes?: string; items: QuotationItem[]; exactHire?: ExactHireFields; version?: number;
+  securityDeposit: number; headerText?: string; terms?: string; notes?: string; items: QuotationItem[]; exactHire?: ExactHireFields; version?: number;
 };
 export type FormError = { name: NamePath; errors: string[] };
 

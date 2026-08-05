@@ -90,6 +90,7 @@ public class AgreementService implements AgreementAccess {
   if(request!=null){
    a.setSecurityDeposit(request.securityDeposit());
    a.setNotes(trim(request.notes()));
+   if(request.headerText() != null) a.setHeaderText(request.headerText());
    if(request.terms() != null) {
        a.setTerms(request.terms());
    }
@@ -116,7 +117,7 @@ public class AgreementService implements AgreementAccess {
   a.setBillingCommencementRule(r.billingCommencementRule()==null?BillingCommencementRule.FIRST_DISPATCH:r.billingCommencementRule());
   a.setFixedBillingStartDate(r.fixedBillingStartDate());
   a.setCustomBillingCycleDays(r.customBillingCycleDays());a.setGracePeriodDays(zero(r.gracePeriodDays()));a.setMinimumBillingDays(zero(r.minimumBillingDays()));
-  a.setSecurityDeposit(r.securityDeposit());a.setTerms(r.terms());a.setNotes(trim(r.notes()));
+  a.setSecurityDeposit(r.securityDeposit());a.setHeaderText(r.headerText());a.setTerms(r.terms());a.setNotes(trim(r.notes()));
   if(r.billingStartRule()!=null)a.setBillingStartRule(BillingStartRule.valueOf(r.billingStartRule()));
   if(r.billingEndRule()!=null)a.setBillingEndRule(BillingEndRule.valueOf(r.billingEndRule()));
   a.setGeneratedDocument(null);a.setGeneratedFilename(null);a.setGeneratedStoragePath(null);a.setGeneratedAt(null);
@@ -217,7 +218,7 @@ public class AgreementService implements AgreementAccess {
  }
  private void validateReady(Agreement a){if(a.getEffectiveDate()==null||a.getItems().isEmpty())throw error("AGREEMENT_NOT_READY","Effective date and agreement items are required");}
  private void copySnapshots(Agreement a,Quotation q){var p=q.getParty();var s=q.getSite();a.setPartyLegalNameSnapshot(q.getPartyNameSnapshot());a.setPartyTradeNameSnapshot(p.getTradeName());a.setPartyGstinSnapshot(p.getGstin());a.setPartyPanSnapshot(p.getPan());a.setPartyAddressSnapshot(p.getAddress());a.setPartyStateSnapshot(p.getState());a.setPartyContactSnapshot(String.join(" / ",nonNull(p.getContactPerson()),nonNull(p.getPhone()),nonNull(p.getEmail())));a.setSiteNameSnapshot(q.getSiteNameSnapshot());a.setSiteCodeSnapshot(s.getSiteCode());a.setSiteAddressSnapshot(s.getAddress());a.setSiteContactSnapshot(s.getContactPerson());a.setQuotationNumberSnapshot(q.getQuotationNumber());a.setQuotationDateSnapshot(q.getQuotationDate());a.setQuotationApprovedAtSnapshot(q.getApprovedAt());}
- private void copyCommercials(Agreement a,Quotation q){a.setSecurityDeposit(q.getSecurityDeposit());a.setSubtotal(q.getSubtotal());a.setDiscountAmount(q.getDiscountAmount());a.setTaxableAmount(q.getTaxableAmount());a.setCgstAmount(q.getCgstAmount());a.setSgstAmount(q.getSgstAmount());a.setIgstAmount(q.getIgstAmount());a.setTotalTax(q.getTotalTax());a.setTransportCharge(q.getTransportCharge());a.setLoadingCharge(q.getLoadingCharge());a.setUnloadingCharge(q.getUnloadingCharge());a.setOtherCharge(q.getOtherCharge());a.setRoundOff(q.getRoundOff());a.setGrandTotal(q.getGrandTotal());a.setTerms(q.getTerms());a.setNotes(q.getNotes());}
+ private void copyCommercials(Agreement a,Quotation q){a.setSecurityDeposit(q.getSecurityDeposit());a.setSubtotal(q.getSubtotal());a.setDiscountAmount(q.getDiscountAmount());a.setTaxableAmount(q.getTaxableAmount());a.setCgstAmount(q.getCgstAmount());a.setSgstAmount(q.getSgstAmount());a.setIgstAmount(q.getIgstAmount());a.setTotalTax(q.getTotalTax());a.setTransportCharge(q.getTransportCharge());a.setLoadingCharge(q.getLoadingCharge());a.setUnloadingCharge(q.getUnloadingCharge());a.setOtherCharge(q.getOtherCharge());a.setRoundOff(q.getRoundOff());a.setGrandTotal(q.getGrandTotal());a.setHeaderText(q.getHeaderText());a.setTerms(q.getTerms());a.setNotes(q.getNotes());}
  private Agreement require(Long id){return agreements.findDetailedById(id).orElseThrow(()->error("AGREEMENT_NOT_FOUND","Agreement not found"));}
  private void expect(Agreement a,AgreementStatus status){if(a.getStatus()!=status)throw transition(a);} private BusinessRuleException transition(Agreement a){return error("INVALID_AGREEMENT_STATUS_TRANSITION","Operation is not allowed while agreement is "+a.getStatus());}
  private AgreementResponse saveLog(Agreement a,String action,String description,HttpServletRequest h){a.setUpdatedBy(actor());Agreement saved=agreements.save(a);log(action,saved,description,h);return response(saved);}
@@ -252,7 +253,7 @@ public class AgreementService implements AgreementAccess {
   a.getSite().getId(),a.getSiteNameSnapshot(),a.getSiteCodeSnapshot(),a.getSiteAddressSnapshot(),a.getSiteContactSnapshot(),a.getAgreementDate(),a.getEffectiveDate(),a.getExpiryDate(),a.getRentalType(),a.getBillingCycle(),
   a.getMeasurementBasis(),a.getBillingCommencementRule(),a.getFixedBillingStartDate(),a.getNextBillingDate(),a.getLastAutoPeriodEnd(),
   a.getCustomBillingCycleDays(),a.getGracePeriodDays(),a.getMinimumBillingDays(),a.getStatus(),a.getSecurityDeposit(),a.getSubtotal(),a.getDiscountAmount(),a.getTaxableAmount(),a.getCgstAmount(),a.getSgstAmount(),a.getIgstAmount(),a.getTotalTax(),
-  a.getTransportCharge(),a.getLoadingCharge(),a.getUnloadingCharge(),a.getOtherCharge(),a.getRoundOff(),a.getGrandTotal(),a.getTerms(),a.getNotes(),
+  a.getTransportCharge(),a.getLoadingCharge(),a.getUnloadingCharge(),a.getOtherCharge(),a.getRoundOff(),a.getGrandTotal(),a.getHeaderText(),a.getTerms(),a.getNotes(),
   a.getGeneratedDocument()==null?null:a.getGeneratedDocument().getId(),a.getGeneratedFilename(),a.getGeneratedAt(),
   a.getSignedDocument()==null?null:a.getSignedDocument().getId(),a.getSignedFilename(),a.getSignedUploadedAt(),
   a.getReadyForReviewAt(),a.getReadyForReviewBy(),a.getActivatedAt(),a.getActivatedBy(),

@@ -38,9 +38,13 @@ public class TermsTemplateService {
             This document, together with accepted commercial terms and signed challans, forms the complete understanding between SteelFab and the hirer for the materials supplied on hire.
             """.trim();
 
+    private static final String DEFAULT_HEADER = "With reference to your requirement, we are pleased to submit our quotation for the supply of scaffolding materials on hire.";
+    private static final String DEFAULT_AGREEMENT_HEADER = "With reference to our discussions and the approved quotation, we are pleased to confirm this agreement for the hire of scaffolding materials for your project. The commercial details and the conditions governing the hire are recorded below.";
+
     public DefaultTermsResponse getDefaultTerms(String documentType) {
-        // Both Quotation and Agreement currently share the same default text,
+        // Both Quotation and Agreement currently share the same default terms,
         // but this service encapsulates that logic and allows future divergence.
-        return new DefaultTermsResponse(documentType, DEFAULT_TERMS, 1);
+        String header = "AGREEMENT".equalsIgnoreCase(documentType) ? DEFAULT_AGREEMENT_HEADER : DEFAULT_HEADER;
+        return new DefaultTermsResponse(documentType, header, DEFAULT_TERMS, 1);
     }
 }

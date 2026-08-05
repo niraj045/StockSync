@@ -21,6 +21,7 @@ export function AgreementFlowScreen({ navigation, route }: Props) {
   const [expiryDate, setExpiryDate] = useState('');
   const [securityDeposit, setSecurityDeposit] = useState('0');
   const [notes, setNotes] = useState('');
+  const [headerText, setHeaderText] = useState('');
   const [terms, setTerms] = useState('');
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState('');
@@ -34,8 +35,8 @@ export function AgreementFlowScreen({ navigation, route }: Props) {
         .finally(() => setLoading(false));
     } else if (route.params.quotationId) {
       // Need to fetch quotation to initialize terms
-      apiClient.get<{terms: string}>(`/quotations/${route.params.quotationId}`)
-        .then((response) => setTerms(response.data.terms ?? ''))
+      apiClient.get<{headerText: string, terms: string}>(`/quotations/${route.params.quotationId}`)
+        .then((response) => { setHeaderText(response.data.headerText ?? ''); setTerms(response.data.terms ?? ''); })
         .catch((cause) => setError(apiErrorMessage(cause, 'Unable to load source quotation.')))
         .finally(() => setLoading(false));
     } else {
@@ -46,14 +47,15 @@ export function AgreementFlowScreen({ navigation, route }: Props) {
   const applyStandardTerms = async () => {
     const doFetch = async () => {
       try {
-        const response = await apiClient.get<{terms:string}>('/settings/default-terms?documentType=AGREEMENT');
+        const response = await apiClient.get<{headerText?:string, terms:string}>('/settings/default-terms?documentType=AGREEMENT');
+        setHeaderText(response.data.headerText ?? '');
         setTerms(response.data.terms);
       } catch (cause) {
         Alert.alert('Error', apiErrorMessage(cause, 'Failed to load standard terms.'));
       }
     };
-    if (terms && terms.trim()) {
-      Alert.alert('Replace terms?', 'This will replace the current terms with the standard terms. Continue?', [
+    if ((terms && terms.trim()) || (headerText && headerText.trim())) {
+      Alert.alert('Replace text?', 'This will replace the current header text and terms with the standard ones. Continue?', [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Replace', style: 'destructive', onPress: doFetch },
       ]);
@@ -75,6 +77,7 @@ export function AgreementFlowScreen({ navigation, route }: Props) {
         effectiveDate,
         expiryDate: expiryDate || null,
         securityDeposit: Number(securityDeposit) || 0,
+        headerText: headerText.trim() || null,
         notes: notes.trim() || null,
         terms: terms.trim() || null,
       });
@@ -187,7 +190,8 @@ export function AgreementFlowScreen({ navigation, route }: Props) {
           <DateField label="Effective date *" value={effectiveDate} onChange={setEffectiveDate} />
           <DateField label="Expiry date" value={expiryDate} onChange={setExpiryDate} optional minimumDate={new Date(`${effectiveDate}T12:00:00`)} />
           <Field label="Security deposit (INR)" value={securityDeposit} onChangeText={setSecurityDeposit} keyboardType="decimal-pad" />
-          <Field label={<View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8}}><Text style={styles.label}>Terms</Text><Pressable onPress={applyStandardTerms}><Text style={{color: colors.primary, fontWeight: '700', fontSize: 12}}>Use Standard Terms</Text></Pressable></View>} value={terms} onChangeText={setTerms} multiline />
+          <Field label={<View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8}}><Text style={styles.label}>Header Intro</Text><Pressable onPress={applyStandardTerms}><Text style={{color: colors.primary, fontWeight: '700', fontSize: 12}}>Use Standard Text</Text></Pressable></View>} value={headerText} onChangeText={setHeaderText} multiline />
+          <Field label="Terms" value={terms} onChangeText={setTerms} multiline />
           <Text style={styles.fieldHelp}>Use the standard terms, edit them manually, or leave the field blank to generate the document without terms.</Text>
           <Field label="Agreement notes" value={notes} onChangeText={setNotes} multiline />
           <AppButton title="Create draft agreement" onPress={convert} loading={working === 'convert'} disabled={!!error} />

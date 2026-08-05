@@ -24,6 +24,7 @@ public record QuotationRequest(
         @NotNull @DecimalMin("0") BigDecimal unloadingCharge,
         @NotNull @DecimalMin("0") BigDecimal otherCharge,
         @NotNull BigDecimal roundOff,
+        String headerText,
         @NotNull @DecimalMin("0") BigDecimal securityDeposit,
         @Size(max=4000) String terms,
         @Size(max=2000) String notes,

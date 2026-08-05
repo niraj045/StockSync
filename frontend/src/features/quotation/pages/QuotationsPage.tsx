@@ -87,14 +87,14 @@ export function QuotationsPage(){
     const current = form.getFieldValue('terms');
     const doFetch = async () => {
       try {
-        const r = await apiClient.get<{terms:string}>('/settings/default-terms?documentType=QUOTATION');
-        form.setFieldsValue({ terms: r.data.terms });
+        const r = await apiClient.get<{headerText?:string, terms:string}>('/settings/default-terms?documentType=QUOTATION');
+        form.setFieldsValue({ headerText: r.data.headerText, terms: r.data.terms });
       } catch (e) {
         message.error('Failed to load standard terms');
       }
     };
     if (current && current.trim()) {
-      modal.confirm({title: 'Replace terms?', content: 'This will replace the current terms with the standard terms. Continue?', onOk: doFetch});
+      modal.confirm({title: 'Replace text?', content: 'This will replace the current header text and terms with the standard ones. Continue?', onOk: doFetch});
     } else {
       doFetch();
     }
@@ -163,7 +163,7 @@ export function QuotationsPage(){
       </div></section>}
       <section className="quotation-form-section">
         <h2>Terms and notes</h2>
-        <div className="master-form-grid"><Form.Item className="master-form-wide" name="terms" label={<Space>Terms <Button size="small" type="link" onClick={applyStandardTerms}>Use Standard Terms</Button></Space>} extra="Use the standard terms, edit them manually, or leave the field blank to generate the document without terms."><Input.TextArea rows={3}/></Form.Item><Form.Item className="master-form-wide" name="notes" label="Notes"><Input.TextArea rows={3}/></Form.Item></div>
+        <div className="master-form-grid"><Form.Item className="master-form-wide" name="headerText" label={<Space>Header Intro <Button size="small" type="link" onClick={applyStandardTerms}>Use Standard Text</Button></Space>} extra="Introductory paragraph."><Input.TextArea rows={3}/></Form.Item><Form.Item className="master-form-wide" name="terms" label="Terms" extra="Use the standard terms, edit them manually, or leave the field blank to generate the document without terms."><Input.TextArea rows={3}/></Form.Item><Form.Item className="master-form-wide" name="notes" label="Notes"><Input.TextArea rows={3}/></Form.Item></div>
       </section>
       <section className="quotation-form-section quotation-summary"><h2>Quotation summary</h2><Alert type="info" showIcon message={`Estimated grand total: ${money(estimate)}`} description="The backend recalculates and stores the authoritative total."/></section>
       <footer className="quotation-action-footer"><Space>{editing&&isExact&&<Button icon={<EyeOutlined/>} onClick={()=>void preview(editing)}>Preview exact PDF</Button>}<Button onClick={closeEditor}>Cancel</Button><Button type="primary" loading={save.isPending} onClick={()=>form.submit()}>{editing?'Save changes':'Create quotation'}</Button></Space></footer>

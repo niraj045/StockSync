@@ -59,6 +59,7 @@ public class Quotation extends AuditedEntity {
     @Column(name = "grand_total", nullable = false, precision = 19, scale = 2)
     private BigDecimal grandTotal = BigDecimal.ZERO;
     @Column(name="security_deposit",nullable=false,precision=19,scale=2) private BigDecimal securityDeposit=BigDecimal.ZERO;
+    @Column(name = "header_text", length = 2000) private String headerText;
     @Column(length = 4000) private String terms;
     @Column(length = 1000) private String notes;
     @Lob @Column(name="exact_hire_fields_json",columnDefinition="LONGTEXT") private String exactHireFieldsJson;
@@ -110,6 +111,7 @@ public class Quotation extends AuditedEntity {
     public BigDecimal getTaxAmount(){return taxAmount;} public void setTaxAmount(BigDecimal v){taxAmount=v;}
     public BigDecimal getGrandTotal(){return grandTotal;} public void setGrandTotal(BigDecimal v){grandTotal=v;}
     public BigDecimal getSecurityDeposit(){return securityDeposit;} public void setSecurityDeposit(BigDecimal v){securityDeposit=v;}
+    public String getHeaderText(){return headerText;} public void setHeaderText(String v){headerText=v;}
     public String getTerms(){return terms;} public void setTerms(String v){terms=v;}
     public String getNotes(){return notes;} public void setNotes(String v){notes=v;}
     public String getExactHireFieldsJson(){return exactHireFieldsJson;} public void setExactHireFieldsJson(String v){exactHireFieldsJson=v;}

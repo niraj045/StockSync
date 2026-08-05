@@ -15,7 +15,7 @@ public record QuotationResponse(
         BigDecimal cgstRate,BigDecimal cgstAmount,BigDecimal sgstRate,BigDecimal sgstAmount,
         BigDecimal igstRate,BigDecimal igstAmount,BigDecimal totalTax,
         BigDecimal transportCharge,BigDecimal loadingCharge,BigDecimal unloadingCharge,BigDecimal otherCharge,
-        BigDecimal roundOff,BigDecimal grandTotal,BigDecimal securityDeposit,String terms,String notes,
+        BigDecimal roundOff,BigDecimal grandTotal,BigDecimal securityDeposit,String headerText,String terms,String notes,
         SteelFabExactHireRequest exactHire,Long exactPdfAttachmentId,String exactPdfTemplateCode,
         Integer exactPdfTemplateVersion,Integer exactPdfCoordinatesVersion,String exactPdfChecksumSha256,
         Instant exactPdfFinalizedAt,String exactPdfFinalizedBy,

@@ -35,7 +35,8 @@ p{margin:7px 0}.right{text-align:right}.center{text-align:center}.bold{font-weig
  <span th:text="${a.siteName}">Bandra Site</span>.</p>
 
 <p>Dear Sir,</p>
-<p>With reference to our discussions and the approved quotation
+<div class="pre" th:if="${fmt.hasText(a.headerText)}" th:text="${a.headerText}"></div>
+<p th:unless="${fmt.hasText(a.headerText)}">With reference to our discussions and the approved quotation
  <span class="bold" th:text="${a.sourceQuotationNumber}">SFE/22/2026-2027</span>, we are pleased to confirm this
  agreement for the hire of scaffolding materials for your project. The commercial details and the
  conditions governing the hire are recorded below.</p>
@@ -88,27 +89,6 @@ confirmed through SteelFab site orders and issued challans.</p>
 specifically included above. Counting and acknowledgement of delivered material shall be performed
 by the client's authorised representative.</p>
 
-<div class="page-break"></div>
-<div class="section">PART B: TERMS AND CONDITIONS</div>
-<ol class="terms">
- <li><span class="bold">Definitions.</span> “Owner” means SteelFab Scaffoldings &amp; Engineering
- Private Limited. “Hirer” means <span th:text="${a.partyName}">the client</span>. “Materials” means
- the equipment listed in Part A.</li>
- <li><span class="bold">Ownership and responsibility.</span> The materials remain the sole property
- of the Owner. The Hirer is responsible for their safety and security from delivery until accepted return.</li>
- <li><span class="bold">Inspection and use.</span> Materials must be inspected while loading or on
- delivery. They must not be sold, sub-hired or transferred without written permission.</li>
-</ol>
-
-<div class="page-break"></div>
-<ol class="terms" start="4">
- <li><span class="bold">Hire period and returns.</span> Hire commences according to the billing start
- rule recorded in SteelFab and continues until the applicable billing end event. Returned materials
- must be in the same condition, subject to normal wear.</li>
- <li><span class="bold">Loss and damage.</span> Missing or damaged material is chargeable at the
- item-specific loss and damage rates recorded below.</li>
-</ol>
-
 <table class="items" th:if="${!a.items.isEmpty()}">
  <thead><tr><th>Item</th><th>Loss / piece</th><th>Loss / weight</th><th>Damage rate</th></tr></thead>
  <tbody><tr th:each="i : ${a.items}">
@@ -119,29 +99,9 @@ by the client's authorised representative.</p>
  </tr></tbody>
 </table>
 
-<ol class="terms" start="6">
- <li><span class="bold">Security and advance payment.</span> The refundable security deposit is
- Rs. <span th:text="${fmt.amount(a.securityDeposit)}">0</span>, adjustable only against properly
- documented dues, losses or damage.</li>
- <li><span class="bold">Invoicing and payment.</span> Invoices will be raised according to the
- <span th:text="${a.billingCycle}">MONTHLY</span> billing cycle. Any agreed grace period is
- <span th:text="${a.gracePeriodDays}">0</span> days.</li>
- <li><span class="bold">Transportation.</span> Transportation responsibility and charges will be
- governed by the approved quotation and the commercial values in Part A.</li>
- <li><span class="bold">Delivery and delays.</span> The Owner will make reasonable efforts to meet
- the delivery schedule but is not responsible for delays outside its reasonable control.</li>
-</ol>
-
 <div class="page-break"></div>
-<ol class="terms" start="10">
- <li><span class="bold">Complete agreement and amendments.</span> This agreement, its source
- quotation, generated schedules, site orders and signed attachments constitute the complete
- contractual record. Any cancellation or change must be recorded in writing and approved by both
- parties.</li>
-</ol>
-
-<div th:if="${fmt.hasText(a.terms)}" class="avoid">
- <div class="section">ADDITIONAL AGREED TERMS</div><div class="pre" th:text="${a.terms}">Terms</div>
+<div th:if="${fmt.hasText(a.terms)}">
+ <div class="section">PART B: TERMS AND CONDITIONS</div><div class="pre" th:text="${a.terms}">Terms</div>
 </div>
 <div th:if="${fmt.hasText(a.notes)}" class="avoid">
  <div class="section">NOTES</div><div class="pre" th:text="${a.notes}">Notes</div>
