@@ -56,7 +56,7 @@ public class IssuedChallanController {
     @PostMapping(value = "/import-client-excel", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> importClientExcel(@ModelAttribute @Valid ClientExcelImportRequest request) {
-        int imported = importService.importClientExcel(request.siteOrderId(), request.file());
+        int imported = importService.importClientExcel(request.file());
         return ResponseEntity.ok(Map.of("success", true, "importedCount", imported));
     }
 }

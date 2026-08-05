@@ -49,10 +49,7 @@ public class ClientExcelImportService {
     }
 
     @Transactional
-    public int importClientExcel(Long siteOrderId, MultipartFile file) {
-        SiteOrder order = orders.findById(siteOrderId)
-                .orElseThrow(() -> new BusinessRuleException("ORDER_NOT_FOUND", "Site order not found"));
-
+    public int importClientExcel(MultipartFile file) {
         List<Item> allItems = items.findAll();
         int importedCount = 0;
         String actor = auditor();
@@ -82,6 +79,37 @@ public class ClientExcelImportService {
             
             if (headerRowIndex == -1) {
                 throw new BusinessRuleException("INVALID_FORMAT", "Could not find 'Challan no.' header in the first sheet.");
+            }
+            
+            // Auto-detect Target Site Order
+            List<SiteOrder> activeOrders = orders.findAll().stream()
+                    .filter(o -> !o.getStatus().name().equals("CANCELLED"))
+                    .toList();
+            SiteOrder order = null;
+            
+            for (int i = 0; i <= headerRowIndex; i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+                for (Cell cell : row) {
+                    if (cell.getCellType() == CellType.STRING) {
+                        String val = cell.getStringCellValue().trim().toLowerCase();
+                        if (val.isEmpty()) continue;
+                        
+                        for (SiteOrder so : activeOrders) {
+                            if (so.getSite() != null && so.getSite().getSiteName() != null && 
+                                val.contains(so.getSite().getSiteName().toLowerCase())) {
+                                order = so;
+                                break;
+                            }
+                        }
+                    }
+                    if (order != null) break;
+                }
+                if (order != null) break;
+            }
+            
+            if (order == null) {
+                throw new BusinessRuleException("SITE_ORDER_NOT_FOUND", "Could not automatically determine the Site Order from the Excel file contents. Ensure the site name is present above the header row.");
             }
             
             Row headerRow = sheet.getRow(headerRowIndex);
