@@ -7,6 +7,7 @@ export type RootStackParams = {
   GstExport: undefined;
   ExcelReports: undefined;
   Billing: undefined;
+  BillingRunDetail: { runId: number };
   CreateParty: undefined;
   CreateSite: { partyId?: number } | undefined;
   CreateQuotation: { partyId?: number; siteId?: number } | undefined;
@@ -20,6 +21,8 @@ export type RootStackParams = {
   CreateInquiry: { inquiryId?: number } | undefined;
   SiteOperations: undefined;
   CreateSiteOperation: { operationId?: number } | undefined;
+  OpeningStockImport: undefined;
+  SiteLedgerImport: undefined;
 };
 
 export type MainTabParams = {

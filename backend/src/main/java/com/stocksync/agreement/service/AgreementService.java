@@ -1,4 +1,5 @@
 package com.stocksync.agreement.service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.stocksync.agreement.dto.*;
 import com.stocksync.agreement.entity.*;
@@ -86,7 +87,13 @@ public class AgreementService implements AgreementAccess {
   a.setFixedBillingStartDate(request==null?null:request.fixedBillingStartDate());
   validateBillingCommencement(a.getBillingCommencementRule(),a.getFixedBillingStartDate());
   a.setStatus(AgreementStatus.DRAFT);copySnapshots(a,q);copyCommercials(a,q);
-  if(request!=null){a.setSecurityDeposit(request.securityDeposit());a.setNotes(trim(request.notes()));}
+  if(request!=null){
+   a.setSecurityDeposit(request.securityDeposit());
+   a.setNotes(trim(request.notes()));
+   if(request.terms() != null) {
+       a.setTerms(request.terms());
+   }
+  }
   List<AgreementItem> lines=new ArrayList<>();for(QuotationItem source:q.getItems()){AgreementItem i=new AgreementItem();
    i.setSourceQuotationItem(source);i.setItem(source.getItem());i.setItemCodeSnapshot(source.getItemCodeSnapshot());i.setItemNameSnapshot(source.getItemNameSnapshot());
    i.setDescriptionSnapshot(source.getDescriptionSnapshot());i.setSizeSnapshot(source.getSizeSnapshot());i.setUnitSnapshot(source.getUnitSnapshot());
@@ -109,7 +116,7 @@ public class AgreementService implements AgreementAccess {
   a.setBillingCommencementRule(r.billingCommencementRule()==null?BillingCommencementRule.FIRST_DISPATCH:r.billingCommencementRule());
   a.setFixedBillingStartDate(r.fixedBillingStartDate());
   a.setCustomBillingCycleDays(r.customBillingCycleDays());a.setGracePeriodDays(zero(r.gracePeriodDays()));a.setMinimumBillingDays(zero(r.minimumBillingDays()));
-  a.setSecurityDeposit(r.securityDeposit());a.setTerms(trim(r.terms()));a.setNotes(trim(r.notes()));
+  a.setSecurityDeposit(r.securityDeposit());a.setTerms(r.terms());a.setNotes(trim(r.notes()));
   if(r.billingStartRule()!=null)a.setBillingStartRule(BillingStartRule.valueOf(r.billingStartRule()));
   if(r.billingEndRule()!=null)a.setBillingEndRule(BillingEndRule.valueOf(r.billingEndRule()));
   a.setGeneratedDocument(null);a.setGeneratedFilename(null);a.setGeneratedStoragePath(null);a.setGeneratedAt(null);
@@ -166,6 +173,38 @@ public class AgreementService implements AgreementAccess {
   Path path=storageRoot.resolve(f.getStoragePath()).normalize();if(!path.startsWith(storageRoot)||!Files.isRegularFile(path))throw error("FILE_NOT_FOUND","Agreement document not found");
   return new Download(new FileSystemResource(path),f.getOriginalFilename(),f.getContentType());
  }
+
+ @Transactional public AgreementResponse uploadSignedDocument(Long id, MultipartFile file, HttpServletRequest h){
+  if(file==null||file.isEmpty())throw error("FILE_EMPTY","Select a document to upload");
+  if(file.getSize()>20L*1024*1024)throw error("FILE_TOO_LARGE","Document must not exceed 20 MB");
+  Agreement a=require(id);
+  String original=Paths.get(Optional.ofNullable(file.getOriginalFilename()).orElse("signed-agreement.pdf")).getFileName().toString();
+  String ext=original.contains(".")?original.substring(original.lastIndexOf(".")):"";
+  String safe="signed-agreement-"+a.getAgreementNumber().replaceAll("[^A-Za-z0-9.-]","-")+ext;
+  
+  Path dir=storageRoot.resolve("agreements").resolve("signed").resolve(String.valueOf(a.getId())).normalize();
+  Path target=dir.resolve(UUID.randomUUID()+ext).normalize();
+  if(!target.startsWith(storageRoot))throw error("INVALID_FILE_PATH","Invalid agreement document path");
+  
+  byte[] content;
+  try{content=file.getBytes();}catch(Exception e){throw error("FILE_READ_FAILED","Unable to read uploaded document");}
+  try{Files.createDirectories(dir);Files.write(target,content,StandardOpenOption.CREATE_NEW);}catch(Exception e){throw error("AGREEMENT_UPLOAD_FAILED","Unable to store signed document");}
+  
+  FileAttachment f=new FileAttachment();f.setEntityType("AGREEMENT");f.setEntityId(a.getId());f.setDocumentType("SIGNED_AGREEMENT");
+  f.setOriginalFilename(safe);f.setStoredFilename(target.getFileName().toString());f.setContentType(file.getContentType());
+  f.setFileSize(content.length);f.setStoragePath(storageRoot.relativize(target).toString());
+  f.setDescription("Uploaded signed agreement");f.setUploadedBy(actor());f=attachments.save(f);
+  
+  a.setSignedDocument(f);a.setSignedFilename(safe);a.setSignedUploadedAt(Instant.now());
+  return saveLog(a,"SIGNED_AGREEMENT_UPLOADED",safe,h);
+ }
+
+ @Transactional(readOnly=true) public Download downloadSignedDocument(Long id){
+  Agreement a=require(id);FileAttachment f=a.getSignedDocument();if(f==null)throw error("SIGNED_DOCUMENT_NOT_FOUND","Signed document has not been uploaded");
+  Path path=storageRoot.resolve(f.getStoragePath()).normalize();if(!path.startsWith(storageRoot)||!Files.isRegularFile(path))throw error("FILE_NOT_FOUND","Signed document not found on server");
+  return new Download(new FileSystemResource(path),f.getOriginalFilename(),f.getContentType());
+ }
+
  @Override @Transactional(readOnly=true) public OrderAgreement requireForOrder(Long id){Agreement a=require(id);if(a.getStatus()!=AgreementStatus.ACTIVE||a.getExpiryDate()!=null&&a.getExpiryDate().isBefore(LocalDate.now()))throw error("AGREEMENT_NOT_ORDERABLE","Agreement is not active");
   return new OrderAgreement(a.getId(),a.getParty().getId(),a.getSite().getId(),a.getStatus(),a.getItems().stream().map(i->new OrderAgreementItem(i.getItem().getId(),i.getAgreedQuantity())).toList());}
 
@@ -214,7 +253,9 @@ public class AgreementService implements AgreementAccess {
   a.getMeasurementBasis(),a.getBillingCommencementRule(),a.getFixedBillingStartDate(),a.getNextBillingDate(),a.getLastAutoPeriodEnd(),
   a.getCustomBillingCycleDays(),a.getGracePeriodDays(),a.getMinimumBillingDays(),a.getStatus(),a.getSecurityDeposit(),a.getSubtotal(),a.getDiscountAmount(),a.getTaxableAmount(),a.getCgstAmount(),a.getSgstAmount(),a.getIgstAmount(),a.getTotalTax(),
   a.getTransportCharge(),a.getLoadingCharge(),a.getUnloadingCharge(),a.getOtherCharge(),a.getRoundOff(),a.getGrandTotal(),a.getTerms(),a.getNotes(),
-  a.getGeneratedDocument()==null?null:a.getGeneratedDocument().getId(),a.getGeneratedFilename(),a.getGeneratedAt(),a.getReadyForReviewAt(),a.getReadyForReviewBy(),a.getActivatedAt(),a.getActivatedBy(),
+  a.getGeneratedDocument()==null?null:a.getGeneratedDocument().getId(),a.getGeneratedFilename(),a.getGeneratedAt(),
+  a.getSignedDocument()==null?null:a.getSignedDocument().getId(),a.getSignedFilename(),a.getSignedUploadedAt(),
+  a.getReadyForReviewAt(),a.getReadyForReviewBy(),a.getActivatedAt(),a.getActivatedBy(),
   a.getTerminationReason(),a.getTerminatedAt(),a.getTerminatedBy(),a.getCancellationReason(),a.getCancelledAt(),a.getCancelledBy(),
   a.getItems().stream().map(this::itemResponse).toList(),
   a.getBillingStartRule() == null ? "ISSUE_DATE_INCLUDED" : a.getBillingStartRule().name(),

@@ -15,7 +15,7 @@ type PaymentFormValues = Omit<PaymentInput, 'paymentDate' | 'chequeDate' | 'allo
   allocations?: AllocationInput[];
 };
 
-const money = (value?: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(value ?? 0);
+const money = (value?: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(value ?? 0);
 
 export function CreatePaymentPage() {
   const navigate = useNavigate();

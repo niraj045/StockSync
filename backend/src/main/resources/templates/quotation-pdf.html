@@ -96,8 +96,8 @@ th{text-align:center;font-weight:700}
 <p><span class="bold">Amount in Words:</span> <span th:text="${fmt.amountInWords(q.grandTotal)}">Rupees Zero Only</span></p>
 <p><span class="bold">Security Deposit:</span> Rs. <span th:text="${fmt.amount(q.securityDeposit)}">0</span></p>
 
-<div class="section-title">PART B: TERMS AND CONDITIONS</div>
-<div class="pre" th:text="${fmt.hireTerms(q.terms)}">Terms and conditions</div>
+<div class="section-title" th:if="${fmt.hasText(q.terms)}">PART B: TERMS AND CONDITIONS</div>
+<div class="pre" th:if="${fmt.hasText(q.terms)}" th:text="${q.terms}">Terms and conditions</div>
 
 <div class="section-title" th:if="${fmt.hasText(q.notes)}">Notes</div>
 <div class="pre" th:if="${fmt.hasText(q.notes)}" th:text="${q.notes}">Notes</div>

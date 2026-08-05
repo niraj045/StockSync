@@ -90,6 +90,24 @@ export function MoreScreen({ navigation }: Props) {
         <Ionicons name="chevron-forward" size={20} color={colors.muted} />
       </Pressable> : null}
 
+      <Pressable style={styles.menuRow} onPress={() => navigation.navigate('OpeningStockImport')}>
+        <View style={styles.menuIcon}><Ionicons name="cloud-upload-outline" size={21} color={colors.primary} /></View>
+        <View style={styles.menuCopy}>
+          <Text style={styles.menuTitle}>Import opening stock</Text>
+          <Text style={styles.menuText}>Upload Excel files to import stock records</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+      </Pressable>
+
+      <Pressable style={styles.menuRow} onPress={() => navigation.navigate('SiteLedgerImport')}>
+        <View style={styles.menuIcon}><Ionicons name="documents-outline" size={21} color={colors.primary} /></View>
+        <View style={styles.menuCopy}>
+          <Text style={styles.menuTitle}>Import site ledger</Text>
+          <Text style={styles.menuText}>Upload a customer D&R statement to auto-generate opening site balances</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+      </Pressable>
+
       <View style={styles.logout}>
         <AppButton title="Sign out" variant="danger" onPress={() => void logout()} />
       </View>
@@ -98,7 +116,7 @@ export function MoreScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  content: { flex: 1, backgroundColor: colors.canvas, padding: 18 },
+  content: { flexGrow: 1, backgroundColor: colors.canvas, padding: 18 },
   profile: { flexDirection: 'row', alignItems: 'center' },
   avatar: { width: 58, height: 58, borderRadius: 29, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   initial: { color: '#fff', fontSize: 25, fontFamily: fonts.black },

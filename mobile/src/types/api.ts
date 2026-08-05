@@ -120,6 +120,9 @@ export type Agreement = {
   grandTotal: number;
   generatedDocumentAttachmentId?: number;
   generatedFilename?: string;
+  signedDocumentAttachmentId?: number;
+  signedFilename?: string;
+  signedUploadedAt?: string;
   status: 'DRAFT' | 'READY_FOR_REVIEW' | 'ACTIVE' | 'EXPIRED' | 'TERMINATED' | 'CLOSED' | 'CANCELLED';
   items: AgreementItem[];
 };

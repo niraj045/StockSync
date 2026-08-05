@@ -27,7 +27,7 @@ const stateCode=(gstin?:string,location?:string)=>{const value=gstin?.trim().toU
 const addDays=(date:string,days:number)=>{const value=new Date(`${date}T00:00:00`);value.setDate(value.getDate()+days);return value.toISOString().slice(0,10);};
 const matchesSlot=(item:Option,key:string)=>{const value=normalize(`${item.itemCode} ${item.itemName}`);if(key==='hframe')return value.includes('hframe');if(key==='bracing')return value.includes('bracing')||value.includes('crossbrace');if(key==='mspipe')return value.includes('20ftpipe')||value.includes('mspipe')||value.includes('steelpipe');if(key==='platepipe')return value.includes('platepipe');if(key==='basejack')return value.includes('basejack');if(key==='platform')return value.includes('platform')||value.includes('walkway');return value.includes('coupler')||value.includes('clamp');};
 export const exactDefaultItems=(items:Option[])=>exactSlots.flatMap(slot=>{const item=items.find(candidate=>matchesSlot(candidate,slot.key));return item?[{itemId:item.id,quantity:0,requiredQuantity:0,rate:0,hireMonths:6,replacementRate:0,rentalType:'PER_PIECE_PER_MONTH'}]:[];});
-const money=(v?:number)=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR'}).format(v??0);
+const money=(v?:number)=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(v??0);
 export function QuotationsPage(){
   const navigate=useNavigate(),location=useLocation(),{quotationId}=useParams();
   const {modal,message}=App.useApp(),{user}=useAuth(),roles=user?.roles??[],{isAdmin,canWrite}=quotationPermissions(roles),qc=useQueryClient();
@@ -83,6 +83,22 @@ export function QuotationsPage(){
   const download=async(q:Quotation)=>{const r=await apiClient.get(`/quotations/${q.id}/pdf`,{responseType:'blob'});const url=URL.createObjectURL(r.data as Blob);const a=document.createElement('a');a.href=url;a.download=`quotation-${q.quotationNumber.replaceAll('/','-')}.pdf`;a.click();URL.revokeObjectURL(url);};
   const preview=async(q:Quotation)=>{const r=await apiClient.get(`/quotations/${q.id}/pdf/preview`,{params:{template:exactTemplateCode},responseType:'blob'});const url=URL.createObjectURL(r.data as Blob);window.open(url,'_blank','noopener,noreferrer');window.setTimeout(()=>URL.revokeObjectURL(url),60000);};
   const finalizePdf=async(q:Quotation)=>{const r=await apiClient.post(`/quotations/${q.id}/pdf/finalize`,undefined,{responseType:'blob'});const url=URL.createObjectURL(r.data as Blob);const a=document.createElement('a');a.href=url;a.download=`steelfab-hire-${q.quotationNumber.replaceAll('/','-')}.pdf`;a.click();URL.revokeObjectURL(url);message.success('Exact PDF finalized and locked');void qc.invalidateQueries({queryKey:['quotations']});};
+  const applyStandardTerms = async () => {
+    const current = form.getFieldValue('terms');
+    const doFetch = async () => {
+      try {
+        const r = await apiClient.get<{terms:string}>('/settings/default-terms?documentType=QUOTATION');
+        form.setFieldsValue({ terms: r.data.terms });
+      } catch (e) {
+        message.error('Failed to load standard terms');
+      }
+    };
+    if (current && current.trim()) {
+      modal.confirm({title: 'Replace terms?', content: 'This will replace the current terms with the standard terms. Continue?', onOk: doFetch});
+    } else {
+      doFetch();
+    }
+  };
   const estimate=useMemo(()=>{const v=watched; if(!v)return 0;const sub=(v.items??[]).reduce((s,i)=>s+(Number(i.quantity)||0)*(Number(i.rate)||0)*(isExact?(Number(i.hireMonths)||0):1),0);const discount=v.discountType==='PERCENTAGE'?sub*(Number(v.discountValue)||0)/100:v.discountType==='FIXED'?Number(v.discountValue)||0:0;const taxable=sub-discount+(Number(v.transportCharge)||0)+(Number(v.loadingCharge)||0)+(Number(v.unloadingCharge)||0)+(Number(v.otherCharge)||0);const tax=isExact?Number(v.exactHire?.gstPercentage)||0:(Number(v.cgstRate)||0)+(Number(v.sgstRate)||0)+(Number(v.igstRate)||0);return taxable*(1+tax/100)+(Number(v.roundOff)||0);},[watched,isExact]);
   if(isEditorRoute)return <div className="quotation-editor-page">
     <button type="button" className="quotation-back-link" onClick={closeEditor}>← Back to quotations</button>
@@ -147,7 +163,7 @@ export function QuotationsPage(){
       </div></section>}
       <section className="quotation-form-section">
         <h2>Terms and notes</h2>
-        <div className="master-form-grid"><Form.Item className="master-form-wide" name="terms" label="Terms"><Input.TextArea rows={3}/></Form.Item><Form.Item className="master-form-wide" name="notes" label="Notes"><Input.TextArea rows={3}/></Form.Item></div>
+        <div className="master-form-grid"><Form.Item className="master-form-wide" name="terms" label={<Space>Terms <Button size="small" type="link" onClick={applyStandardTerms}>Use Standard Terms</Button></Space>} extra="Use the standard terms, edit them manually, or leave the field blank to generate the document without terms."><Input.TextArea rows={3}/></Form.Item><Form.Item className="master-form-wide" name="notes" label="Notes"><Input.TextArea rows={3}/></Form.Item></div>
       </section>
       <section className="quotation-form-section quotation-summary"><h2>Quotation summary</h2><Alert type="info" showIcon message={`Estimated grand total: ${money(estimate)}`} description="The backend recalculates and stores the authoritative total."/></section>
       <footer className="quotation-action-footer"><Space>{editing&&isExact&&<Button icon={<EyeOutlined/>} onClick={()=>void preview(editing)}>Preview exact PDF</Button>}<Button onClick={closeEditor}>Cancel</Button><Button type="primary" loading={save.isPending} onClick={()=>form.submit()}>{editing?'Save changes':'Create quotation'}</Button></Space></footer>

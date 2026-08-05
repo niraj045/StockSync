@@ -12,6 +12,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController @RequestMapping("/api/v1/agreements")
 public class AgreementController {
@@ -41,4 +42,19 @@ public class AgreementController {
  @PostMapping("/{id}/cancel") @PreAuthorize("hasRole('ADMIN')") public AgreementResponse cancel(@PathVariable Long id,@Valid @RequestBody AgreementReasonRequest r,HttpServletRequest h){return service.cancel(id,r,h);}
  @GetMapping("/{id}/document") public ResponseEntity<Resource> document(@PathVariable Long id){var d=service.download(id);return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF)
   .header(HttpHeaders.CONTENT_DISPOSITION,ContentDisposition.attachment().filename(d.filename(),StandardCharsets.UTF_8).build().toString()).body(d.resource());}
+
+ @PostMapping(value = "/{id}/signed-document", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+ @PreAuthorize("hasAnyRole('ADMIN','OPERATIONS')")
+ public AgreementResponse uploadSignedDocument(@PathVariable Long id, @RequestParam("file") MultipartFile file, HttpServletRequest h){
+  return service.uploadSignedDocument(id, file, h);
+ }
+
+ @GetMapping("/{id}/signed-document")
+ public ResponseEntity<Resource> downloadSignedDocument(@PathVariable Long id){
+  var d = service.downloadSignedDocument(id);
+  return ResponseEntity.ok()
+   .contentType(MediaType.parseMediaType(d.contentType()))
+   .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment().filename(d.filename(), StandardCharsets.UTF_8).build().toString())
+   .body(d.resource());
+ }
 }

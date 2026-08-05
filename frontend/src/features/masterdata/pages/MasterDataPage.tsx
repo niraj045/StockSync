@@ -5,6 +5,8 @@ import { EditOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { apiClient } from '../../../api/client';
 import { useAuth } from '../../auth/context/AuthContext';
 import { FormDrawer } from '../../../components/FormDrawer';
+import { LedgerImportModal } from '../components/LedgerImportModal';
+import { UploadOutlined } from '@ant-design/icons';
 
 type Kind = 'categories' | 'items' | 'parties' | 'sites' | 'vendors';
 type Row = Record<string, unknown> & { id: number; version: number };
@@ -125,6 +127,8 @@ export function MasterDataPage({ kind }: { kind: Kind }) {
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<Row | null>(null);
   const [open, setOpen] = useState(false);
+  const [ledgerModalOpen, setLedgerModalOpen] = useState(false);
+  const [selectedSite, setSelectedSite] = useState<Row | null>(null);
   const queryClient = useQueryClient();
   const config = baseConfigs[kind];
 
@@ -169,10 +173,17 @@ export function MasterDataPage({ kind }: { kind: Kind }) {
       title: column.title, dataIndex: column.key, key: column.key,
       render: column.render ? (value: unknown, row: Row) => column.render?.(value, row) : undefined,
     })),
-    ...(canManage ? [{ title: 'Actions', key: 'actions', width: 90, render: (_: unknown, row: Row) => (
-      <Button type="text" className="action-button" icon={<EditOutlined />} onClick={() => {
-        setEditing(row); form.setFieldsValue(row); setOpen(true);
-      }}>Edit</Button>
+    ...(canManage ? [{ title: 'Actions', key: 'actions', width: kind === 'sites' ? 140 : 90, render: (_: unknown, row: Row) => (
+      <div style={{ display: 'flex', gap: 8 }}>
+        <Button type="text" className="action-button" icon={<EditOutlined />} onClick={() => {
+          setEditing(row); form.setFieldsValue(row); setOpen(true);
+        }}>Edit</Button>
+        {kind === 'sites' && (
+          <Button type="text" className="action-button" icon={<UploadOutlined />} onClick={() => {
+            setSelectedSite(row); setLedgerModalOpen(true);
+          }}>Ledger</Button>
+        )}
+      </div>
     ) }] : []),
   ];
 
@@ -222,6 +233,14 @@ export function MasterDataPage({ kind }: { kind: Kind }) {
           </section>)}
         </Form>
       </FormDrawer>
+      {kind === 'sites' && (
+        <LedgerImportModal 
+          open={ledgerModalOpen} 
+          siteId={selectedSite?.id as number} 
+          siteName={String(selectedSite?.siteName || '')} 
+          onClose={() => setLedgerModalOpen(false)} 
+        />
+      )}
     </div>
   );
 }

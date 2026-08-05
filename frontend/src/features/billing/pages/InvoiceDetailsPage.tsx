@@ -7,7 +7,7 @@ import { apiClient } from '../../../api/client';
 import { useAuth } from '../../auth/context/AuthContext';
 import type { Invoice } from '../types';
 
-const money = (v?: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(v ?? 0);
+const money = (v?: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v ?? 0);
 const errorMessage = (error: unknown, fallback: string) => {
   const err = error as { response?: { data?: { message?: string } } };
   return err.response?.data?.message ?? fallback;

@@ -265,6 +265,25 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
     }
   };
 
+  const applyStandardTerms = async () => {
+    const doFetch = async () => {
+      try {
+        const response = await apiClient.get<{terms:string}>('/settings/default-terms?documentType=QUOTATION');
+        setTerms(response.data.terms);
+      } catch (cause) {
+        Alert.alert('Error', apiErrorMessage(cause, 'Failed to load standard terms.'));
+      }
+    };
+    if (terms && terms.trim()) {
+      Alert.alert('Replace terms?', 'This will replace the current terms with the standard terms. Continue?', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Replace', style: 'destructive', onPress: doFetch },
+      ]);
+    } else {
+      doFetch();
+    }
+  };
+
   const submit = async () => {
     if (!templateId || !partyId || !siteId) {
       Alert.alert('Complete quotation details', 'Select a template, customer, and site.');
@@ -481,7 +500,8 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
           <Field label="Customer phone" value={exactHire.acceptedPhone} onChangeText={(value) => updateExactHire('acceptedPhone', value)} keyboardType="phone-pad" />
           <DateField label="Acceptance date" value={exactHire.acceptedDate} onChange={(value) => updateExactHire('acceptedDate', value)} optional />
         </> : null}
-        <Field label="Terms" value={terms} onChangeText={setTerms} multiline />
+        <Field label={<View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}><Text style={styles.label}>Terms</Text><Pressable onPress={applyStandardTerms}><Text style={{color: colors.primary, fontWeight: '700', fontSize: 12}}>Use Standard Terms</Text></Pressable></View>} value={terms} onChangeText={setTerms} multiline />
+        <Text style={styles.fieldHelp}>Use the standard terms, edit them manually, or leave the field blank to generate the document without terms.</Text>
         <Field label="Notes" value={notes} onChangeText={setNotes} multiline />
         <Card style={styles.totalCard}>
           <Text style={styles.totalLabel}>Estimated total</Text>

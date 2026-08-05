@@ -23,7 +23,7 @@ public class OpeningStockService implements OpeningStockAccess {
         StockBalance balance=locked(item);apply(balance,c.stockBucket(),c.quantity(),true,item);
         applySitePending(item,c.siteId(),c.stockBucket(),c.quantity(),true);
         StockTransaction tx=base(item,c.transactionType(),c.stockBucket(),c.snapshotDate(),c.quantity(),"IN","STOCK_IMPORT",
-            c.rowId(),c.batchId(),c.rowId(),c.partyId(),c.siteId(),c.sourceDescription(),c.actor());
+            c.rowId() != null ? c.rowId() : -1L,c.batchId(),c.rowId(),c.partyId(),c.siteId(),c.sourceDescription(),c.actor());
         return transactions.save(tx).getId();
     }
     @Override @Transactional public Long reverse(ReversalCommand c){
@@ -34,7 +34,7 @@ public class OpeningStockService implements OpeningStockAccess {
         applySitePending(item,c.siteId(),c.stockBucket(),c.quantity(),false);
         String reversalType="AVAILABLE".equals(c.stockBucket())?"OPENING_GODOWN_REVERSAL":"OPENING_SITE_REVERSAL";
         StockTransaction tx=base(item,reversalType,c.stockBucket(),c.reversalDate(),c.quantity(),"OUT",
-            "STOCK_IMPORT_REVERSAL",c.rowId(),c.batchId(),c.rowId(),c.partyId(),c.siteId(),c.reason(),c.actor());
+            "STOCK_IMPORT_REVERSAL",c.rowId() != null ? c.rowId() : -1L,c.batchId(),c.rowId(),c.partyId(),c.siteId(),c.reason(),c.actor());
         tx.setReversalOfTransaction(original);return transactions.save(tx).getId();
     }
     @Override @Transactional public void assertReversalSafe(Long batchId,Instant importedAt,Set<Long>itemIds){

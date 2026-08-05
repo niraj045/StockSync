@@ -137,6 +137,7 @@ class Phase6BIntegrationTest extends BaseIntegrationTest {
                 "Shrikant",
                 "9876543210",
                 null,
+                null,
                 "OPENING_SITE_BALANCE",
                 "Legacy items return",
                 List.of(new ReceivingChallanItemRequest(

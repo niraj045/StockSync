@@ -141,17 +141,17 @@ public class InvoiceService {
         i.setCompanyGstinSnapshot(companyGstin);
 
         // Customer Snapshots
-        i.setPartyLegalNameSnapshot(br.getAgreement().getPartyLegalNameSnapshot());
-        i.setPartyGstinSnapshot(br.getAgreement().getPartyGstinSnapshot());
-        i.setPartyPanSnapshot(br.getAgreement().getPartyPanSnapshot());
-        i.setPartyAddressSnapshot(br.getAgreement().getPartyAddressSnapshot());
-        i.setPartyStateSnapshot(br.getAgreement().getPartyStateSnapshot());
+        i.setPartyLegalNameSnapshot(valueOr(br.getAgreement().getPartyLegalNameSnapshot(), ""));
+        i.setPartyGstinSnapshot(valueOr(br.getAgreement().getPartyGstinSnapshot(), ""));
+        i.setPartyPanSnapshot(valueOr(br.getAgreement().getPartyPanSnapshot(), ""));
+        i.setPartyAddressSnapshot(valueOr(br.getAgreement().getPartyAddressSnapshot(), ""));
+        i.setPartyStateSnapshot(valueOr(br.getAgreement().getPartyStateSnapshot(), ""));
 
-        i.setSiteNameSnapshot(br.getAgreement().getSiteNameSnapshot());
-        i.setSiteCodeSnapshot(br.getAgreement().getSiteCodeSnapshot());
-        i.setSiteAddressSnapshot(br.getAgreement().getSiteAddressSnapshot());
-        i.setSiteContactSnapshot(br.getAgreement().getSiteContactSnapshot());
-        i.setAgreementNumberSnapshot(br.getAgreement().getAgreementNumber());
+        i.setSiteNameSnapshot(valueOr(br.getAgreement().getSiteNameSnapshot(), ""));
+        i.setSiteCodeSnapshot(valueOr(br.getAgreement().getSiteCodeSnapshot(), ""));
+        i.setSiteAddressSnapshot(valueOr(br.getAgreement().getSiteAddressSnapshot(), ""));
+        i.setSiteContactSnapshot(valueOr(br.getAgreement().getSiteContactSnapshot(), ""));
+        i.setAgreementNumberSnapshot(valueOr(br.getAgreement().getAgreementNumber(), ""));
 
         // Totals
         i.setSubtotal(br.getRentalSubtotal());

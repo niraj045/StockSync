@@ -64,7 +64,11 @@ public class Agreement extends AuditedEntity {
  @Column(length=4000) private String terms; @Column(length=1000) private String notes;
  @OneToOne(fetch=FetchType.LAZY) @JoinColumn(name="generated_document_attachment_id") private FileAttachment generatedDocument;
  @Column(name="generated_filename") private String generatedFilename; @Column(name="generated_storage_path") private String generatedStoragePath;
- @Column(name="generated_at") private Instant generatedAt; @Column(name="ready_for_review_at") private Instant readyForReviewAt;
+ @Column(name="generated_at") private Instant generatedAt; 
+ @OneToOne(fetch=FetchType.LAZY) @JoinColumn(name="signed_document_attachment_id") private FileAttachment signedDocument;
+ @Column(name="signed_filename") private String signedFilename; 
+ @Column(name="signed_uploaded_at") private Instant signedUploadedAt; 
+ @Column(name="ready_for_review_at") private Instant readyForReviewAt;
  @Column(name="ready_for_review_by") private String readyForReviewBy; @Column(name="activated_at") private Instant activatedAt;
  @Column(name="activated_by") private String activatedBy; @Column(name="expired_at") private Instant expiredAt; @Column(name="expired_by") private String expiredBy;
  @Column(name="termination_reason") private String terminationReason; @Column(name="terminated_at") private Instant terminatedAt; @Column(name="terminated_by") private String terminatedBy;
@@ -105,6 +109,9 @@ public class Agreement extends AuditedEntity {
  public String getTerms(){return terms;} public void setTerms(String v){terms=v;} public String getNotes(){return notes;} public void setNotes(String v){notes=v;}
  public FileAttachment getGeneratedDocument(){return generatedDocument;} public void setGeneratedDocument(FileAttachment v){generatedDocument=v;} public String getGeneratedFilename(){return generatedFilename;} public void setGeneratedFilename(String v){generatedFilename=v;}
  public String getGeneratedStoragePath(){return generatedStoragePath;} public void setGeneratedStoragePath(String v){generatedStoragePath=v;} public Instant getGeneratedAt(){return generatedAt;} public void setGeneratedAt(Instant v){generatedAt=v;}
+ public FileAttachment getSignedDocument(){return signedDocument;} public void setSignedDocument(FileAttachment v){signedDocument=v;}
+ public String getSignedFilename(){return signedFilename;} public void setSignedFilename(String v){signedFilename=v;}
+ public Instant getSignedUploadedAt(){return signedUploadedAt;} public void setSignedUploadedAt(Instant v){signedUploadedAt=v;}
  public Instant getReadyForReviewAt(){return readyForReviewAt;} public void setReadyForReviewAt(Instant v){readyForReviewAt=v;} public String getReadyForReviewBy(){return readyForReviewBy;} public void setReadyForReviewBy(String v){readyForReviewBy=v;}
  public Instant getActivatedAt(){return activatedAt;} public void setActivatedAt(Instant v){activatedAt=v;} public String getActivatedBy(){return activatedBy;} public void setActivatedBy(String v){activatedBy=v;}
  public Instant getExpiredAt(){return expiredAt;} public void setExpiredAt(Instant v){expiredAt=v;} public String getExpiredBy(){return expiredBy;} public void setExpiredBy(String v){expiredBy=v;}

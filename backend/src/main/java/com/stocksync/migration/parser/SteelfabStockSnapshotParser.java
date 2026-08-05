@@ -19,11 +19,17 @@ public class SteelfabStockSnapshotParser {
 
     public ParsedWorkbook parse(InputStream input){
         try(Workbook workbook=WorkbookFactory.create(input)){
-            Sheet sheet=workbook.getSheet("Sheet1");
-            if(sheet==null)throw invalid("Sheet1 is required");
+            Sheet sheet=null;
+            for(int i=0; i<workbook.getNumberOfSheets(); i++){
+                Sheet s=workbook.getSheetAt(i);
+                Row header=s.getRow(3);
+                if(header!=null && "Party Name".equalsIgnoreCase(text(header.getCell(ITEM_NAME_COLUMN)))){
+                    sheet=s;
+                    break;
+                }
+            }
+            if(sheet==null)throw invalid("Could not find a sheet with 'Party Name' in cell B4");
             Row header=sheet.getRow(3);
-            if(header==null||!"Party Name".equalsIgnoreCase(text(header.getCell(ITEM_NAME_COLUMN))))
-                throw invalid("Expected source header was not found in Sheet1 row 4");
             LocalDate partyDate=parseDate(text(sheet.getRow(1).getCell(0)),"party snapshot");
             LocalDate godownDate=parseDate(text(header.getCell(GODOWN_COLUMN)),"godown snapshot");
             LinkedHashMap<String,String> locations=new LinkedHashMap<>();

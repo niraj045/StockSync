@@ -22,7 +22,10 @@ import { CreateOrderScreen } from '../screens/CreateOrderScreen';
 import { StockScreen } from '../screens/StockScreen';
 import { GstExportScreen } from '../screens/GstExportScreen';
 import { ExcelReportsScreen } from '../screens/ExcelReportsScreen';
+import { OpeningStockImportScreen } from '../screens/OpeningStockImportScreen';
+import { SiteLedgerImportScreen } from '../screens/SiteLedgerImportScreen';
 import { BillingScreen } from '../screens/BillingScreen';
+import { BillingRunDetailScreen } from '../screens/BillingRunDetailScreen';
 import { InquiriesScreen } from '../screens/InquiriesScreen';
 import { CreateInquiryScreen } from '../screens/CreateInquiryScreen';
 import { SiteOperationsScreen } from '../screens/SiteOperationsScreen';
@@ -107,7 +110,10 @@ export function AppNavigator() {
             <Stack.Screen name="Stock" component={StockScreen} options={{ title: 'Current stock' }} />
             <Stack.Screen name="GstExport" component={GstExportScreen} options={{ title: 'Monthly GST export' }} />
             <Stack.Screen name="ExcelReports" component={ExcelReportsScreen} options={{ title: 'Excel reports' }} />
+            <Stack.Screen name="OpeningStockImport" component={OpeningStockImportScreen} options={{ title: 'Import Stock' }} />
+            <Stack.Screen name="SiteLedgerImport" component={SiteLedgerImportScreen} options={{ title: 'Import Site Ledger' }} />
             <Stack.Screen name="Billing" component={BillingScreen} options={{ title: 'Monthly rental billing' }} />
+            <Stack.Screen name="BillingRunDetail" component={BillingRunDetailScreen} options={{ title: 'Billing details' }} />
             <Stack.Screen name="CreateParty" component={CreatePartyScreen} options={{ title: 'New customer' }} />
             <Stack.Screen name="CreateSite" component={CreateSiteScreen} options={{ title: 'New site' }} />
             <Stack.Screen name="CreateQuotation" component={CreateQuotationScreen} options={{ title: 'New quotation' }} />

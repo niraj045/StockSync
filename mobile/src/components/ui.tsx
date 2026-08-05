@@ -72,7 +72,7 @@ export function Field({
   error,
   keyboardType,
   ...props
-}: TextInputProps & { label: string; error?: string; keyboardType?: KeyboardTypeOptions }) {
+}: TextInputProps & { label: string | ReactNode; error?: string; keyboardType?: KeyboardTypeOptions }) {
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{label}</Text>

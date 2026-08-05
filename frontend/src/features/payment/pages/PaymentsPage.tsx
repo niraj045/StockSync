@@ -8,7 +8,7 @@ import type { PaymentReceipt } from '../types';
 import { useAuth } from '../../auth/context/AuthContext';
 import { ReportExcelButton } from '../../../components/ReportExcelButton';
 
-const money = (value?: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(value ?? 0);
+const money = (value?: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(value ?? 0);
 const canPost = (roles: string[]) => roles.includes('ROLE_ADMIN') || roles.includes('ROLE_ACCOUNTS');
 const canReverse = (roles: string[]) => roles.includes('ROLE_ADMIN');
 

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { apiClient, apiErrorMessage } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
+import * as DocumentPicker from 'expo-document-picker';
 import { AppButton, Card, DateField, Field, LoadingBlock, StatusPill } from '../components/ui';
 import type { RootStackParams } from '../navigation/types';
 import { colors } from '../theme';
@@ -20,17 +21,46 @@ export function AgreementFlowScreen({ navigation, route }: Props) {
   const [expiryDate, setExpiryDate] = useState('');
   const [securityDeposit, setSecurityDeposit] = useState('0');
   const [notes, setNotes] = useState('');
-  const [loading, setLoading] = useState(!!route.params.agreementId);
+  const [terms, setTerms] = useState('');
+  const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!route.params.agreementId) return;
-    apiClient.get<Agreement>(`/agreements/${route.params.agreementId}`)
-      .then((response) => setAgreement(response.data))
-      .catch((cause) => setError(apiErrorMessage(cause, 'Unable to load this agreement.')))
-      .finally(() => setLoading(false));
-  }, [route.params.agreementId]);
+    if (route.params.agreementId) {
+      apiClient.get<Agreement>(`/agreements/${route.params.agreementId}`)
+        .then((response) => setAgreement(response.data))
+        .catch((cause) => setError(apiErrorMessage(cause, 'Unable to load this agreement.')))
+        .finally(() => setLoading(false));
+    } else if (route.params.quotationId) {
+      // Need to fetch quotation to initialize terms
+      apiClient.get<{terms: string}>(`/quotations/${route.params.quotationId}`)
+        .then((response) => setTerms(response.data.terms ?? ''))
+        .catch((cause) => setError(apiErrorMessage(cause, 'Unable to load source quotation.')))
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, [route.params.agreementId, route.params.quotationId]);
+
+  const applyStandardTerms = async () => {
+    const doFetch = async () => {
+      try {
+        const response = await apiClient.get<{terms:string}>('/settings/default-terms?documentType=AGREEMENT');
+        setTerms(response.data.terms);
+      } catch (cause) {
+        Alert.alert('Error', apiErrorMessage(cause, 'Failed to load standard terms.'));
+      }
+    };
+    if (terms && terms.trim()) {
+      Alert.alert('Replace terms?', 'This will replace the current terms with the standard terms. Continue?', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Replace', style: 'destructive', onPress: doFetch },
+      ]);
+    } else {
+      doFetch();
+    }
+  };
 
   const convert = async () => {
     if (!route.params.quotationId) return;
@@ -46,6 +76,7 @@ export function AgreementFlowScreen({ navigation, route }: Props) {
         expiryDate: expiryDate || null,
         securityDeposit: Number(securityDeposit) || 0,
         notes: notes.trim() || null,
+        terms: terms.trim() || null,
       });
       setAgreement(response.data);
     } catch (cause) {
@@ -97,6 +128,53 @@ export function AgreementFlowScreen({ navigation, route }: Props) {
     }
   };
 
+  const shareSignedDocument = async () => {
+    if (!agreement) return;
+    setWorking('shareSigned');
+    try {
+      await shareServerPdf(
+        `/agreements/${agreement.id}/signed-document`,
+        agreement.signedFilename ?? `signed-agreement-${agreement.agreementNumber}.pdf`,
+        'Share signed agreement',
+      );
+    } catch (cause) {
+      Alert.alert('Document unavailable', apiErrorMessage(cause, 'Unable to download and share the signed agreement.'));
+    } finally {
+      setWorking('');
+    }
+  };
+
+  const pickAndUploadSignedDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['application/pdf', 'image/jpeg', 'image/png'],
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled) return;
+      if (result.assets && result.assets.length > 0) {
+        const file = result.assets[0];
+        setWorking('upload');
+        const formData = new FormData();
+        formData.append('file', {
+          uri: file.uri,
+          name: file.name,
+          type: file.mimeType ?? 'application/pdf',
+        } as any);
+
+        const response = await apiClient.post<Agreement>(`/agreements/${agreement!.id}/signed-document`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        setAgreement(response.data);
+        Alert.alert('Success', 'Signed agreement uploaded.');
+      }
+    } catch (err) {
+      Alert.alert('Error', apiErrorMessage(err, 'Failed to upload signed document.'));
+    } finally {
+      setWorking('');
+    }
+  };
+
   if (loading) return <LoadingBlock />;
 
   if (!agreement) {
@@ -109,6 +187,8 @@ export function AgreementFlowScreen({ navigation, route }: Props) {
           <DateField label="Effective date *" value={effectiveDate} onChange={setEffectiveDate} />
           <DateField label="Expiry date" value={expiryDate} onChange={setExpiryDate} optional minimumDate={new Date(`${effectiveDate}T12:00:00`)} />
           <Field label="Security deposit (INR)" value={securityDeposit} onChangeText={setSecurityDeposit} keyboardType="decimal-pad" />
+          <Field label={<View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}><Text style={styles.label}>Terms</Text><Pressable onPress={applyStandardTerms}><Text style={{color: colors.primary, fontWeight: '700', fontSize: 12}}>Use Standard Terms</Text></Pressable></View>} value={terms} onChangeText={setTerms} multiline />
+          <Text style={styles.fieldHelp}>Use the standard terms, edit them manually, or leave the field blank to generate the document without terms.</Text>
           <Field label="Agreement notes" value={notes} onChangeText={setNotes} multiline />
           <AppButton title="Create draft agreement" onPress={convert} loading={working === 'convert'} disabled={!!error} />
         </ScrollView>
@@ -139,8 +219,9 @@ export function AgreementFlowScreen({ navigation, route }: Props) {
       <Card style={styles.steps}>
         <Step number="1" title="Agreement created" done />
         <Step number="2" title="Document generated" done={generated} />
-        <Step number="3" title="Ready for review" done={agreement.status !== 'DRAFT'} />
-        <Step number="4" title="Agreement active" done={agreement.status === 'ACTIVE'} />
+        <Step number="3" title="Signed document uploaded" done={!!agreement.signedDocumentAttachmentId} />
+        <Step number="4" title="Ready for review" done={agreement.status !== 'DRAFT'} />
+        <Step number="5" title="Agreement active" done={agreement.status === 'ACTIVE'} />
       </Card>
 
       {agreement.status === 'DRAFT' && !generated ? (
@@ -164,6 +245,24 @@ export function AgreementFlowScreen({ navigation, route }: Props) {
           variant="secondary"
           onPress={shareDocument}
           loading={working === 'share'}
+          icon={<Ionicons name="share-social-outline" size={20} color={colors.primary} />}
+        />
+      ) : null}
+      {generated && (
+        <AppButton
+          title={agreement.signedDocumentAttachmentId ? "Re-upload signed agreement" : "Upload signed agreement"}
+          variant="secondary"
+          onPress={pickAndUploadSignedDocument}
+          loading={working === 'upload'}
+          icon={<Ionicons name="cloud-upload-outline" size={20} color={colors.primary} />}
+        />
+      )}
+      {agreement.signedDocumentAttachmentId ? (
+        <AppButton
+          title="Share signed PDF"
+          variant="secondary"
+          onPress={shareSignedDocument}
+          loading={working === 'shareSigned'}
           icon={<Ionicons name="share-social-outline" size={20} color={colors.primary} />}
         />
       ) : null}
@@ -214,4 +313,6 @@ const styles = StyleSheet.create({
   stepTitleDone: { color: colors.ink },
   helper: { color: colors.muted, fontSize: 12, lineHeight: 18, textAlign: 'center', marginTop: -5 },
   notice: { color: colors.amber, backgroundColor: colors.amberSoft, borderRadius: 8, padding: 12, lineHeight: 19 },
+  label: { color: colors.ink, fontSize: 14, fontWeight: '700' },
+  fieldHelp: { color: colors.muted, fontSize: 11, marginTop: -9 },
 });

@@ -120,7 +120,7 @@ public class QuotationService implements QuotationAccess {
         }else{q.setCgstRate(r.cgstRate());q.setSgstRate(r.sgstRate());q.setIgstRate(r.igstRate());}
         q.setTransportCharge(r.transportCharge());q.setLoadingCharge(r.loadingCharge());q.setUnloadingCharge(r.unloadingCharge());q.setOtherCharge(r.otherCharge());
         q.setRoundOff(r.roundOff());q.setSecurityDeposit(r.securityDeposit());
-        q.setTerms(creating&&isBlank(r.terms())?trim(q.getQuotationTemplate().getDefaultTerms()):trim(r.terms()));
+        q.setTerms(creating && (r.terms() == null || r.terms().isBlank()) ? trim(q.getQuotationTemplate().getDefaultTerms()) : r.terms());
         q.setNotes(creating&&isBlank(r.notes())?trim(q.getQuotationTemplate().getDefaultNotes()):trim(r.notes()));
         Set<Long> unique=new HashSet<>();List<QuotationItem> lines=new ArrayList<>();int sequence=1;
         for(QuotationItemRequest line:r.items()){if(!unique.add(line.itemId()))throw new BusinessRuleException("DUPLICATE_ITEM_LINE","Each item may appear only once");

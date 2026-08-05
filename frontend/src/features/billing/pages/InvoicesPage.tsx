@@ -8,7 +8,7 @@ import type { Invoice } from '../types';
 import { ReportExcelButton } from '../../../components/ReportExcelButton';
 
 type Page<T> = { content: T[]; totalElements: number };
-const money = (v?: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(v ?? 0);
+const money = (v?: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v ?? 0);
 
 export function InvoicesPage() {
   const navigate = useNavigate();
