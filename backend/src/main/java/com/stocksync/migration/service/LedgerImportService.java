@@ -100,39 +100,47 @@ public class LedgerImportService {
         }
         
         String detected = detectedSiteName.trim();
+        String partyName = selectedSite.getParty().getLegalName().trim();
         
-        // If it matches exactly, use it (sometimes user selects the generic party site)
-        if (detected.equalsIgnoreCase(selectedSite.getSiteName())) {
-            return selectedSite;
+        // Strip party name prefix from detected site name if present (e.g. "SBUT - A Wing..." -> "A Wing...")
+        String cleanDetected = detected;
+        if (cleanDetected.toLowerCase().startsWith(partyName.toLowerCase())) {
+            cleanDetected = cleanDetected.substring(partyName.length()).trim();
+            if (cleanDetected.startsWith("-") || cleanDetected.startsWith(":")) {
+                cleanDetected = cleanDetected.substring(1).trim();
+            }
+        }
+        if (cleanDetected.isBlank()) {
+            cleanDetected = detected;
         }
         
-        // Look for a matching site under the same party
+        final String searchName = cleanDetected;
         List<Site> partySites = siteRepository.findByPartyId(selectedSite.getParty().getId());
-        Optional<Site> matchingSite = partySites.stream()
-            .filter(s -> detected.toLowerCase().contains(s.getSiteName().toLowerCase()) || 
-                         s.getSiteName().toLowerCase().contains(detected.toLowerCase()))
+        
+        // 1. Try exact match (case insensitive) among party's sites for searchName or full detected
+        Optional<Site> exactMatch = partySites.stream()
+            .filter(s -> s.getSiteName().equalsIgnoreCase(searchName) || s.getSiteName().equalsIgnoreCase(detected))
             .findFirst();
-            
-        if (matchingSite.isPresent()) {
-            return matchingSite.get();
+        if (exactMatch.isPresent()) {
+            return exactMatch.get();
         }
         
-        // If not found, create a new specific site under this party
-        String newSiteName = detected;
-        String partyName = selectedSite.getParty().getLegalName();
-        if (newSiteName.toLowerCase().startsWith(partyName.toLowerCase())) {
-            newSiteName = newSiteName.substring(partyName.length()).trim();
-            if (newSiteName.startsWith("-")) newSiteName = newSiteName.substring(1).trim();
-        }
-        if (newSiteName.isBlank()) {
-            newSiteName = detected;
+        // 2. Try partial match ONLY on existing sub-sites (excluding the generic site named identical to party)
+        Optional<Site> subSiteMatch = partySites.stream()
+            .filter(s -> !s.getSiteName().equalsIgnoreCase(partyName))
+            .filter(s -> searchName.toLowerCase().contains(s.getSiteName().toLowerCase()) || 
+                         s.getSiteName().toLowerCase().contains(searchName.toLowerCase()))
+            .findFirst();
+        if (subSiteMatch.isPresent()) {
+            return subSiteMatch.get();
         }
         
+        // 3. If no existing sub-site matches, create a new specific site under this party
         Site newSite = new Site();
         newSite.setParty(selectedSite.getParty());
-        newSite.setSiteName(newSiteName);
+        newSite.setSiteName(cleanDetected);
         
-        String code = newSiteName.replaceAll("[^a-zA-Z0-9]", "").toUpperCase();
+        String code = cleanDetected.replaceAll("[^a-zA-Z0-9]", "").toUpperCase();
         if (code.length() > 20) code = code.substring(0, 20);
         if (code.isBlank()) code = "SITE";
         

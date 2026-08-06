@@ -27,8 +27,12 @@ public class IssuedChallanController {
     }
 
     @GetMapping
-    public Page<IssuedChallanResponse> list(@RequestParam(required = false) String search, Pageable pageable) {
-        return service.list(search, pageable);
+    public Page<IssuedChallanResponse> list(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Long partyId,
+            @RequestParam(required = false) Long siteId,
+            Pageable pageable) {
+        return service.list(search, partyId, siteId, pageable);
     }
 
     @GetMapping("/{id}")

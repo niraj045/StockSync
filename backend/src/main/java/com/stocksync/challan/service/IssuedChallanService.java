@@ -13,6 +13,8 @@ import com.stocksync.inventory.entity.*;
 import com.stocksync.inventory.repository.*;
 import com.stocksync.order.entity.*;
 import com.stocksync.order.repository.*;
+import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.jpa.domain.Specification;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.*;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -64,13 +66,26 @@ public class IssuedChallanService {
     }
 
     @Transactional(readOnly = true)
-    public Page<IssuedChallanResponse> list(String search, Pageable pageable) {
-        Page<IssuedChallan> page;
-        if (search != null && !search.isBlank()) {
-            page = challans.search("%" + search.trim() + "%", pageable);
-        } else {
-            page = challans.findAll(pageable);
-        }
+    public Page<IssuedChallanResponse> list(String search, Long partyId, Long siteId, Pageable pageable) {
+        Specification<IssuedChallan> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (search != null && !search.isBlank()) {
+                String pattern = "%" + search.trim().toLowerCase() + "%";
+                var order = root.join("siteOrder", jakarta.persistence.criteria.JoinType.LEFT);
+                predicates.add(cb.or(
+                    cb.like(cb.lower(root.get("challanNumber")), pattern),
+                    cb.like(cb.lower(order.get("orderNumber")), pattern)
+                ));
+            }
+            if (siteId != null) {
+                predicates.add(cb.equal(root.get("siteOrder").get("site").get("id"), siteId));
+            }
+            if (partyId != null) {
+                predicates.add(cb.equal(root.get("siteOrder").get("party").get("id"), partyId));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        Page<IssuedChallan> page = challans.findAll(spec, pageable);
         return page.map(this::response);
     }
 
