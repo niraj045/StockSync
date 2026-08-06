@@ -199,7 +199,12 @@ export function DashboardPage() {
 
       <section className="dashboard-kpi-grid">
         {operationalMetrics.map((metric) => (
-          <article className="dashboard-kpi-card" key={metric.title}>
+          <article
+            className={`dashboard-kpi-card ${metric.title === 'At sites' ? 'dashboard-kpi-clickable' : ''}`}
+            key={metric.title}
+            onClick={() => metric.title === 'At sites' && navigate('/sites')}
+            style={metric.title === 'At sites' ? { cursor: 'pointer' } : undefined}
+          >
             <div className="dashboard-kpi-head">
               <span className={`dashboard-icon dashboard-icon-${metric.tone}`}>{metric.icon}</span>
               {metric.badge && <span className="dashboard-soft-badge">{metric.badge}</span>}
@@ -325,8 +330,20 @@ function MovementTrend({ data }: { data: TrendPoint[] }) {
 }
 
 function TopSites({ data }: { data: ChartPoint[] }) {
+  const navigate = useNavigate();
   const maximum = Math.max(...data.map((item) => item.value), 1);
-  return <div className="dashboard-top-sites">{data.slice(0, 6).map((site, index) => <div key={site.label}><span className="dashboard-rank">{index + 1}</span><span className="dashboard-site-name">{site.label}</span><span className="dashboard-site-bar"><i style={{ width: `${(site.value / maximum) * 100}%` }} /></span><strong>{quantity(site.value)}</strong></div>)}</div>;
+  return (
+    <div className="dashboard-top-sites">
+      {data.slice(0, 6).map((site, index) => (
+        <div key={site.label} onClick={() => navigate('/sites')} style={{ cursor: 'pointer' }}>
+          <span className="dashboard-rank">{index + 1}</span>
+          <span className="dashboard-site-name">{site.label}</span>
+          <span className="dashboard-site-bar"><i style={{ width: `${(site.value / maximum) * 100}%` }} /></span>
+          <strong>{quantity(site.value)}</strong>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function DashboardEmpty({ icon, title, description, action, onAction, compact = false }: { icon: ReactNode; title: string; description: string; action?: string; onAction?: () => void; compact?: boolean }) {

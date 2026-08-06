@@ -12,6 +12,7 @@ const DashboardPage = lazy(() => import('../../features/dashboard/pages/Dashboar
 const UserListPage = lazy(() => import('../../features/users/pages/UserListPage').then((module) => ({ default: module.UserListPage })));
 const AuditLogPage = lazy(() => import('../../features/audit/pages/AuditLogPage').then((module) => ({ default: module.AuditLogPage })));
 const MasterDataPage = lazy(() => import('../../features/masterdata/pages/MasterDataPage').then((module) => ({ default: module.MasterDataPage })));
+const SiteDetailsPage = lazy(() => import('../../features/masterdata/pages/SiteDetailsPage').then((module) => ({ default: module.SiteDetailsPage })));
 const DocumentsPage = lazy(() => import('../../features/documents/pages/DocumentsPage').then((module) => ({ default: module.DocumentsPage })));
 const InventoryPage = lazy(() => import('../../features/inventory/pages/InventoryPage').then((module) => ({ default: module.InventoryPage })));
 const OpeningStockImportPage = lazy(() => import('../../features/migration/pages/OpeningStockImportPage').then((module) => ({ default: module.OpeningStockImportPage })));
@@ -86,6 +87,7 @@ export const router = createBrowserRouter([
       { path: 'items', element: deferred(<MasterDataPage kind="items" />) },
       { path: 'parties', element: deferred(<MasterDataPage kind="parties" />) },
       { path: 'sites', element: deferred(<MasterDataPage kind="sites" />) },
+      { path: 'sites/:siteId', element: deferred(<SiteDetailsPage />) },
       { path: 'vendors', element: deferred(<MasterDataPage kind="vendors" />) },
       { path: 'documents', element: deferred(<DocumentsPage />) },
       { path: 'inventory', element: deferred(<InventoryPage />) },

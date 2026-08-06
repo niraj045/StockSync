@@ -98,7 +98,8 @@ const baseConfigs: Record<Kind, Config> = {
       { name: 'excelTemplateCode', label: 'Site Excel format', type: 'select', options: [{ label: 'Standard export', value: 'STANDARD' }, { label: 'SBUT D&R', value: 'SBUT_DR_V1' }] },
     ],
     columns: [
-      { key: 'siteCode', title: 'Code' }, { key: 'siteName', title: 'Site' },
+      { key: 'siteCode', title: 'Code' },
+      { key: 'siteName', title: 'Site', render: (v, row) => <a style={{ fontWeight: 600, color: '#006565' }} href={`/sites/${row.id}`}>{String(v)}</a> },
       { key: 'partyName', title: 'Party' }, { key: 'status', title: 'Status', render: (v) => <Tag>{String(v).replace('_', ' ')}</Tag> },
       { key: 'defaulter', title: 'Risk', render: (v) => v ? <Tag color="error">Defaulter</Tag> : <Tag>Clear</Tag> },
     ],
