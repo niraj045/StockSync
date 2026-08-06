@@ -29,15 +29,17 @@ public class InventoryService {
     private final ItemRepository items;
     private final StockBalanceRepository balances;
     private final StockTransactionRepository transactions;
+    private final SiteStockBalanceRepository siteBalances;
     private final VendorRepository vendors;
     private final JdbcTemplate jdbc;
     private final UserRepository users;
     private final UserActivityLogService audit;
 
     public InventoryService(ItemRepository items, StockBalanceRepository balances,
+            SiteStockBalanceRepository siteBalances,
             StockTransactionRepository transactions, VendorRepository vendors, JdbcTemplate jdbc,
             UserRepository users, UserActivityLogService audit) {
-        this.items=items;this.balances=balances;this.transactions=transactions;this.vendors=vendors;
+        this.items=items;this.balances=balances;this.siteBalances=siteBalances;this.transactions=transactions;this.vendors=vendors;
         this.jdbc=jdbc;this.users=users;this.audit=audit;
     }
 
@@ -108,6 +110,31 @@ public class InventoryService {
             if(Boolean.TRUE.equals(belowMinimum))p.add(cb.lessThan(root.get("availableQuantity"),root.get("item").get("minimumStock")));
             return cb.and(p.toArray(Predicate[]::new));
         },pageable).map(this::balanceResponse);
+    }
+
+    @Transactional(readOnly=true)
+    public Page<StockBalanceResponse> siteBalancePage(Long siteId, Pageable pageable){
+        return siteBalances.findBySiteId(siteId, pageable).map(sb -> {
+            Item i = sb.getItem();
+            BigDecimal minimum = i.getMinimumStock();
+            return new StockBalanceResponse(
+                i.getId(),
+                i.getItemCode(),
+                i.getItemName(),
+                i.getCategory() == null ? null : i.getCategory().getName(),
+                i.getUnit(),
+                sb.getPendingQuantity(),
+                sb.getPendingQuantity(),
+                sb.getPendingQuantity(),
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                sb.getPendingQuantity().multiply(Optional.ofNullable(i.getWeightPerPiece()).orElse(BigDecimal.ZERO)),
+                minimum,
+                false,
+                sb.getVersion(),
+                sb.getUpdatedAt()
+            );
+        });
     }
 
     @Transactional(readOnly=true)

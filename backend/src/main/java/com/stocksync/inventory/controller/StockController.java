@@ -16,6 +16,10 @@ public class StockController {
     @GetMapping("/balances")
     public Page<StockBalanceResponse> balances(@RequestParam(required=false)String search,
             @RequestParam(required=false)Boolean belowMinimum,Pageable pageable){return service.balancePage(search,belowMinimum,pageable);}
+    @GetMapping("/balances/site/{siteId}")
+    public Page<StockBalanceResponse> siteBalances(@PathVariable Long siteId, Pageable pageable){
+        return service.siteBalancePage(siteId, pageable);
+    }
     @GetMapping("/transactions")
     public Page<StockTransactionResponse> history(@RequestParam(required=false)Long itemId,@RequestParam(required=false)String type,
             @RequestParam(required=false)@DateTimeFormat(iso=DateTimeFormat.ISO.DATE)LocalDate from,
