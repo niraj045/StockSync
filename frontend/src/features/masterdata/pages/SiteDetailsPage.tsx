@@ -15,6 +15,8 @@ import {
   Spin,
   Alert,
   Breadcrumb,
+  Modal,
+  Descriptions,
   message,
 } from 'antd';
 import {
@@ -28,6 +30,8 @@ import {
   TruckOutlined,
   FileTextOutlined,
   ReloadOutlined,
+  EyeOutlined,
+  DownloadOutlined,
 } from '@ant-design/icons';
 import { apiClient } from '../../../api/client';
 import { LedgerImportModal } from '../components/LedgerImportModal';
@@ -64,7 +68,9 @@ interface SiteOrder {
   status: string;
   fulfillmentStatus?: string;
   requirement?: string;
-  items?: { itemId: number; itemName?: string; itemCode?: string; quantity: number }[];
+  partyName?: string;
+  siteName?: string;
+  items?: { itemId: number; itemName?: string; itemCode?: string; unit?: string; quantity: number; fulfilledQuantity?: number }[];
 }
 
 interface IssuedChallan {
@@ -74,7 +80,13 @@ interface IssuedChallan {
   vehicleNumber?: string;
   driverName?: string;
   status: string;
-  items?: { itemId: number; itemName?: string; itemCode?: string; quantity: number }[];
+  siteOrderNumber?: string;
+  partyName?: string;
+  siteName?: string;
+  notes?: string;
+  createdBy?: string;
+  createdAt?: string;
+  items?: { itemId: number; itemName?: string; itemCode?: string; unit?: string; quantity: number }[];
 }
 
 interface ReceivingChallan {
@@ -84,7 +96,12 @@ interface ReceivingChallan {
   vehicleNumber?: string;
   driverName?: string;
   status: string;
-  items?: { id: number; itemName?: string; itemCode?: string; goodReturnedQuantity?: number; damagedReturnedQuantity?: number; lostQuantity?: number }[];
+  partyName?: string;
+  siteName?: string;
+  notes?: string;
+  createdBy?: string;
+  createdAt?: string;
+  items?: { id?: number; itemId?: number; itemName?: string; itemCode?: string; unit?: string; goodReturnedQuantity?: number; damagedReturnedQuantity?: number; lostQuantity?: number }[];
 }
 
 interface SiteOperation {
@@ -114,6 +131,11 @@ export function SiteDetailsPage() {
   const [stockSearch, setStockSearch] = useState('');
   const [ledgerModalOpen, setLedgerModalOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
+
+  // Selected items for viewing in Modal
+  const [selectedIssuedChallan, setSelectedIssuedChallan] = useState<IssuedChallan | null>(null);
+  const [selectedReceivingChallan, setSelectedReceivingChallan] = useState<ReceivingChallan | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<SiteOrder | null>(null);
 
   // 1. Fetch site profile
   const siteQuery = useQuery({
@@ -164,6 +186,21 @@ export function SiteDetailsPage() {
   const receivingChallans = receivingChallansQuery.data?.content || [];
   const operations = operationsQuery.data || [];
 
+  // Download PDF for Issued Challan
+  const handleDownloadPdf = async (c: IssuedChallan) => {
+    try {
+      const res = await apiClient.get(`/challans/issued/${c.id}/pdf`, { responseType: 'blob' });
+      const url = URL.createObjectURL(res.data as Blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `challan-${c.challanNumber.replaceAll('/', '-')}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      message.error('Failed to download challan PDF');
+    }
+  };
+
   // Aggregate Material Quantities across Stock, Issued, and Receiving Challans
   const aggregatedMaterials = () => {
     const map = new Map<string, {
@@ -208,7 +245,7 @@ export function SiteDetailsPage() {
           itemId: itm.itemId,
           itemCode: code,
           itemName: itm.itemName || code,
-          unit: 'pcs',
+          unit: itm.unit || 'pcs',
           totalDispatched: 0,
           totalReturned: 0,
           totalLostOrDamaged: 0,
@@ -231,7 +268,7 @@ export function SiteDetailsPage() {
           key,
           itemCode: code,
           itemName: itm.itemName || code,
-          unit: 'pcs',
+          unit: itm.unit || 'pcs',
           totalDispatched: 0,
           totalReturned: 0,
           totalLostOrDamaged: 0,
@@ -319,6 +356,16 @@ export function SiteDetailsPage() {
     { title: 'Date', dataIndex: 'orderDate', key: 'orderDate' },
     { title: 'Requirement', dataIndex: 'requirement', key: 'requirement', render: (v: string) => v || '-' },
     { title: 'Status', dataIndex: 'status', key: 'status', render: (v: string) => <Tag color={v === 'CONFIRMED' ? 'success' : 'default'}>{v}</Tag> },
+    {
+      title: 'Action',
+      key: 'action',
+      width: 100,
+      render: (_: any, r: SiteOrder) => (
+        <Button size="small" icon={<EyeOutlined />} onClick={() => setSelectedOrder(r)}>
+          View
+        </Button>
+      ),
+    },
   ];
 
   const issuedColumns = [
@@ -327,7 +374,37 @@ export function SiteDetailsPage() {
     { title: 'Vehicle', dataIndex: 'vehicleNumber', key: 'vehicleNumber', render: (v: string) => v || '-' },
     { title: 'Driver', dataIndex: 'driverName', key: 'driverName', render: (v: string) => v || '-' },
     { title: 'Status', dataIndex: 'status', key: 'status', render: (v: string) => <Tag color="processing">{v}</Tag> },
-    { title: 'Items', key: 'items', render: (_: any, r: IssuedChallan) => r.items ? r.items.length + ' item types' : '-' },
+    {
+      title: 'Dispatched Materials & Quantities',
+      key: 'items',
+      render: (_: any, r: IssuedChallan) => {
+        if (!r.items || r.items.length === 0) return <span style={{ color: '#8c8c8c' }}>-</span>;
+        return (
+          <Space wrap size={[4, 6]}>
+            {r.items.map((itm, idx) => (
+              <Tag key={idx} color="teal" style={{ fontSize: '0.85rem', padding: '2px 8px' }}>
+                <strong>{itm.itemName || itm.itemCode || `Item #${itm.itemId}`}</strong>: {Number(itm.quantity || 0).toLocaleString('en-IN')} {itm.unit || 'NOS'}
+              </Tag>
+            ))}
+          </Space>
+        );
+      },
+    },
+    {
+      title: 'Action',
+      key: 'action',
+      width: 160,
+      render: (_: any, r: IssuedChallan) => (
+        <Space wrap>
+          <Button size="small" type="primary" ghost icon={<EyeOutlined />} onClick={() => setSelectedIssuedChallan(r)}>
+            View
+          </Button>
+          <Button size="small" icon={<DownloadOutlined />} onClick={() => handleDownloadPdf(r)}>
+            PDF
+          </Button>
+        </Space>
+      ),
+    },
   ];
 
   const receivingColumns = [
@@ -335,6 +412,34 @@ export function SiteDetailsPage() {
     { title: 'Return Date', dataIndex: 'receiveDate', key: 'receiveDate' },
     { title: 'Vehicle', dataIndex: 'vehicleNumber', key: 'vehicleNumber', render: (v: string) => v || '-' },
     { title: 'Status', dataIndex: 'status', key: 'status', render: (v: string) => <Tag color={v === 'CANCELLED' ? 'error' : 'success'}>{v}</Tag> },
+    {
+      title: 'Returned Materials',
+      key: 'items',
+      render: (_: any, r: ReceivingChallan) => {
+        if (!r.items || r.items.length === 0) return <span style={{ color: '#8c8c8c' }}>-</span>;
+        return (
+          <Space wrap size={[4, 6]}>
+            {r.items.map((itm, idx) => (
+              <Tag key={idx} color="green" style={{ fontSize: '0.85rem', padding: '2px 8px' }}>
+                <strong>{itm.itemName || itm.itemCode}</strong>: Good {Number(itm.goodReturnedQuantity || 0).toLocaleString('en-IN')}
+                {(itm.damagedReturnedQuantity || 0) > 0 && ` | Dmg ${itm.damagedReturnedQuantity}`}
+                {(itm.lostQuantity || 0) > 0 && ` | Lost ${itm.lostQuantity}`}
+              </Tag>
+            ))}
+          </Space>
+        );
+      },
+    },
+    {
+      title: 'Action',
+      key: 'action',
+      width: 100,
+      render: (_: any, r: ReceivingChallan) => (
+        <Button size="small" icon={<EyeOutlined />} onClick={() => setSelectedReceivingChallan(r)}>
+          View
+        </Button>
+      ),
+    },
   ];
 
   const operationColumns = [
@@ -433,7 +538,13 @@ export function SiteDetailsPage() {
               label: `Site Orders (${orders.length})`,
               children: (
                 <div style={{ paddingTop: 12 }}>
-                  <Table rowKey="id" columns={orderColumns} dataSource={orders} pagination={{ pageSize: 10 }} scroll={{ x: 600 }} />
+                  <Table
+                    rowKey="id"
+                    columns={orderColumns}
+                    dataSource={orders}
+                    pagination={{ pageSize: 10 }}
+                    scroll={{ x: 650 }}
+                  />
                 </div>
               ),
             },
@@ -442,7 +553,13 @@ export function SiteDetailsPage() {
               label: `Issued Challans (${issuedChallans.length})`,
               children: (
                 <div style={{ paddingTop: 12 }}>
-                  <Table rowKey="id" columns={issuedColumns} dataSource={issuedChallans} pagination={{ pageSize: 10 }} scroll={{ x: 700 }} />
+                  <Table
+                    rowKey="id"
+                    columns={issuedColumns}
+                    dataSource={issuedChallans}
+                    pagination={{ pageSize: 10 }}
+                    scroll={{ x: 800 }}
+                  />
                 </div>
               ),
             },
@@ -451,7 +568,13 @@ export function SiteDetailsPage() {
               label: `Receiving Challans (${receivingChallans.length})`,
               children: (
                 <div style={{ paddingTop: 12 }}>
-                  <Table rowKey="id" columns={receivingColumns} dataSource={receivingChallans} pagination={{ pageSize: 10 }} scroll={{ x: 600 }} />
+                  <Table
+                    rowKey="id"
+                    columns={receivingColumns}
+                    dataSource={receivingChallans}
+                    pagination={{ pageSize: 10 }}
+                    scroll={{ x: 750 }}
+                  />
                 </div>
               ),
             },
@@ -467,6 +590,158 @@ export function SiteDetailsPage() {
           ]}
         />
       </Card>
+
+      {/* Issued Challan Details Modal */}
+      <Modal
+        title={`Issued Delivery Challan: ${selectedIssuedChallan?.challanNumber || ''}`}
+        open={Boolean(selectedIssuedChallan)}
+        width={750}
+        footer={null}
+        onCancel={() => setSelectedIssuedChallan(null)}
+      >
+        {selectedIssuedChallan && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <Descriptions bordered size="small" column={2}>
+              <Descriptions.Item label="Challan Number"><code>{selectedIssuedChallan.challanNumber}</code></Descriptions.Item>
+              <Descriptions.Item label="Dispatch Date">{selectedIssuedChallan.dispatchDate}</Descriptions.Item>
+              <Descriptions.Item label="Site">{site.siteName}</Descriptions.Item>
+              <Descriptions.Item label="Party">{site.partyLegalName || site.partyName || '-'}</Descriptions.Item>
+              <Descriptions.Item label="Vehicle">{selectedIssuedChallan.vehicleNumber || '-'}</Descriptions.Item>
+              <Descriptions.Item label="Driver">{selectedIssuedChallan.driverName || '-'}</Descriptions.Item>
+              <Descriptions.Item label="Status"><Tag color="processing">{selectedIssuedChallan.status}</Tag></Descriptions.Item>
+              {selectedIssuedChallan.siteOrderNumber && (
+                <Descriptions.Item label="Order No."><code>{selectedIssuedChallan.siteOrderNumber}</code></Descriptions.Item>
+              )}
+            </Descriptions>
+
+            <div>
+              <h4 style={{ margin: '8px 0 12px' }}>Material Items & Quantities</h4>
+              <Table
+                rowKey={(_r, i) => i || 0}
+                pagination={false}
+                size="small"
+                dataSource={selectedIssuedChallan.items || []}
+                columns={[
+                  { title: 'Code', dataIndex: 'itemCode', key: 'itemCode', render: (v: string) => <code>{v || '-'}</code> },
+                  { title: 'Material Item Name', dataIndex: 'itemName', key: 'itemName', render: (v: string) => <strong>{v}</strong> },
+                  { title: 'Unit', dataIndex: 'unit', key: 'unit', render: (v: string) => v || 'NOS' },
+                  {
+                    title: 'Dispatched Quantity',
+                    dataIndex: 'quantity',
+                    key: 'quantity',
+                    render: (v: number, r: any) => (
+                      <strong style={{ color: '#006565' }}>
+                        {Number(v || 0).toLocaleString('en-IN')} {r.unit || 'NOS'}
+                      </strong>
+                    ),
+                  },
+                ]}
+              />
+            </div>
+
+            {selectedIssuedChallan.notes && (
+              <div style={{ background: '#f5f5f5', padding: 12, borderRadius: 6 }}>
+                <strong>Remarks / Notes:</strong> {selectedIssuedChallan.notes}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 8 }}>
+              <Button icon={<DownloadOutlined />} onClick={() => handleDownloadPdf(selectedIssuedChallan)}>
+                Download PDF
+              </Button>
+              <Button type="primary" onClick={() => setSelectedIssuedChallan(null)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Receiving Challan Details Modal */}
+      <Modal
+        title={`Receiving Return Challan: ${selectedReceivingChallan?.challanNumber || ''}`}
+        open={Boolean(selectedReceivingChallan)}
+        width={750}
+        footer={null}
+        onCancel={() => setSelectedReceivingChallan(null)}
+      >
+        {selectedReceivingChallan && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <Descriptions bordered size="small" column={2}>
+              <Descriptions.Item label="Challan Number"><code>{selectedReceivingChallan.challanNumber}</code></Descriptions.Item>
+              <Descriptions.Item label="Return Date">{selectedReceivingChallan.receiveDate}</Descriptions.Item>
+              <Descriptions.Item label="Vehicle">{selectedReceivingChallan.vehicleNumber || '-'}</Descriptions.Item>
+              <Descriptions.Item label="Driver">{selectedReceivingChallan.driverName || '-'}</Descriptions.Item>
+              <Descriptions.Item label="Status"><Tag color={selectedReceivingChallan.status === 'CANCELLED' ? 'error' : 'success'}>{selectedReceivingChallan.status}</Tag></Descriptions.Item>
+            </Descriptions>
+
+            <div>
+              <h4 style={{ margin: '8px 0 12px' }}>Returned Material Items</h4>
+              <Table
+                rowKey={(_r, i) => i || 0}
+                pagination={false}
+                size="small"
+                dataSource={selectedReceivingChallan.items || []}
+                columns={[
+                  { title: 'Code', dataIndex: 'itemCode', key: 'itemCode', render: (v: string) => <code>{v || '-'}</code> },
+                  { title: 'Material Name', dataIndex: 'itemName', key: 'itemName', render: (v: string) => <strong>{v}</strong> },
+                  { title: 'Good Qty', dataIndex: 'goodReturnedQuantity', key: 'goodReturnedQuantity', render: (v: number) => Number(v || 0).toLocaleString('en-IN') },
+                  { title: 'Damaged Qty', dataIndex: 'damagedReturnedQuantity', key: 'damagedReturnedQuantity', render: (v: number) => v ? <Tag color="warning">{v}</Tag> : '0' },
+                  { title: 'Lost Qty', dataIndex: 'lostQuantity', key: 'lostQuantity', render: (v: number) => v ? <Tag color="error">{v}</Tag> : '0' },
+                ]}
+              />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+              <Button type="primary" onClick={() => setSelectedReceivingChallan(null)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Site Order Details Modal */}
+      <Modal
+        title={`Site Order: ${selectedOrder?.orderNumber || ''}`}
+        open={Boolean(selectedOrder)}
+        width={650}
+        footer={null}
+        onCancel={() => setSelectedOrder(null)}
+      >
+        {selectedOrder && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <Descriptions bordered size="small" column={2}>
+              <Descriptions.Item label="Order Number"><code>{selectedOrder.orderNumber}</code></Descriptions.Item>
+              <Descriptions.Item label="Order Date">{selectedOrder.orderDate}</Descriptions.Item>
+              <Descriptions.Item label="Requirement">{selectedOrder.requirement || '-'}</Descriptions.Item>
+              <Descriptions.Item label="Status"><Tag color={selectedOrder.status === 'CONFIRMED' ? 'success' : 'default'}>{selectedOrder.status}</Tag></Descriptions.Item>
+            </Descriptions>
+
+            <div>
+              <h4 style={{ margin: '8px 0 12px' }}>Order Items</h4>
+              <Table
+                rowKey={(_r, i) => i || 0}
+                pagination={false}
+                size="small"
+                dataSource={selectedOrder.items || []}
+                columns={[
+                  { title: 'Code', dataIndex: 'itemCode', key: 'itemCode', render: (v: string) => <code>{v || '-'}</code> },
+                  { title: 'Material Name', dataIndex: 'itemName', key: 'itemName', render: (v: string) => <strong>{v}</strong> },
+                  { title: 'Ordered Qty', dataIndex: 'quantity', key: 'quantity', render: (v: number) => Number(v || 0).toLocaleString('en-IN') },
+                  { title: 'Fulfilled Qty', dataIndex: 'fulfilledQuantity', key: 'fulfilledQuantity', render: (v: number) => Number(v || 0).toLocaleString('en-IN') },
+                ]}
+              />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+              <Button type="primary" onClick={() => setSelectedOrder(null)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       <LedgerImportModal
         open={ledgerModalOpen}
