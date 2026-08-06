@@ -344,21 +344,28 @@ public class ClientExcelImportService {
                     if (qty.compareTo(BigDecimal.ZERO) > 0) {
                         Item item = entry.getValue();
                         
-                        // Update Balances
-                        StockBalance balance = balances.findForUpdate(item.getId()).orElseGet(() -> {
-                            jdbc.update("INSERT IGNORE INTO stock_balances(item_id) VALUES(?)", item.getId());
-                            return balances.findForUpdate(item.getId()).orElseThrow();
-                        });
-                        balance.setAvailableQuantity(balance.getAvailableQuantity().subtract(qty));
-                        balance.setIssuedQuantity(balance.getIssuedQuantity().add(qty));
-                        balances.save(balance);
+                        boolean hasOpeningStock = Boolean.TRUE.equals(jdbc.queryForObject(
+                            "SELECT COUNT(*) > 0 FROM stock_transactions WHERE site_id = ? AND item_id = ? AND transaction_type LIKE 'OPENING%'",
+                            Boolean.class, finalOrder.getSite().getId(), item.getId()
+                        ));
 
-                        SiteStockBalance siteBalance = siteBalances.findForUpdate(finalOrder.getSite().getId(), item.getId()).orElseGet(() -> {
-                            jdbc.update("INSERT IGNORE INTO site_stock_balances(site_id, item_id) VALUES(?, ?)", finalOrder.getSite().getId(), item.getId());
-                            return siteBalances.findForUpdate(finalOrder.getSite().getId(), item.getId()).orElseThrow();
-                        });
-                        siteBalance.setPendingQuantity(siteBalance.getPendingQuantity().add(qty));
-                        siteBalances.save(siteBalance);
+                        if (!hasOpeningStock) {
+                            // Update Balances only if opening stock has not set baseline snapshot
+                            StockBalance balance = balances.findForUpdate(item.getId()).orElseGet(() -> {
+                                jdbc.update("INSERT IGNORE INTO stock_balances(item_id) VALUES(?)", item.getId());
+                                return balances.findForUpdate(item.getId()).orElseThrow();
+                            });
+                            balance.setAvailableQuantity(balance.getAvailableQuantity().subtract(qty));
+                            balance.setIssuedQuantity(balance.getIssuedQuantity().add(qty));
+                            balances.save(balance);
+
+                            SiteStockBalance siteBalance = siteBalances.findForUpdate(finalOrder.getSite().getId(), item.getId()).orElseGet(() -> {
+                                jdbc.update("INSERT IGNORE INTO site_stock_balances(site_id, item_id) VALUES(?, ?)", finalOrder.getSite().getId(), item.getId());
+                                return siteBalances.findForUpdate(finalOrder.getSite().getId(), item.getId()).orElseThrow();
+                            });
+                            siteBalance.setPendingQuantity(siteBalance.getPendingQuantity().add(qty));
+                            siteBalances.save(siteBalance);
+                        }
                         
                         BigDecimal weight = qty.multiply(Optional.ofNullable(item.getWeightPerPiece()).orElse(BigDecimal.ZERO));
                         

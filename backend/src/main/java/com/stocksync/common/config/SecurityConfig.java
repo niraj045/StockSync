@@ -75,7 +75,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-                        .ignoringRequestMatchers("/api/v1/auth/csrf", "/api/v1/health", "/actuator/health", "/error")
+                        .ignoringRequestMatchers("/api/v1/auth/csrf", "/api/v1/auth/login", "/api/v1/health", "/actuator/health", "/error")
                 )
                 .sessionManagement(session -> session
                         .sessionFixation(sessionFixation -> sessionFixation.migrateSession())

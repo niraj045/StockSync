@@ -159,8 +159,9 @@ public class StockImportService {
             StockImportRow selected=sourceRows.getFirst();String sr=selected.getSourceSrNumber();
             String code="MAT-"+String.format("%03d",Integer.parseInt(sr));String name=selected.getNormalizedItemSuggestion()==null||
                 selected.getNormalizedItemSuggestion().isBlank()?selected.getSourceItemName():selected.getNormalizedItemSuggestion();
-            ImportItemAccess.ItemView item=itemAccess.byCode(code).filter(ImportItemAccess.ItemView::active)
-                .orElseGet(()->itemAccess.create(code,name,actor()));
+            ImportItemAccess.ItemView item=itemAccess.byExactName(name).filter(ImportItemAccess.ItemView::active)
+                .orElseGet(()->itemAccess.byCode(code).filter(ImportItemAccess.ItemView::active)
+                    .orElseGet(()->itemAccess.create(code,name,actor())));
             Item reference=entityManager.getReference(Item.class,item.id());boolean confirm=isAmbiguous(selected.getSourceItemName());
             sourceRows.forEach(r->{r.setExcluded(false);r.setExclusionReason(null);r.setMappedItem(reference);
                 r.setDuplicateConfirmed(confirm);evaluate(r);});
