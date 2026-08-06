@@ -26,16 +26,29 @@ export function OpeningStockImportScreen({ navigation }: Props) {
         type: file.mimeType ?? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       } as any);
 
-      const response = await apiClient.post('/stock-imports/upload', formData, {
+      // 1. Upload workbook
+      const uploadRes = await apiClient.post('/stock-imports/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
-      
-      const data = response.data;
+      const uploadData = uploadRes.data;
+      const batchId = uploadData.id;
+      const fileChecksum = uploadData.fileChecksum;
+
+      // 2. Auto-map items and party/site locations
+      await apiClient.post(`/stock-imports/${batchId}/auto-map`);
+
+      // 3. Post opening stock
+      const postRes = await apiClient.post(`/stock-imports/${batchId}/post`, {
+        confirmed: true,
+        expectedChecksum: fileChecksum,
+      });
+      const postData = postRes.data;
+
       Alert.alert(
-        'Upload Successful',
-        `File "${data.fileName || file.name}" uploaded successfully.\nBatch Code: ${data.batchCode || 'N/A'}\nTotal Rows: ${data.totalRows ?? 'N/A'}\nStatus: ${data.status || 'UPLOADED'}`,
+        'Import Successful',
+        `Workbook "${dataName(uploadData, file)}" processed & posted successfully!\n\nBatch: ${uploadData.batchCode}\nTotal Posted Items & Stock: ${postData.postedCombinedTotal ?? uploadData.expectedCombinedTotal ?? 'Complete'}`,
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
     } catch (e: any) {
@@ -45,6 +58,8 @@ export function OpeningStockImportScreen({ navigation }: Props) {
       setIsPending(false);
     }
   };
+
+  const dataName = (data: any, file: DocumentPicker.DocumentPickerAsset) => data.fileName || file.name;
 
   const pickDocument = async () => {
     try {
