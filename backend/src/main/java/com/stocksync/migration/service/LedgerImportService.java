@@ -8,7 +8,9 @@ import com.stocksync.inventory.repository.ItemRepository;
 import com.stocksync.inventory.service.OpeningStockAccess;
 import com.stocksync.migration.parser.LedgerImportParser;
 import com.stocksync.site.entity.Site;
+import com.stocksync.site.entity.SiteStatus;
 import com.stocksync.site.repository.SiteRepository;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,48 +30,125 @@ public class LedgerImportService {
     private final ItemCategoryRepository categoryRepository;
     private final SiteRepository siteRepository;
     private final OpeningStockAccess openingStockAccess;
+    private final JdbcTemplate jdbc;
 
     public LedgerImportService(LedgerImportParser parser, ItemRepository itemRepository, 
                                ItemCategoryRepository categoryRepository, SiteRepository siteRepository, 
-                               OpeningStockAccess openingStockAccess) {
+                               OpeningStockAccess openingStockAccess, JdbcTemplate jdbc) {
         this.parser = parser;
         this.itemRepository = itemRepository;
         this.categoryRepository = categoryRepository;
         this.siteRepository = siteRepository;
         this.openingStockAccess = openingStockAccess;
+        this.jdbc = jdbc;
     }
 
     @Transactional
     public List<LedgerImportParser.LedgerItemTotal> importLedger(Long siteId, MultipartFile file) {
-        Site site = siteRepository.findById(siteId)
+        Site selectedSite = siteRepository.findById(siteId)
                 .orElseThrow(() -> new BusinessRuleException("SITE_NOT_FOUND", "Site not found"));
         
-        List<LedgerImportParser.LedgerItemTotal> totals;
+        LedgerImportParser.LedgerParseResult result;
         try (InputStream is = file.getInputStream()) {
-            totals = parser.parse(is);
+            result = parser.parseWithSiteName(is);
+        } catch (BusinessRuleException e) {
+            throw e;
         } catch (Exception e) {
             throw new BusinessRuleException("LEDGER_READ_FAILED", "Unable to read the ledger file: " + e.getMessage());
         }
 
+        List<LedgerImportParser.LedgerItemTotal> totals = result.totals();
         if (totals.isEmpty()) {
             throw new BusinessRuleException("LEDGER_EMPTY", "No material totals found in the ledger");
         }
+        
+        // Auto-detect and resolve site
+        Site targetSite = resolveTargetSite(selectedSite, result.detectedSiteName());
 
         String actor = SecurityContextHolder.getContext().getAuthentication() != null ? 
                 SecurityContextHolder.getContext().getAuthentication().getName() : "system";
 
+        List<LedgerImportParser.LedgerItemTotal> posted = new ArrayList<>();
+
         for (LedgerImportParser.LedgerItemTotal total : totals) {
             Item item = findOrCreateItem(total.itemName());
 
+            // GUARD: Skip if an OPENING_SITE_BALANCE transaction already exists for this site+item.
+            Integer existingCount = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM stock_transactions WHERE item_id = ? AND site_id = ? AND transaction_type IN ('OPENING_SITE_BALANCE','OPENING_GODOWN_BALANCE')",
+                Integer.class, item.getId(), targetSite.getId()
+            );
+            if (existingCount != null && existingCount > 0) {
+                continue;
+            }
+
             OpeningStockAccess.OpeningCommand command = new OpeningStockAccess.OpeningCommand(
-                    null, null, item.getId(), site.getParty().getId(), site.getId(),
+                    null, null, item.getId(), targetSite.getParty().getId(), targetSite.getId(),
                     "OPENING_SITE_BALANCE", "ISSUED", LocalDate.now(), total.totalDelivered(),
                     "Imported from D&R Ledger", actor
             );
             openingStockAccess.post(command);
+            posted.add(total);
         }
 
-        return totals;
+        return posted;
+    }
+
+    private Site resolveTargetSite(Site selectedSite, String detectedSiteName) {
+        if (detectedSiteName == null || detectedSiteName.isBlank()) {
+            return selectedSite;
+        }
+        
+        String detected = detectedSiteName.trim();
+        
+        // If it matches exactly, use it (sometimes user selects the generic party site)
+        if (detected.equalsIgnoreCase(selectedSite.getSiteName())) {
+            return selectedSite;
+        }
+        
+        // Look for a matching site under the same party
+        List<Site> partySites = siteRepository.findByPartyId(selectedSite.getParty().getId());
+        Optional<Site> matchingSite = partySites.stream()
+            .filter(s -> detected.toLowerCase().contains(s.getSiteName().toLowerCase()) || 
+                         s.getSiteName().toLowerCase().contains(detected.toLowerCase()))
+            .findFirst();
+            
+        if (matchingSite.isPresent()) {
+            return matchingSite.get();
+        }
+        
+        // If not found, create a new specific site under this party
+        String newSiteName = detected;
+        String partyName = selectedSite.getParty().getLegalName();
+        if (newSiteName.toLowerCase().startsWith(partyName.toLowerCase())) {
+            newSiteName = newSiteName.substring(partyName.length()).trim();
+            if (newSiteName.startsWith("-")) newSiteName = newSiteName.substring(1).trim();
+        }
+        if (newSiteName.isBlank()) {
+            newSiteName = detected;
+        }
+        
+        Site newSite = new Site();
+        newSite.setParty(selectedSite.getParty());
+        newSite.setSiteName(newSiteName);
+        
+        String code = newSiteName.replaceAll("[^a-zA-Z0-9]", "").toUpperCase();
+        if (code.length() > 20) code = code.substring(0, 20);
+        if (code.isBlank()) code = "SITE";
+        
+        String finalCode = code;
+        int counter = 1;
+        while(siteRepository.existsBySiteCodeIgnoreCase(finalCode)) {
+            finalCode = code + counter++;
+        }
+        
+        newSite.setSiteCode(finalCode);
+        newSite.setStatus(SiteStatus.ACTIVE);
+        newSite.setDefaulter(false);
+        newSite.setStartDate(LocalDate.now());
+        newSite.setNotes("Auto-created from D&R import");
+        
+        return siteRepository.save(newSite);
     }
 
     private Item findOrCreateItem(String itemName) {
@@ -89,12 +168,11 @@ public class LedgerImportService {
 
         Item newItem = new Item();
         newItem.setItemName(itemName);
-        newItem.setItemCode(itemName.replaceAll("[^a-zA-Z0-9]", "").toUpperCase());
-        if (newItem.getItemCode().length() > 20) {
-            newItem.setItemCode(newItem.getItemCode().substring(0, 20));
-        }
+        String code = itemName.replaceAll("[^a-zA-Z0-9]", "").toUpperCase();
+        if (code.length() > 20) code = code.substring(0, 20);
+        newItem.setItemCode(code);
         newItem.setCategory(category);
-        newItem.setUnit("Nos");
+        newItem.setUnit("NOS");
         newItem.setActive(true);
 
         return itemRepository.save(newItem);

@@ -70,6 +70,10 @@ public class PartyService {
     }
     private void validatePartyUnique(PartyRequest r,Long id){
         String gst=upper(r.gstin()), pan=upper(r.pan());
+        if(gst!=null&&gst.length()>0&&!gst.matches("^[0-9A-Z]{15}$"))
+            throw new BusinessRuleException("INVALID_GSTIN","GSTIN must be 15 uppercase letters or digits (e.g. 27AAAPZ2128Q1Z1)");
+        if(pan!=null&&pan.length()>0&&!pan.matches("^[A-Z]{5}[0-9]{4}[A-Z]$"))
+            throw new BusinessRuleException("INVALID_PAN","PAN must be in format AAAAA9999A (e.g. ABCDE1234F)");
         if(gst!=null&&(id==null?parties.existsByGstinIgnoreCase(gst):parties.existsByGstinIgnoreCaseAndIdNot(gst,id)))
             throw new BusinessRuleException("GSTIN_ALREADY_EXISTS","GSTIN already exists");
         if(pan!=null&&(id==null?parties.existsByPanIgnoreCase(pan):parties.existsByPanIgnoreCaseAndIdNot(pan,id)))
