@@ -26,7 +26,7 @@ export function OpeningStockImportScreen({ navigation }: Props) {
         type: file.mimeType ?? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       } as any);
 
-      const response = await apiClient.post('/import/stock', formData, {
+      const response = await apiClient.post('/stock-imports/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -34,8 +34,8 @@ export function OpeningStockImportScreen({ navigation }: Props) {
       
       const data = response.data;
       Alert.alert(
-        'Import Successful',
-        `Imported stock snapshot successfully.\n\nParty: ${data.partyName}\nSite: ${data.siteName}\nRecords: ${data.importedRecordsCount}`,
+        'Upload Successful',
+        `File "${data.fileName || file.name}" uploaded successfully.\nBatch Code: ${data.batchCode || 'N/A'}\nTotal Rows: ${data.totalRows ?? 'N/A'}\nStatus: ${data.status || 'UPLOADED'}`,
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
     } catch (e: any) {
