@@ -9,11 +9,15 @@ export function ReportExcelButton({
   filters = {},
   label = 'Excel',
   size,
+  disabled = false,
+  title,
 }: {
   reportType: string;
   filters?: ReportFilter;
   label?: string;
   size?: 'small' | 'middle' | 'large';
+  disabled?: boolean;
+  title?: string;
 }) {
   const { message } = App.useApp();
   const [loading, setLoading] = useState(false);
@@ -34,8 +38,10 @@ export function ReportExcelButton({
     <Button
       icon={<FileExcelOutlined />}
       loading={loading}
+      disabled={disabled}
       onClick={() => void exportReport()}
       size={size}
+      title={title}
     >
       {label}
     </Button>

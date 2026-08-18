@@ -3,11 +3,13 @@ import { CompositeScreenProps, useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   FlatList,
+  Modal,
   Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -19,7 +21,7 @@ import { Card, EmptyBlock, PageHeader, StatusPill } from '../components/ui';
 import { ExcelExportButton } from '../components/ExcelExportButton';
 import type { MainTabParams, RootStackParams } from '../navigation/types';
 import { colors, fonts } from '../theme';
-import type { IssuedChallan, Page, ReceivingChallan } from '../types/api';
+import type { IssuedChallan, Page, Party, ReceivingChallan } from '../types/api';
 import { dateLabel, quantity } from '../utils/format';
 
 type Props = CompositeScreenProps<
@@ -36,6 +38,10 @@ export function ChallansScreen({ navigation }: Props) {
   const [mode, setMode] = useState<Mode>('issued');
   const [issued, setIssued] = useState<IssuedChallan[]>([]);
   const [received, setReceived] = useState<ReceivingChallan[]>([]);
+  const [parties, setParties] = useState<Party[]>([]);
+  const [companyId, setCompanyId] = useState<number | null>(null);
+  const [companyPickerOpen, setCompanyPickerOpen] = useState(false);
+  const [companySearch, setCompanySearch] = useState('');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -45,9 +51,13 @@ export function ChallansScreen({ navigation }: Props) {
     setError('');
     try {
       const endpoint = mode === 'issued' ? '/challans/issued' : '/challans/receiving';
-      const response = await apiClient.get<Page<IssuedChallan | ReceivingChallan>>(endpoint, {
-        params: { search: search.trim() || undefined, size: 100, sort: 'id,desc' },
-      });
+      const [response, partyResponse] = await Promise.all([
+        apiClient.get<Page<IssuedChallan | ReceivingChallan>>(endpoint, {
+          params: { search: search.trim() || undefined, partyId: companyId ?? undefined, size: 100, sort: 'id,desc' },
+        }),
+        apiClient.get<Page<Party>>('/parties', { params: { active: true, size: 500, sort: 'legalName,asc' } }),
+      ]);
+      setParties(partyResponse.data.content);
       if (mode === 'issued') setIssued(response.data.content as IssuedChallan[]);
       else setReceived(response.data.content as ReceivingChallan[]);
     } catch (cause) {
@@ -55,7 +65,7 @@ export function ChallansScreen({ navigation }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [mode, search]);
+  }, [mode, search, companyId]);
 
   useFocusEffect(useCallback(() => {
     const timer = setTimeout(() => void load(), 150);
@@ -63,8 +73,15 @@ export function ChallansScreen({ navigation }: Props) {
   }, [load]));
 
   const data: Array<IssuedChallan | ReceivingChallan> = mode === 'issued' ? issued : received;
+  const selectedCompany = parties.find((party) => party.id === companyId);
+  const filteredCompanies = useMemo(() => {
+    const value = companySearch.trim().toLowerCase();
+    if (!value) return parties;
+    return parties.filter((party) => `${party.legalName} ${party.tradeName ?? ''}`.toLowerCase().includes(value));
+  }, [companySearch, parties]);
 
   return (
+    <>
     <FlatList<IssuedChallan | ReceivingChallan>
       data={data}
       keyExtractor={(item) => `${mode}-${item.id}`}
@@ -78,7 +95,8 @@ export function ChallansScreen({ navigation }: Props) {
             action={<View style={styles.headerActions}>
               <ExcelExportButton
                 reportType={mode === 'issued' ? 'ISSUED_CHALLANS_REGISTER' : 'RECEIVING_CHALLANS_REGISTER'}
-                filters={{ documentNumber: search.trim() || undefined }}
+                filters={{ partyId: companyId ?? undefined, documentNumber: search.trim() || undefined }}
+                disabled={!companyId}
               />
               {canWrite ? (
                 <Pressable
@@ -95,6 +113,24 @@ export function ChallansScreen({ navigation }: Props) {
             <Segment label="Issued" active={mode === 'issued'} onPress={() => setMode('issued')} />
             <Segment label="Received" active={mode === 'received'} onPress={() => setMode('received')} />
           </View>
+          <Pressable
+            accessibilityLabel="Select company for challan Excel"
+            accessibilityRole="button"
+            onPress={() => {
+              setCompanySearch('');
+              setCompanyPickerOpen(true);
+            }}
+            style={styles.companySelector}
+          >
+            <Ionicons name="business-outline" size={20} color={colors.primary} />
+            <View style={styles.companySelectorText}>
+              <Text style={styles.companySelectorLabel}>Company Excel</Text>
+              <Text numberOfLines={1} style={selectedCompany ? styles.companySelectorValue : styles.companySelectorPlaceholder}>
+                {selectedCompany?.legalName ?? 'Select one company before exporting'}
+              </Text>
+            </View>
+            <Ionicons name="chevron-down" size={20} color={colors.muted} />
+          </Pressable>
           <View style={styles.search}>
             <Ionicons name="search-outline" size={20} color={colors.muted} />
             <TextInput
@@ -151,6 +187,58 @@ export function ChallansScreen({ navigation }: Props) {
         );
       }}
     />
+    <Modal animationType="slide" transparent visible={companyPickerOpen} onRequestClose={() => setCompanyPickerOpen(false)}>
+      <View style={styles.backdrop}>
+        <View style={styles.sheet}>
+          <View style={styles.sheetHeader}>
+            <Text style={styles.sheetTitle}>Select company</Text>
+            <Pressable accessibilityLabel="Close company selection" onPress={() => setCompanyPickerOpen(false)}>
+              <Ionicons name="close" size={25} color={colors.ink} />
+            </Pressable>
+          </View>
+          <View style={styles.companySearch}>
+            <Ionicons name="search-outline" size={20} color={colors.muted} />
+            <TextInput
+              autoFocus
+              onChangeText={setCompanySearch}
+              placeholder="Search company"
+              placeholderTextColor="#98A2B3"
+              style={styles.searchInput}
+              value={companySearch}
+            />
+          </View>
+          <ScrollView contentContainerStyle={styles.companyList} keyboardShouldPersistTaps="handled">
+            <Pressable
+              style={styles.companyOption}
+              onPress={() => {
+                setCompanyId(null);
+                setCompanyPickerOpen(false);
+              }}
+            >
+              <Text style={styles.clearCompany}>Clear company filter</Text>
+            </Pressable>
+            {filteredCompanies.map((party) => (
+              <Pressable
+                key={party.id}
+                style={[styles.companyOption, companyId === party.id && styles.companyOptionActive]}
+                onPress={() => {
+                  setCompanyId(party.id);
+                  setCompanyPickerOpen(false);
+                }}
+              >
+                <View style={styles.companySelectorText}>
+                  <Text style={styles.companyOptionTitle}>{party.legalName}</Text>
+                  {party.tradeName ? <Text style={styles.companyOptionMeta}>{party.tradeName}</Text> : null}
+                </View>
+                {companyId === party.id ? <Ionicons name="checkmark-circle" size={21} color={colors.primary} /> : null}
+              </Pressable>
+            ))}
+            {!filteredCompanies.length ? <EmptyBlock title="No company found" message="Try a different company name." /> : null}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+    </>
   );
 }
 
@@ -171,6 +259,11 @@ const styles = StyleSheet.create({
   segmentActive: { backgroundColor: colors.primary },
   segmentText: { color: colors.muted, fontFamily: fonts.bold },
   segmentTextActive: { color: '#fff' },
+  companySelector: { minHeight: 62, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#fff', borderWidth: 1, borderColor: colors.line, borderRadius: 8, paddingHorizontal: 14, marginBottom: 12 },
+  companySelectorText: { flex: 1 },
+  companySelectorLabel: { color: colors.primary, fontSize: 11, fontFamily: fonts.bold, textTransform: 'uppercase' },
+  companySelectorValue: { color: colors.ink, fontSize: 14, fontFamily: fonts.bold, marginTop: 3 },
+  companySelectorPlaceholder: { color: colors.muted, fontSize: 13, marginTop: 3 },
   search: { flexDirection: 'row', alignItems: 'center', gap: 9, backgroundColor: '#fff', borderWidth: 1, borderColor: colors.line, borderRadius: 8, paddingHorizontal: 14, marginBottom: 14 },
   searchInput: { flex: 1, height: 50, color: colors.ink, fontSize: 15 },
   error: { color: colors.red, backgroundColor: colors.redSoft, borderRadius: 8, padding: 12, marginBottom: 12 },
@@ -182,4 +275,15 @@ const styles = StyleSheet.create({
   rowMeta: { borderTopWidth: 1, borderTopColor: colors.line, marginTop: 13, paddingTop: 11, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   meta: { color: colors.muted, fontSize: 12 },
   total: { color: colors.ink, fontWeight: '800' },
+  backdrop: { flex: 1, backgroundColor: 'rgba(4,25,23,0.45)', justifyContent: 'flex-end' },
+  sheet: { maxHeight: '82%', backgroundColor: '#fff', borderTopLeftRadius: 12, borderTopRightRadius: 12 },
+  sheetHeader: { minHeight: 64, paddingHorizontal: 18, borderBottomWidth: 1, borderBottomColor: colors.line, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  sheetTitle: { color: colors.ink, fontSize: 19, fontFamily: fonts.extraBold },
+  companySearch: { flexDirection: 'row', alignItems: 'center', gap: 9, borderWidth: 1, borderColor: colors.line, borderRadius: 8, margin: 14, marginBottom: 0, paddingHorizontal: 12 },
+  companyList: { padding: 14, paddingBottom: 28 },
+  companyOption: { minHeight: 62, paddingHorizontal: 12, borderBottomWidth: 1, borderBottomColor: colors.line, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  companyOptionActive: { backgroundColor: colors.primarySoft },
+  companyOptionTitle: { color: colors.ink, fontSize: 15, fontFamily: fonts.bold },
+  companyOptionMeta: { color: colors.muted, fontSize: 12, marginTop: 3 },
+  clearCompany: { color: colors.red, fontFamily: fonts.semiBold },
 });

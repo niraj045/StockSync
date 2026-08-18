@@ -69,14 +69,16 @@ public class ReportExportService {
         String type = catalog.normalize(reportType);
         catalog.require(type, auth);
         List<Map<String, Object>> rows = queries.exportRows(type, filters);
-        String filename = safe(type) + "-" + LocalDate.now() + "." + extension(format);
+        String companyName = companyName(filters);
+        String companySuffix = companyName == null ? "" : "-" + safe(companyName);
+        String filename = safe(type) + companySuffix + "-" + LocalDate.now() + "." + extension(format);
         try {
             Files.createDirectories(exportRoot);
             Path file = exportRoot.resolve(Instant.now().toEpochMilli() + "-" + filename).normalize();
             if (!file.startsWith(exportRoot)) throw new BusinessRuleException("INVALID_EXPORT_PATH", "Invalid export path");
             byte[] bytes = switch (format) {
                 case CSV -> csv(rows);
-                case EXCEL -> excel(type, filters, rows);
+                case EXCEL -> excel(type, filters, companyName, rows);
                 case PDF -> pdf(type, rows);
             };
             Files.write(file, bytes);
@@ -144,9 +146,9 @@ public class ReportExportService {
         return out.toString().getBytes(StandardCharsets.UTF_8);
     }
 
-    private byte[] excel(String type, ReportFilterRequest filters, List<Map<String, Object>> rows) throws IOException {
+    private byte[] excel(String type, ReportFilterRequest filters, String companyName, List<Map<String, Object>> rows) throws IOException {
         try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            String reportName = displayHeader(type);
+            String reportName = displayHeader(type) + (companyName == null ? "" : " - " + companyName);
             var sheet = workbook.createSheet(WorkbookUtil.createSafeSheetName(reportName));
             sheet.setDisplayGridlines(false);
             sheet.setAutobreaks(true);
@@ -197,7 +199,7 @@ public class ReportExportService {
 
             Row filterRow = sheet.createRow(3);
             Cell filterCell = filterRow.createCell(1);
-            filterCell.setCellValue(filterSummary(filters));
+            filterCell.setCellValue(filterSummary(filters, companyName));
             filterCell.setCellStyle(metadataStyle);
             sheet.addMergedRegion(new CellRangeAddress(3, 3, 1, mergeEnd));
 
@@ -295,12 +297,12 @@ public class ReportExportService {
         return style;
     }
 
-    private String filterSummary(ReportFilterRequest filters) {
+    private String filterSummary(ReportFilterRequest filters, String companyName) {
         List<String> values = new ArrayList<>();
         if (filters.startDate() != null) values.add("From " + filters.startDate());
         if (filters.endDate() != null) values.add("To " + filters.endDate());
         if (filters.month() != null) values.add("Month " + filters.month());
-        if (filters.partyId() != null) values.add("Party ID " + filters.partyId());
+        if (filters.partyId() != null) values.add("Company " + (companyName == null ? filters.partyId() : companyName));
         if (filters.siteId() != null) values.add("Site ID " + filters.siteId());
         if (filters.agreementId() != null) values.add("Agreement ID " + filters.agreementId());
         if (filters.itemId() != null) values.add("Item ID " + filters.itemId());
@@ -308,6 +310,15 @@ public class ReportExportService {
         if (filters.status() != null && !filters.status().isBlank()) values.add("Status " + filters.status());
         if (filters.documentNumber() != null && !filters.documentNumber().isBlank()) values.add("Document " + filters.documentNumber());
         return values.isEmpty() ? "Filters: All records" : "Filters: " + String.join(" | ", values);
+    }
+
+    private String companyName(ReportFilterRequest filters) {
+        if (filters == null || filters.partyId() == null) return null;
+        return jdbc.query(
+                "SELECT legal_name FROM parties WHERE id = ?",
+                (rs, rowNum) -> rs.getString("legal_name"),
+                filters.partyId()
+        ).stream().findFirst().orElse(null);
     }
 
     private String displayHeader(String header) {

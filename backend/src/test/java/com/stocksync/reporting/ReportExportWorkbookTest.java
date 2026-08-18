@@ -28,15 +28,16 @@ class ReportExportWorkbookTest {
         row.put("effective_date", LocalDate.of(2026, 8, 2));
         row.put("grand_total", new BigDecimal("12345.67"));
 
-        Method excel = ReportExportService.class.getDeclaredMethod("excel", String.class, ReportFilterRequest.class, List.class);
+        Method excel = ReportExportService.class.getDeclaredMethod("excel", String.class, ReportFilterRequest.class, String.class, List.class);
         excel.setAccessible(true);
-        byte[] bytes = (byte[]) excel.invoke(service, "AGREEMENT_REGISTER", filters, List.of(row));
+        byte[] bytes = (byte[]) excel.invoke(service, "AGREEMENT_REGISTER", filters, "4m Facade LLP", List.of(row));
 
         try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(bytes))) {
             var sheet = workbook.getSheetAt(0);
-            assertEquals("Agreement Register", sheet.getSheetName());
+            assertTrue(sheet.getSheetName().startsWith("Agreement Register - 4m"));
             assertEquals("SteelFab Scaffoldings & Engineering Pvt. Ltd.", sheet.getRow(0).getCell(1).getStringCellValue());
-            assertTrue(sheet.getRow(3).getCell(1).getStringCellValue().contains("Party ID 7"));
+            assertTrue(sheet.getRow(1).getCell(1).getStringCellValue().contains("4m Facade LLP"));
+            assertTrue(sheet.getRow(3).getCell(1).getStringCellValue().contains("Company 4m Facade LLP"));
             assertEquals("Document Number", sheet.getRow(5).getCell(0).getStringCellValue());
             assertEquals(CellType.NUMERIC, sheet.getRow(6).getCell(1).getCellType());
             assertEquals(CellType.NUMERIC, sheet.getRow(6).getCell(2).getCellType());

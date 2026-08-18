@@ -10,6 +10,7 @@ import type { SiteOrder } from '../../order/types';
 import type { IssuedChallan } from '../types';
 
 type Page<T> = { content: T[]; totalElements: number };
+type PartyOption = { id: number; legalName: string; tradeName?: string };
 
 type ChallanFormValue = {
   siteOrderId: number;
@@ -37,6 +38,7 @@ export function IssuedChallansPage() {
   const { message } = App.useApp();
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
+  const [companyId, setCompanyId] = useState<number>();
   const [selected, setSelected] = useState<IssuedChallan>();
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -45,13 +47,23 @@ export function IssuedChallansPage() {
 
   // Queries
   const challans = useQuery({
-    queryKey: ['issued-challans', search],
+    queryKey: ['issued-challans', search, companyId],
     queryFn: async () =>
       (
         await apiClient.get<Page<IssuedChallan>>('/challans/issued', {
-          params: { search, size: 50, sort: 'id,desc' },
+          params: { search, partyId: companyId, size: 50, sort: 'id,desc' },
         })
       ).data,
+  });
+
+  const parties = useQuery({
+    queryKey: ['parties-challan-company-options'],
+    queryFn: async () =>
+      (
+        await apiClient.get<Page<PartyOption>>('/parties', {
+          params: { active: true, size: 500, sort: 'legalName,asc' },
+        })
+      ).data.content,
   });
 
   const pendingOrders = useQuery({
@@ -177,7 +189,13 @@ export function IssuedChallansPage() {
           </p>
         </div>
         <Space wrap>
-          <ReportExcelButton reportType="ISSUED_CHALLANS_REGISTER" filters={{ documentNumber: search || undefined }} />
+          <ReportExcelButton
+            reportType="ISSUED_CHALLANS_REGISTER"
+            filters={{ partyId: companyId, documentNumber: search || undefined }}
+            label="Company Excel"
+            disabled={!companyId}
+            title={companyId ? 'Export issued challans for the selected company' : 'Select a company before exporting Excel'}
+          />
           {canWrite && (
           <Button
             type="primary"
@@ -205,6 +223,23 @@ export function IssuedChallansPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{ width: 250 }}
+          />
+          <Select
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            suffixIcon={<SearchOutlined />}
+            placeholder="Select company for Excel"
+            value={companyId}
+            onChange={(value) => {
+              setCompanyId(value);
+              setSelected(undefined);
+            }}
+            style={{ minWidth: 280 }}
+            options={(parties.data ?? []).map((party) => ({
+              value: party.id,
+              label: party.tradeName ? `${party.legalName} (${party.tradeName})` : party.legalName,
+            }))}
           />
         </Space>
 

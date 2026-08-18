@@ -83,6 +83,7 @@ describe('quotation editor behavior', () => {
   });
   it('adds and removes dynamic item rows', () => {
     render(<Form initialValues={{ items: [editor().items[0]] }}><QuotationItemRows items={[]}/></Form>);
+    expect(screen.getByRole('combobox', { name: 'Search and select quotation material' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Add line' }));
     expect(screen.getAllByRole('button', { name: 'Remove' })).toHaveLength(2);
     fireEvent.click(screen.getAllByRole('button', { name: 'Remove' })[1]);

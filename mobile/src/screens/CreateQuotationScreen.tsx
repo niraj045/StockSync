@@ -130,6 +130,7 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
   const [exactHire, setExactHire] = useState<ExactHireForm>(initialExactHire);
   const [itemPickerIndex, setItemPickerIndex] = useState<number | null>(null);
   const [picker, setPicker] = useState<PickerKind>(null);
+  const [pickerSearch, setPickerSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -212,6 +213,10 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
     }).catch((cause) => setError(apiErrorMessage(cause, 'Unable to load quotation setup data.')))
       .finally(() => setLoading(false));
   }, [route.params?.quotationId]);
+
+  useEffect(() => {
+    setPickerSearch('');
+  }, [picker]);
 
   const selectedTemplate = templates.find((row) => row.id === templateId);
   const selectedParty = parties.find((row) => row.id === partyId);
@@ -445,10 +450,13 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
     if (picker === 'template') return templates.map((row) => ({ key: row.id, title: `${row.templateCode} | ${row.name}`, onPress: () => selectTemplate(row) }));
     if (picker === 'party') return parties.map((row) => ({ key: row.id, title: row.legalName, meta: row.tradeName, onPress: () => selectParty(row) }));
     if (picker === 'site') return filteredSites.map((row) => ({ key: row.id, title: row.siteName, meta: row.siteCode, onPress: () => selectSite(row) }));
-    if (picker === 'item') return availableItems.map((row) => ({ key: row.id, title: row.itemName, meta: `${row.itemCode} | ${row.unit}`, onPress: () => {
+    if (picker === 'item') {
+      const searchValue = pickerSearch.trim().toLowerCase();
+      return availableItems.filter((row) => !searchValue || `${row.itemCode} ${row.itemName} ${row.unit}`.toLowerCase().includes(searchValue)).map((row) => ({ key: row.id, title: row.itemName, meta: `${row.itemCode} | ${row.unit}`, onPress: () => {
       if (itemPickerIndex !== null) updateLine(itemPickerIndex, 'itemId', row.id); else addItem(row);
       setItemPickerIndex(null); setPicker(null);
-    } }));
+      } }));
+    }
     if (picker === 'rental') return rentalTypes.map(([value, label]) => ({ key: value, title: label, onPress: () => { setRentalType(value); setPicker(null); } }));
     return [];
   };
@@ -598,6 +606,17 @@ export function CreateQuotationScreen({ navigation, route }: Props) {
               <Text style={styles.sheetTitle}>Select {picker}</Text>
               <Pressable onPress={() => setPicker(null)}><Ionicons name="close" size={25} color={colors.ink} /></Pressable>
             </View>
+            {picker === 'item' ? <View style={styles.pickerSearch}>
+              <Ionicons name="search-outline" size={21} color={colors.muted} />
+              <TextInput
+                autoFocus
+                onChangeText={setPickerSearch}
+                placeholder="Search material by code or name"
+                placeholderTextColor="#98A2B3"
+                style={styles.pickerSearchInput}
+                value={pickerSearch}
+              />
+            </View> : null}
             <ScrollView contentContainerStyle={styles.list}>
               {pickerRows().length ? pickerRows().map((row) => (
                 <Pressable key={row.key} style={styles.option} onPress={row.onPress}>
@@ -672,6 +691,8 @@ const styles = StyleSheet.create({
   sheet: { maxHeight: '80%', backgroundColor: '#fff', borderTopLeftRadius: 12, borderTopRightRadius: 12 },
   sheetHeader: { minHeight: 64, paddingHorizontal: 18, borderBottomWidth: 1, borderBottomColor: colors.line, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   sheetTitle: { color: colors.ink, fontSize: 19, fontWeight: '900', textTransform: 'capitalize' },
+  pickerSearch: { flexDirection: 'row', alignItems: 'center', gap: 9, borderWidth: 1, borderColor: colors.line, borderRadius: 8, margin: 14, marginBottom: 0, paddingHorizontal: 12 },
+  pickerSearchInput: { flex: 1, height: 48, color: colors.ink, fontSize: 15 },
   list: { padding: 14, paddingBottom: 28 },
   option: { minHeight: 66, padding: 13, borderBottomWidth: 1, borderBottomColor: colors.line, flexDirection: 'row', alignItems: 'center' },
   optionTitle: { color: colors.ink, fontSize: 15, fontWeight: '800' },

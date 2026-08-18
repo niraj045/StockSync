@@ -2,6 +2,8 @@ package com.stocksync.common.pdf;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.format.DateTimeFormatter;
@@ -41,6 +43,14 @@ public final class PdfViewHelper {
         return date == null ? "-" : date.format(MONTH_DATE);
     }
 
+    public String documentDate(LocalDate date) {
+        return date == null ? "-" : date.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+    }
+
+    public String compactDate(LocalDate date) {
+        return date == null ? "-" : date.format(DateTimeFormatter.ofPattern("dd-MM-yy"));
+    }
+
     public String amount(BigDecimal value) {
         if (value == null) {
             return "0";
@@ -53,6 +63,16 @@ public final class PdfViewHelper {
             return "0";
         }
         return value.stripTrailingZeros().toPlainString();
+    }
+
+    public String money(BigDecimal value) {
+        DecimalFormat format = new DecimalFormat("##,##,##0.00", DecimalFormatSymbols.getInstance(Locale.ENGLISH));
+        format.setRoundingMode(RoundingMode.HALF_UP);
+        return format.format(value == null ? BigDecimal.ZERO : value);
+    }
+
+    public BigDecimal otherCharges(BigDecimal taxableAmount, BigDecimal rentalSubtotal, BigDecimal discountAmount) {
+        return zero(taxableAmount).add(zero(discountAmount)).subtract(zero(rentalSubtotal));
     }
 
     public BigDecimal lineAmount(BigDecimal quantity, BigDecimal rate, int months) {
@@ -144,6 +164,10 @@ public final class PdfViewHelper {
             out.append(' ');
         }
         out.append(value);
+    }
+
+    private BigDecimal zero(BigDecimal value) {
+        return value == null ? BigDecimal.ZERO : value;
     }
 
     private record Scale(long value, String label) {

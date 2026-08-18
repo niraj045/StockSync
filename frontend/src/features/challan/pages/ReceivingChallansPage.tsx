@@ -48,6 +48,7 @@ export function ReceivingChallansPage() {
   const { message } = App.useApp();
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
+  const [companyId, setCompanyId] = useState<number>();
   const [selected, setSelected] = useState<ReceivingChallan>();
   const [createOpen, setCreateOpen] = useState(false);
   const [cancelReasonOpen, setCancelReasonOpen] = useState(false);
@@ -60,11 +61,11 @@ export function ReceivingChallansPage() {
 
   // Queries
   const challans = useQuery({
-    queryKey: ['receiving-challans', search],
+    queryKey: ['receiving-challans', search, companyId],
     queryFn: async () =>
       (
         await apiClient.get<Page<ReceivingChallan>>('/challans/receiving', {
-          params: { search, size: 50, sort: 'id,desc' },
+          params: { search, partyId: companyId, size: 50, sort: 'id,desc' },
         })
       ).data,
   });
@@ -245,7 +246,13 @@ export function ReceivingChallansPage() {
           <p className="page-description">Record returns and reconcile deployed site materials.</p>
         </div>
         <Space wrap>
-          <ReportExcelButton reportType="RECEIVING_CHALLANS_REGISTER" filters={{ documentNumber: search || undefined }} />
+          <ReportExcelButton
+            reportType="RECEIVING_CHALLANS_REGISTER"
+            filters={{ partyId: companyId, documentNumber: search || undefined }}
+            label="Company Excel"
+            disabled={!companyId}
+            title={companyId ? 'Export receiving challans for the selected company' : 'Select a company before exporting Excel'}
+          />
           {canWrite && (
           <Button
             type="primary"
@@ -272,6 +279,23 @@ export function ReceivingChallansPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               style={{ width: '100%' }}
+            />
+            <Select
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              suffixIcon={<SearchOutlined />}
+              placeholder="Select company for Excel"
+              value={companyId}
+              onChange={(value) => {
+                setCompanyId(value);
+                setSelected(undefined);
+              }}
+              style={{ width: '100%', marginTop: 10 }}
+              options={(parties.data ?? []).map((party: any) => ({
+                value: party.id,
+                label: party.tradeName ? `${party.legalName} (${party.tradeName})` : party.legalName,
+              }))}
             />
           </div>
           <Table

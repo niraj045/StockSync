@@ -22,7 +22,12 @@ public class InvoicePdfService {
 
     public byte[] generate(InvoiceResponse invoice) {
         Context context = new Context();
-        context.setVariables(Map.of("inv", invoice, "fmt", PdfViewHelper.INSTANCE));
+        context.setVariables(Map.of(
+                "inv", invoice,
+                "fmt", PdfViewHelper.INSTANCE,
+                "letterheadDataUri", branding.letterheadDataUri(),
+                "stampDataUri", branding.stampDataUri()
+        ));
         String html = templates.process("invoice-pdf", context);
         try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             new PdfRendererBuilder().useFastMode().withHtmlContent(html, null).toStream(output).run();

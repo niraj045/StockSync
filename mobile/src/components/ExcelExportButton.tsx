@@ -8,7 +8,15 @@ import { shareServerFile } from '../utils/sharePdf';
 
 type ReportFilters = Record<string, string | number | undefined>;
 
-export function ExcelExportButton({ reportType, filters = {} }: { reportType: string; filters?: ReportFilters }) {
+export function ExcelExportButton({
+  reportType,
+  filters = {},
+  disabled = false,
+}: {
+  reportType: string;
+  filters?: ReportFilters;
+  disabled?: boolean;
+}) {
   const [loading, setLoading] = useState(false);
 
   const exportExcel = async () => {
@@ -33,11 +41,11 @@ export function ExcelExportButton({ reportType, filters = {} }: { reportType: st
 
   return (
     <Pressable
-      accessibilityLabel="Export current list to Excel"
+      accessibilityLabel={disabled ? 'Select a company before exporting Excel' : 'Export current list to Excel'}
       accessibilityRole="button"
-      disabled={loading}
+      disabled={loading || disabled}
       onPress={() => void exportExcel()}
-      style={({ pressed }) => [styles.button, pressed && styles.pressed, loading && styles.disabled]}
+      style={({ pressed }) => [styles.button, pressed && styles.pressed, (loading || disabled) && styles.disabled]}
     >
       {loading ? <ActivityIndicator color={colors.primary} size="small" /> : (
         <Ionicons name="document-text-outline" color={colors.primary} size={22} />

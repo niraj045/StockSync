@@ -1,23 +1,146 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"/>
-<style>
-@page{size:A4;margin:16mm 14mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:10px;color:#000;margin:0}.title{text-align:center;font-size:14px;font-weight:bold;border:1px solid #000;border-bottom:0;padding:3px}.grid,.lines,.summary{width:100%;border-collapse:collapse}.grid td,.lines th,.lines td,.summary td{border:1px solid #000;padding:3px;vertical-align:top}.grid td{width:50%;height:54px}.grid .top{height:auto;padding:2px}.section{text-align:center;font-weight:bold;border:1px solid #000;border-top:0;padding:3px}.lines th{text-align:center;vertical-align:middle;height:32px}.lines td{height:24px;vertical-align:middle}.center{text-align:center}.right{text-align:right}.party{font-size:11px;line-height:1.45}.strong{font-weight:bold}.totals td{height:auto;padding:2px 4px}.words{height:54px!important;line-height:1.5}.signature{height:78px!important;position:relative}.sign-bottom{margin-top:54px;font-weight:bold}.bank{line-height:1.45}.notes{margin-top:14px;line-height:1.5}.notes-title{text-decoration:underline;font-weight:bold;font-size:11px}.nowrap{white-space:nowrap}
-</style></head><body>
-<div class="title" th:text="${inv.measurementBasis == 'SQUARE_FEET' ? 'Tax Invoice' : 'TAX INVOICE'}">TAX INVOICE</div>
-<table class="grid"><tr><td class="top"><b>Invoice No:</b> <span th:text="${inv.invoiceNumber}"></span></td><td class="top"><b th:text="${inv.measurementBasis == 'SQUARE_FEET' ? 'Date:-' : 'Dated :'}">Date:</b> <span th:text="${inv.invoiceDate}"></span></td></tr>
-<tr><td class="party"><b th:if="${inv.measurementBasis == 'SQUARE_FEET'}">Name of Party :</b><br th:if="${inv.measurementBasis == 'SQUARE_FEET'}"/><b th:text="${inv.partyNameSnapshot}"></b><br/><span th:text="${inv.partyAddressSnapshot}"></span><br/><b>GSTIN: </b><b th:text="${inv.partyGstinSnapshot ?: '-'}"></b></td><td class="party"><b>Site Address:</b><br/><span th:text="${inv.siteAddressSnapshot}"></span></td></tr></table>
-<div class="section" th:text="${inv.measurementBasis == 'SQUARE_FEET' ? 'Supply of Scaffolding on Hire' : 'Supply of Material on Hire'}"></div>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <style>
+    @page { size: Letter; margin: 8mm 12mm 9mm; }
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; font-size: 9.5px; color: #000; margin: 0; }
+    .letterhead { display: block; position: relative; left: -23.111px; width: 66.667%; height: 59.333pt; margin: 66.667px auto 4.222px; }
+    .letterhead-spacer { height: 0; }
+    .document { width: 86%; margin: 0 auto; }
+    .title { text-align: center; font-size: 13px; font-weight: bold; border: 1px solid #000; padding: 3px; }
+    .meta, .lines, .summary, .signature { width: 100%; border-collapse: collapse; }
+    .meta td, .lines th, .lines td, .summary td, .signature td { border: 1px solid #000; padding: 2px; vertical-align: top; }
+    .meta .top { width: 50%; height: 19px; }
+    .meta .party { width: 50%; height: 58px; line-height: 1.35; }
+    .section { text-align: center; font-weight: bold; font-size: 10px; border: 1px solid #000; border-top: 0; padding: 3px; }
+    .lines { table-layout: fixed; }
+    .lines th { text-align: center; vertical-align: middle; height: 35px; font-weight: normal; }
+    .lines td { height: 21px; vertical-align: middle; word-wrap: break-word; }
+    .lines .filler td { height: 21px; }
+    .center { text-align: center; }
+    .right { text-align: right; }
+    .strong { font-weight: bold; }
+    .summary .details { width: 61%; line-height: 1.55; }
+    .summary .totals { width: 39%; padding: 0; }
+    .totals table { width: 100%; border-collapse: collapse; }
+    .totals td { border: 0; height: 19px; padding: 2px 4px; vertical-align: middle; }
+    .totals tr + tr td { border-top: 1px solid #000; }
+    .words { width: 61%; height: 49px; line-height: 1.45; }
+    .gross { width: 39%; padding: 0!important; }
+    .gross table { width: 100%; border-collapse: collapse; }
+    .gross td { border: 0; padding: 3px 4px; vertical-align: middle; }
+    .signature td { width: 50%; height: 88px; line-height: 1.5; position: relative; }
+    .stamp-window { position: relative; width: 54px; height: 54px; margin: 3px 0 0 18px; overflow: hidden; }
+    .stamp-source { position: absolute; width: 92px; height: 100px; max-width: none; left: -22px; top: -23px; }
+    .sign-bottom { position: absolute; left: 2px; bottom: 2px; }
+    .bank { font-size: 9px; }
+    .notes { margin-top: 10px; line-height: 1.45; }
+    .notes-title { font-weight: bold; text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <img class="letterhead" th:src="${letterheadDataUri}" alt="SteelFab"/>
+  <div class="letterhead-spacer"></div>
 
-<table class="lines" th:if="${inv.measurementBasis != 'SQUARE_FEET'}"><thead><tr><th style="width:7%">Sr. No.</th><th style="width:15%">Challan no<br/>&amp; Date</th><th style="width:17%">Item</th><th style="width:12%">Qty (nos)</th><th style="width:14%">Rate Per<br/>Nos. Per month</th><th style="width:14%">Hire Period</th><th style="width:9%">No. of<br/>Months</th><th style="width:12%">Total<br/>Amount Rs.</th></tr></thead><tbody>
-<tr th:each="i:${inv.items}"><td class="center" th:text="${i.sequenceNumber}"></td><td class="center" th:text="${i.sourceDocumentNumber ?: '-'}"></td><td class="center" th:text="${i.itemNameSnapshot ?: i.description}"></td><td class="center" th:text="${fmt.qty(i.quantity)}"></td><td class="right" th:text="${fmt.amount(i.rate)}"></td><td class="center"><span th:text="${inv.periodStart}"></span><br/>to<br/><span th:text="${inv.periodEnd}"></span></td><td class="center" th:text="${fmt.billingMonths(i.billableDays,inv.periodStart,inv.periodEnd)}"></td><td class="right" th:text="${fmt.amount(i.amount)}"></td></tr>
-</tbody></table>
+  <div class="document">
+  <div class="title">Tax Invoice</div>
+  <table class="meta">
+    <tr>
+      <td class="top"><b>Invoice no.</b> <span th:text="${inv.invoiceNumber}"></span></td>
+      <td class="top"><b>Date:-</b> <span th:text="${fmt.documentDate(inv.invoiceDate)}"></span></td>
+    </tr>
+    <tr>
+      <td class="party">
+        <b th:text="${inv.measurementBasis == 'SQUARE_FEET' ? 'Name of Party :' : 'To:'}">To:</b>
+        <b th:text="${inv.partyNameSnapshot}"></b><br/>
+        <span th:text="${inv.partyAddressSnapshot}"></span><br/>
+        <b>GSTIN:- </b><span th:text="${inv.partyGstinSnapshot ?: '-'}"></span>
+      </td>
+      <td class="party"><b>Site Address:</b><br/><span th:text="${inv.siteAddressSnapshot}"></span></td>
+    </tr>
+  </table>
+  <div class="section" th:text="${inv.measurementBasis == 'SQUARE_FEET' ? 'Supply of Scaffolding on Hire' : 'Supply of Scaffolding Material on Hire'}"></div>
 
-<table class="lines" th:if="${inv.measurementBasis == 'SQUARE_FEET'}"><thead><tr><th style="width:7%">Sr.<br/>No.</th><th style="width:18%">Challan No. &amp;<br/>Date</th><th style="width:22%">Particulars</th><th style="width:12%">Qty (sft)</th><th style="width:10%">Hire<br/>Rate per</th><th style="width:14%">Hire Period</th><th style="width:8%">Period</th><th style="width:13%">Amount Rs.</th></tr></thead><tbody>
-<tr th:each="i:${inv.items}"><td class="center" th:text="${i.sequenceNumber}"></td><td class="center" th:text="${i.sourceDocumentNumber ?: '-'}"></td><td class="center" th:text="${i.description}"></td><td class="center" th:text="${fmt.qty(i.area != null and i.area.signum() > 0 ? i.area : i.quantity)}"></td><td class="right" th:text="${fmt.amount(i.rate)}"></td><td class="center"><span th:text="${inv.periodStart}"></span><br/>to<br/><span th:text="${inv.periodEnd}"></span></td><td class="center" th:text="${fmt.billingMonths(i.billableDays,inv.periodStart,inv.periodEnd)}"></td><td class="right" th:text="${fmt.amount(i.amount)}"></td></tr>
-</tbody></table>
+  <table class="lines">
+    <thead>
+      <tr th:if="${inv.measurementBasis != 'SQUARE_FEET'}">
+        <th style="width:7%">Sr.</th>
+        <th style="width:13%">Delivery<br/>Challan &amp;</th>
+        <th style="width:17%">Particulars</th>
+        <th style="width:9%">Nos.</th>
+        <th style="width:14%">Hire Rate Per<br/>nos. per</th>
+        <th style="width:14%">Hire Period</th>
+        <th style="width:10%">No. of<br/>months</th>
+        <th style="width:16%">Total Amount Rs.</th>
+      </tr>
+      <tr th:if="${inv.measurementBasis == 'SQUARE_FEET'}">
+        <th style="width:7%">Sr.<br/>No.</th>
+        <th style="width:16%">Challan No. &amp;<br/>Date</th>
+        <th style="width:22%">Particulars</th>
+        <th style="width:12%">Qty (sft)</th>
+        <th style="width:10%">Hire<br/>Rate per</th>
+        <th style="width:14%">Hire Period</th>
+        <th style="width:8%">Period</th>
+        <th style="width:11%">Amount Rs.</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr th:each="i:${inv.items}">
+        <td class="center" th:text="${i.sequenceNumber}"></td>
+        <td class="center" th:text="${i.sourceDocumentNumber ?: '-'}"></td>
+        <td th:text="${i.itemNameSnapshot ?: i.description}"></td>
+        <td class="center" th:text="${fmt.qty(inv.measurementBasis == 'SQUARE_FEET' and i.area != null and i.area.signum() > 0 ? i.area : i.quantity)}"></td>
+        <td class="right" th:text="${fmt.money(i.rate)}"></td>
+        <td class="center"><span th:text="${fmt.compactDate(inv.periodStart)}"></span><br/>to<br/><span th:text="${fmt.compactDate(inv.periodEnd)}"></span></td>
+        <td class="center" th:text="${fmt.billingMonths(i.billableDays,inv.periodStart,inv.periodEnd)}"></td>
+        <td class="right" th:text="${fmt.money(i.amount)}"></td>
+      </tr>
+      <tr class="filler" th:if="${inv.items.size() &lt; 6}" th:each="row:${#numbers.sequence(inv.items.size() + 1, 6)}">
+        <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="right">-</td>
+      </tr>
+    </tbody>
+  </table>
 
-<table class="summary"><tr><td style="width:50%"><b th:text="${'GSTIN: '+inv.companyGstinSnapshot+', HSN: 995457'}"></b></td><td class="totals"><table style="width:100%;border-collapse:collapse"><tr><td style="border:0"><b th:text="${inv.measurementBasis == 'SQUARE_FEET' ? 'Total Hire Charges Rs.' : 'Net Hire Charges Rs.'}"></b></td><td style="border:0" class="right strong" th:text="${fmt.amount(inv.subtotal)}"></td></tr><tr th:if="${inv.discountAmount.signum()>0}"><td style="border:0">Less: Discount in Hire Charges Rs.</td><td style="border:0" class="right" th:text="${fmt.amount(inv.discountAmount)}"></td></tr><tr><td style="border:0"><b th:text="${inv.measurementBasis == 'SQUARE_FEET' ? 'CGST @ '+inv.cgstRate+'%' : 'Total Hire Charges Rs.'}"></b></td><td style="border:0" class="right" th:text="${inv.measurementBasis == 'SQUARE_FEET' ? fmt.amount(inv.cgstAmount) : fmt.amount(inv.taxableAmount)}"></td></tr><tr><td style="border:0" th:text="${inv.measurementBasis == 'SQUARE_FEET' ? 'SGST @ '+inv.sgstRate+'%' : 'CGST @'+inv.cgstRate+'%'}"></td><td style="border:0" class="right" th:text="${inv.measurementBasis == 'SQUARE_FEET' ? fmt.amount(inv.sgstAmount) : fmt.amount(inv.cgstAmount)}"></td></tr><tr th:if="${inv.measurementBasis != 'SQUARE_FEET'}"><td style="border:0" th:text="${'SGST @ '+inv.sgstRate+'%'}"></td><td style="border:0" class="right" th:text="${fmt.amount(inv.sgstAmount)}"></td></tr></table></td></tr>
-<tr><td class="words"><b>Amount in words</b><br/><span th:text="${fmt.amountInWords(inv.grandTotal)}"></span></td><td class="totals"><table style="width:100%;border-collapse:collapse"><tr><td style="border:0"><b>Gross Hire Charges Rs.</b></td><td style="border:0" class="right strong" th:text="${fmt.amount(inv.grandTotal)}"></td></tr></table></td></tr>
-<tr><td class="signature"><b th:text="${'For '+inv.companyNameSnapshot}"></b><div class="sign-bottom">Authorized Signatory.</div></td><td class="signature bank"><b>BANK DETAILS :-</b><br/>SteelFab Scaffoldings &amp; Engr. Pvt. Ltd.<br/>Bank Name : HDFC Bank<br/>Bank Branch : Orlem, Malad (w)<br/>Account No : 50200106597981<br/>IFSC Code : HDFC0000047</td></tr></table>
-<div class="notes" th:if="${fmt.hasText(inv.notes)}"><div class="notes-title">Note / Transportation Details</div><div th:text="${inv.notes}"></div></div>
-</body></html>
+  <table class="summary">
+    <tr>
+      <td class="details">
+        <b th:text="${'GSTIN: ' + (inv.companyGstinSnapshot ?: '-')}"></b><br/>
+        <span>HSN CODE: 995457</span>
+      </td>
+      <td class="totals">
+        <table>
+          <tr><td>Net Hire Charges Rs.</td><td class="right strong" th:text="${fmt.money(inv.subtotal)}"></td></tr>
+          <tr><td>Transport / Other</td><td class="right" th:text="${fmt.money(fmt.otherCharges(inv.taxableAmount,inv.subtotal,inv.discountAmount))}"></td></tr>
+          <tr th:if="${inv.discountAmount != null and inv.discountAmount.signum() &gt; 0}"><td>Less: Discount</td><td class="right" th:text="${fmt.money(inv.discountAmount)}"></td></tr>
+          <tr><td class="strong">Sub Total Rs.</td><td class="right strong" th:text="${fmt.money(inv.taxableAmount)}"></td></tr>
+          <tr th:if="${inv.igstAmount == null or inv.igstAmount.signum() == 0}"><td th:text="${'CGST @ ' + fmt.qty(inv.cgstRate) + '%'}"></td><td class="right" th:text="${fmt.money(inv.cgstAmount)}"></td></tr>
+          <tr th:if="${inv.igstAmount == null or inv.igstAmount.signum() == 0}"><td th:text="${'SGST @ ' + fmt.qty(inv.sgstRate) + '%'}"></td><td class="right" th:text="${fmt.money(inv.sgstAmount)}"></td></tr>
+          <tr th:if="${inv.igstAmount != null and inv.igstAmount.signum() &gt; 0}"><td th:text="${'IGST @ ' + fmt.qty(inv.igstRate) + '%'}"></td><td class="right" th:text="${fmt.money(inv.igstAmount)}"></td></tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td class="words"><b>Amount In words</b><br/><span th:text="${fmt.amountInWords(inv.grandTotal)}"></span></td>
+      <td class="gross">
+        <table><tr><td class="strong">Gross Hire Charges Rs.</td><td class="right strong" th:text="${fmt.money(inv.grandTotal)}"></td></tr></table>
+      </td>
+    </tr>
+  </table>
+
+  <table class="signature">
+    <tr>
+      <td>
+        <b th:text="${'For ' + inv.companyNameSnapshot}"></b>
+        <div class="stamp-window"><img class="stamp-source" th:src="${stampDataUri}" alt="SteelFab company stamp"/></div>
+        <div class="sign-bottom">Authorized Signatory.</div>
+      </td>
+      <td class="bank"><b>BANK DETAILS :-</b><br/>STEELFAB SCAFFOLDINGS &amp; ENGR PVT LTD<br/>Bank Name : HDFC Bank<br/>Bank Branch : Orlem, Malad (w)<br/>Account No : 50200106597981<br/>IFSC Code : HDFC0000047</td>
+    </tr>
+  </table>
+
+  <div class="notes" th:if="${fmt.hasText(inv.notes)}"><span class="notes-title">Note / Transportation Details</span><br/><span th:text="${inv.notes}"></span></div>
+  </div>
+</body>
+</html>
