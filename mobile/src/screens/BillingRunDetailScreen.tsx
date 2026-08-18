@@ -74,14 +74,17 @@ export function BillingRunDetailScreen({ route, navigation }: Props) {
     try {
       // 1. Create or get existing invoice from billing run
       const result = await apiClient.post<{ id: number; invoiceNumber: string; status: string }>(`/invoices/from-billing-run/${selected.id}`);
-      
-      // 2. If it's a draft, issue it so the PDF is generated
-      let invoiceId = result.data.id;
+
+      // 2. Always replace an older stored PDF with the current approved invoice format.
+      const invoiceId = result.data.id;
+      await apiClient.post(`/invoices/${invoiceId}/generate-pdf`);
+
+      // 3. Issue a new draft after its current-format PDF has been generated.
       if (result.data.status === 'DRAFT') {
         await apiClient.post(`/invoices/${invoiceId}/issue`);
       }
 
-      // 3. Download and share the PDF
+      // 4. Download and share the refreshed PDF.
       await shareServerFile(
         `/invoices/${invoiceId}/pdf`,
         `invoice-${result.data.invoiceNumber}.pdf`,
@@ -143,7 +146,7 @@ export function BillingRunDetailScreen({ route, navigation }: Props) {
         ) : null}
         
         {canFinalize && selected.status === 'FINALIZED' ? (
-          <AppButton title="Issue & Download Invoice" onPress={() => void invoiceAndDownload()} loading={submitting} />
+          <AppButton title="Generate & Download Invoice" onPress={() => void invoiceAndDownload()} loading={submitting} />
         ) : null}
       </Card>
     </ScrollView>

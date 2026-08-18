@@ -161,13 +161,15 @@ export function InvoiceDetailsPage() {
               <Button icon={<EditOutlined />} onClick={handleEdit}>
                 Edit
               </Button>
-              <Button icon={<FilePdfOutlined />} onClick={() => generatePdfMutation.mutate()} loading={generatePdfMutation.isPending}>
-                {invoice.generatedPdfAttachmentId ? 'Regenerate PDF' : 'Generate PDF'}
-              </Button>
               <Button type="primary" icon={<CheckCircleOutlined />} onClick={() => issueMutation.mutate()} loading={issueMutation.isPending}>
                 Issue Invoice
               </Button>
             </>
+          )}
+          {canWrite && invoice.status !== 'CANCELLED' && (
+            <Button icon={<FilePdfOutlined />} onClick={() => generatePdfMutation.mutate()} loading={generatePdfMutation.isPending}>
+              {invoice.generatedPdfAttachmentId ? 'Regenerate PDF' : 'Generate PDF'}
+            </Button>
           )}
           {invoice.generatedPdfAttachmentId && (
             <Button icon={<DownloadOutlined />} onClick={downloadPdf}>
