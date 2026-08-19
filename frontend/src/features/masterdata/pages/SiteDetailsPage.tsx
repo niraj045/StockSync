@@ -34,6 +34,7 @@ import {
   DownloadOutlined,
 } from '@ant-design/icons';
 import { apiClient } from '../../../api/client';
+import { reportsApi } from '../../reports/api';
 import { LedgerImportModal } from '../components/LedgerImportModal';
 
 interface SiteProfile {
@@ -121,6 +122,11 @@ interface SiteOperation {
 
 interface PageResult<T> {
   content?: T[];
+}
+
+export async function exportSiteStockExcel(siteId: number) {
+  const result = await reportsApi.export('SITE_PENDING_STOCK', { siteId }, 'EXCEL');
+  return reportsApi.downloadUrl(result.id);
 }
 
 export function SiteDetailsPage() {
@@ -298,11 +304,8 @@ export function SiteDetailsPage() {
   const handleExportExcel = async () => {
     setExporting(true);
     try {
-      const res = await apiClient.post<{ id: number; filename: string }>('/reports/site-inventory/export', {
-        filters: { siteId: numericSiteId },
-        format: 'EXCEL',
-      });
-      window.open(`/api/v1/reports/exports/${res.data.id}/download`, '_blank');
+      const downloadUrl = await exportSiteStockExcel(numericSiteId);
+      window.open(downloadUrl, '_blank', 'noopener,noreferrer');
       message.success('Excel export downloaded');
     } catch {
       message.error('Unable to export Excel report');
