@@ -370,7 +370,14 @@ public class ReportQueryService {
     private QuerySpec issuedChallans(ReportFilterRequest f) {
         Sql sql = new Sql("""
                 SELECT ic.challan_number document_number, ic.dispatch_date date, p.legal_name party, s.site_name site,
-                       ic.vehicle_number vehicle, ic.driver_name driver, SUM(ici.quantity) issued_quantity, SUM(ici.quantity * COALESCE(i.weight_per_piece,0)) weight, so.status status
+                       ic.vehicle_number vehicle, ic.driver_name driver,
+                       GROUP_CONCAT(
+                           CONCAT(ici.item_name_snapshot, ' (',
+                                  TRIM(TRAILING '.' FROM TRIM(TRAILING '0' FROM CAST(ici.quantity AS CHAR))),
+                                  ' ', ici.unit_snapshot, ')')
+                           ORDER BY ici.item_name_snapshot SEPARATOR '; '
+                       ) items,
+                       SUM(ici.quantity) issued_quantity, SUM(ici.quantity * COALESCE(i.weight_per_piece,0)) weight, so.status status
                 FROM issued_challans ic JOIN site_orders so ON so.id=ic.site_order_id JOIN parties p ON p.id=so.party_id JOIN sites s ON s.id=so.site_id
                 JOIN issued_challan_items ici ON ici.issued_challan_id=ic.id JOIN items i ON i.id=ici.item_id WHERE 1=1
                 """);
@@ -385,7 +392,19 @@ public class ReportQueryService {
     private QuerySpec receivingChallans(ReportFilterRequest f) {
         Sql sql = new Sql("""
                 SELECT rc.receiving_challan_number document_number, rc.receive_date date, p.legal_name party, s.site_name site,
-                       rc.vehicle_number vehicle, rc.driver_name driver, rc.status status,
+                       rc.vehicle_number vehicle, rc.driver_name driver,
+                       GROUP_CONCAT(
+                           CONCAT(rci.item_name_snapshot, ' (',
+                               CONCAT_WS(', ',
+                                   IF(rci.good_returned_quantity > 0, CONCAT('Good ', TRIM(TRAILING '.' FROM TRIM(TRAILING '0' FROM CAST(rci.good_returned_quantity AS CHAR))), ' ', rci.unit_snapshot), NULL),
+                                   IF(rci.damaged_returned_quantity > 0, CONCAT('Damaged ', TRIM(TRAILING '.' FROM TRIM(TRAILING '0' FROM CAST(rci.damaged_returned_quantity AS CHAR))), ' ', rci.unit_snapshot), NULL),
+                                   IF(rci.lost_quantity > 0, CONCAT('Lost ', TRIM(TRAILING '.' FROM TRIM(TRAILING '0' FROM CAST(rci.lost_quantity AS CHAR))), ' ', rci.unit_snapshot), NULL),
+                                   IF(rci.extra_returned_quantity > 0, CONCAT('Extra ', TRIM(TRAILING '.' FROM TRIM(TRAILING '0' FROM CAST(rci.extra_returned_quantity AS CHAR))), ' ', rci.unit_snapshot), NULL),
+                                   IF(rci.exchanged_quantity > 0, CONCAT('Exchanged ', TRIM(TRAILING '.' FROM TRIM(TRAILING '0' FROM CAST(rci.exchanged_quantity AS CHAR))), ' ', rci.unit_snapshot), NULL)
+                               ), ')')
+                           ORDER BY rci.sequence SEPARATOR '; '
+                       ) items,
+                       rc.status status,
                        SUM(rci.good_returned_quantity) received_quantity, SUM(rci.damaged_returned_quantity) damaged_quantity, SUM(rci.lost_quantity) lost_quantity
                 FROM receiving_challans rc JOIN receiving_challan_items rci ON rci.receiving_challan_id=rc.id JOIN parties p ON p.id=rc.party_id JOIN sites s ON s.id=rc.site_id WHERE 1=1
                 """);

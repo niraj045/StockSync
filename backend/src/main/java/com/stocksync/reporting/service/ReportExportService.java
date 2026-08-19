@@ -154,6 +154,7 @@ public class ReportExportService {
             sheet.setAutobreaks(true);
             sheet.getPrintSetup().setLandscape(true);
             sheet.getPrintSetup().setFitWidth((short) 1);
+            sheet.getPrintSetup().setFitHeight((short) 0);
             sheet.setFitToPage(true);
 
             CellStyle companyStyle = titleStyle(workbook, 16, IndexedColors.DARK_TEAL, true);
@@ -162,6 +163,14 @@ public class ReportExportService {
             CellStyle headerStyle = headerStyle(workbook);
             CellStyle textStyle = bodyStyle(workbook, false);
             CellStyle alternateStyle = bodyStyle(workbook, true);
+            CellStyle itemStyle = workbook.createCellStyle();
+            itemStyle.cloneStyleFrom(textStyle);
+            itemStyle.setWrapText(true);
+            itemStyle.setVerticalAlignment(VerticalAlignment.TOP);
+            CellStyle alternateItemStyle = workbook.createCellStyle();
+            alternateItemStyle.cloneStyleFrom(alternateStyle);
+            alternateItemStyle.setWrapText(true);
+            alternateItemStyle.setVerticalAlignment(VerticalAlignment.TOP);
             CellStyle numberStyle = workbook.createCellStyle();
             numberStyle.cloneStyleFrom(textStyle);
             numberStyle.setDataFormat(workbook.createDataFormat().getFormat("#,##0.00##"));
@@ -217,6 +226,7 @@ public class ReportExportService {
                     cell.setCellValue(displayHeader(headers.get(i)));
                     cell.setCellStyle(headerStyle);
                 }
+                int itemsColumn = headers.indexOf("items");
                 for (int r = 0; r < rows.size(); r++) {
                     Row row = sheet.createRow(headerIndex + r + 1);
                     boolean alternate = r % 2 == 1;
@@ -224,6 +234,12 @@ public class ReportExportService {
                         Cell cell = row.createCell(c);
                         setCell(cell, rows.get(r).get(headers.get(c)), alternate, textStyle, alternateStyle,
                                 numberStyle, alternateNumberStyle, dateStyle, alternateDateStyle);
+                        if (c == itemsColumn) {
+                            cell.setCellStyle(alternate ? alternateItemStyle : itemStyle);
+                        }
+                    }
+                    if (itemsColumn >= 0) {
+                        row.setHeightInPoints(itemRowHeight(rows.get(r).get("items")));
                     }
                 }
                 sheet.createFreezePane(0, headerIndex + 1);
@@ -231,7 +247,8 @@ public class ReportExportService {
                 sheet.setRepeatingRows(CellRangeAddress.valueOf("$" + (headerIndex + 1) + ":$" + (headerIndex + 1)));
                 for (int i = 0; i < Math.min(headers.size(), 30); i++) {
                     sheet.autoSizeColumn(i);
-                    sheet.setColumnWidth(i, Math.min(Math.max(sheet.getColumnWidth(i) + 768, 3200), 12000));
+                    int width = Math.min(Math.max(sheet.getColumnWidth(i) + 768, 3200), 12000);
+                    sheet.setColumnWidth(i, i == itemsColumn ? 12000 : width);
                 }
             }
             workbook.write(out);
@@ -376,6 +393,12 @@ public class ReportExportService {
             cell.setCellStyle(alternate ? alternateDateStyle : dateStyle);
         } else if (value instanceof java.sql.Timestamp t) cell.setCellValue(t.toInstant().toString());
         else cell.setCellValue(String.valueOf(value));
+    }
+
+    private float itemRowHeight(Object value) {
+        if (value == null) return 15f;
+        int wrappedLines = Math.max(1, (String.valueOf(value).length() + 44) / 45);
+        return Math.min(360f, wrappedLines * 15f);
     }
 
     private String escape(Object value) {

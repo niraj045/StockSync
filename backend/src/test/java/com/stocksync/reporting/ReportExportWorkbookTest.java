@@ -45,6 +45,89 @@ class ReportExportWorkbookTest {
             assertNotNull(sheet.getPaneInformation());
             assertTrue(sheet.getPaneInformation().isFreezePane());
             assertNotNull(sheet.getCTWorksheet().getAutoFilter());
+            assertEquals(0, sheet.getPrintSetup().getFitHeight());
         }
     }
+
+    @Test
+    void issuedChallanExcelKeepsOriginalFieldsAndAddsItemsColumn() throws Exception {
+        ReportExportService service = new ReportExportService(null, null, new ObjectMapper(), null, "target/test-exports");
+        ReportFilterRequest filters = new ReportFilterRequest(
+                null, null, 7L, null, null, null, null, null, null, null, null, 0, 25);
+
+        Map<String, Object> challan = new LinkedHashMap<>();
+        challan.put("document_number", "IC/2026-27/0001");
+        challan.put("date", LocalDate.of(2026, 8, 18));
+        challan.put("party", "Demo Company Pvt. Ltd.");
+        challan.put("site", "Demo Site");
+        challan.put("vehicle", "MH04AB1234");
+        challan.put("driver", "Rajendra");
+        challan.put("items", "H frames (35 NOS); Bracing (20 NOS)");
+        challan.put("issued_quantity", new BigDecimal("35"));
+        challan.put("weight", new BigDecimal("120.50"));
+        challan.put("status", "FULFILLED");
+
+        Method excel = ReportExportService.class.getDeclaredMethod(
+                "excel", String.class, ReportFilterRequest.class, String.class, List.class);
+        excel.setAccessible(true);
+        byte[] bytes = (byte[]) excel.invoke(service, "ISSUED_CHALLANS_REGISTER", filters, "Demo Company Pvt. Ltd.",
+                List.of(challan));
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(bytes))) {
+            var sheet = workbook.getSheetAt(0);
+            String[] expectedHeaders = {"Document Number", "Date", "Party", "Site", "Vehicle", "Driver",
+                    "Items", "Issued Quantity", "Weight", "Status"};
+            for (int column = 0; column < expectedHeaders.length; column++) {
+                assertEquals(expectedHeaders[column], sheet.getRow(5).getCell(column).getStringCellValue());
+            }
+            assertEquals("H frames (35 NOS); Bracing (20 NOS)", sheet.getRow(6).getCell(6).getStringCellValue());
+            assertTrue(sheet.getRow(6).getCell(6).getCellStyle().getWrapText());
+            assertEquals(35, sheet.getRow(6).getCell(7).getNumericCellValue(), 0.001);
+            assertEquals("FULFILLED", sheet.getRow(6).getCell(9).getStringCellValue());
+            assertNull(sheet.getRow(9));
+        }
+    }
+
+    @Test
+    void receivingChallanExcelKeepsOriginalFieldsAndAddsItemsColumn() throws Exception {
+        ReportExportService service = new ReportExportService(null, null, new ObjectMapper(), null, "target/test-exports");
+        ReportFilterRequest filters = new ReportFilterRequest(
+                null, null, 7L, null, null, null, null, null, null, null, null, 0, 25);
+
+        Map<String, Object> challan = new LinkedHashMap<>();
+        challan.put("document_number", "RC/2026-27/0001");
+        challan.put("date", LocalDate.of(2026, 8, 19));
+        challan.put("party", "Demo Company Pvt. Ltd.");
+        challan.put("site", "Demo Site");
+        challan.put("vehicle", "MH04AB1234");
+        challan.put("driver", "Rajendra");
+        challan.put("items", "H frames (Good 25 NOS, Damaged 2 NOS, Lost 1 NOS)");
+        challan.put("status", "POSTED");
+        challan.put("received_quantity", new BigDecimal("28"));
+        challan.put("damaged_quantity", new BigDecimal("2"));
+        challan.put("lost_quantity", new BigDecimal("1"));
+
+        Method excel = ReportExportService.class.getDeclaredMethod(
+                "excel", String.class, ReportFilterRequest.class, String.class, List.class);
+        excel.setAccessible(true);
+        byte[] bytes = (byte[]) excel.invoke(service, "RECEIVING_CHALLANS_REGISTER", filters, "Demo Company Pvt. Ltd.",
+                List.of(challan));
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(bytes))) {
+            var sheet = workbook.getSheetAt(0);
+            String[] expectedHeaders = {"Document Number", "Date", "Party", "Site", "Vehicle", "Driver",
+                    "Items", "Status", "Received Quantity", "Damaged Quantity", "Lost Quantity"};
+            for (int column = 0; column < expectedHeaders.length; column++) {
+                assertEquals(expectedHeaders[column], sheet.getRow(5).getCell(column).getStringCellValue());
+            }
+            assertEquals("H frames (Good 25 NOS, Damaged 2 NOS, Lost 1 NOS)",
+                    sheet.getRow(6).getCell(6).getStringCellValue());
+            assertTrue(sheet.getRow(6).getCell(6).getCellStyle().getWrapText());
+            assertTrue(sheet.getRow(6).getHeightInPoints() > 15f);
+            assertEquals("POSTED", sheet.getRow(6).getCell(7).getStringCellValue());
+            assertEquals(28, sheet.getRow(6).getCell(8).getNumericCellValue(), 0.001);
+            assertNull(sheet.getRow(9));
+        }
+    }
+
 }
